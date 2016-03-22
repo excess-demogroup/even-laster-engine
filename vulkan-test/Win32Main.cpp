@@ -19,6 +19,58 @@ static INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 
 static VkSurfaceKHR surface;
 
+#include <vector>
+
+std::vector<uint8_t> loadBinaryFile(const char *path)
+{
+	FILE *fp = fopen(path, "rb");
+	if (!fp)
+		throw new std::exception("no such file!");
+
+	fseek(fp, 0L, SEEK_END);
+	long int size = ftell(fp);
+	fseek(fp, 0L, SEEK_SET);
+
+	std::vector<uint8_t> data;
+	data.resize(size);
+	size_t read = fread(data.data(), size, 1, fp);
+	assert(read == 1);
+
+	return data;
+}
+
+VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
+{
+	std::vector<uint8_t> shaderCode = loadBinaryFile(path);
+	assert(shaderCode.size() > 0);
+
+	VkShaderModule shaderModule;
+	VkShaderModuleCreateInfo moduleCreateInfo;
+	VkResult err;
+
+	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	moduleCreateInfo.pNext = NULL;
+
+	moduleCreateInfo.codeSize = shaderCode.size();
+	moduleCreateInfo.pCode = (uint32_t *)shaderCode.data();
+	moduleCreateInfo.flags = 0;
+	err = vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule);
+	assert(!err);
+
+	return shaderModule;
+}
+
+VkPipelineShaderStageCreateInfo loadShader(const char * fileName, VkDevice device, VkShaderStageFlagBits stage, const char *name = "main")
+{
+	VkPipelineShaderStageCreateInfo shaderStage = {};
+	shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStage.stage = stage;
+	shaderStage.module = loadShaderModule(fileName, device, stage);
+	shaderStage.pName = name;
+	assert(shaderStage.module != NULL);
+	return shaderStage;
+}
+
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPTSTR    lpCmdLine,
@@ -112,8 +164,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	assert(imageCount > 0);
 
 	// Get the swap chain images
-	VkImage *images = new VkImage[imageCount];
-	VkImageView *imageViews = new VkImageView[imageCount];
+	auto images = new VkImage[imageCount];
+	auto imageViews = new VkImageView[imageCount];
 	err = vkGetSwapchainImagesKHR(device, swapChain, &imageCount, images);
 	assert(err == VK_SUCCESS);
 
@@ -189,7 +241,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	framebufferCreateInfo.height = height;
 	framebufferCreateInfo.layers = 1;
 
-	VkFramebuffer *framebuffers = new VkFramebuffer[imageCount];
+	auto framebuffers = new VkFramebuffer[imageCount];
 	for (uint32_t i = 0; i < imageCount; i++) {
 		framebufferAttachments[0] = imageViews[i];
 		VkResult err = vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]);
@@ -211,10 +263,219 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	commandAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	commandAllocInfo.commandBufferCount = imageCount;
 	
-	VkCommandBuffer *commandBuffers = new VkCommandBuffer[imageCount];
+	auto commandBuffers = new VkCommandBuffer[imageCount];
 	err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers);
 	assert(err == VK_SUCCESS);
 
+	// OK, let's prepare for rendering!
+
+	VkPipelineShaderStageCreateInfo shaderStages[] = {
+		loadShader("shaders/triangle.vert.spv", device, VK_SHADER_STAGE_VERTEX_BIT),
+		loadShader("shaders/triangle.frag.spv", device, VK_SHADER_STAGE_FRAGMENT_BIT)
+	};
+
+	VkVertexInputBindingDescription vertexInputBindingDesc[1];
+	vertexInputBindingDesc[0].binding = 0;
+	vertexInputBindingDesc[0].stride = sizeof(float) * 3;
+	vertexInputBindingDesc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	VkVertexInputAttributeDescription vertexInputAttributeDescription[1];
+	vertexInputAttributeDescription[0].binding = 0;
+	vertexInputAttributeDescription[0].location = 0;
+	vertexInputAttributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+	vertexInputAttributeDescription[0].offset = 0;
+
+	VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
+	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = ARRAY_SIZE(vertexInputBindingDesc);
+	pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDesc;
+	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = ARRAY_SIZE(vertexInputAttributeDescription);
+	pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescription;
+
+	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
+	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pipelineInputAssemblyStateCreateInfo.flags = 0;
+	pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+	VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {};
+	pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pipelineRasterizationStateCreateInfo.flags = 0;
+	pipelineRasterizationStateCreateInfo.depthClampEnable = VK_TRUE;
+
+	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1];
+	pipelineColorBlendAttachmentState[0].colorWriteMask = 0xf;
+	pipelineColorBlendAttachmentState[0].blendEnable = VK_FALSE;
+
+	VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = {};
+	pipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	pipelineColorBlendStateCreateInfo.attachmentCount = ARRAY_SIZE(pipelineColorBlendAttachmentState);
+	pipelineColorBlendStateCreateInfo.pAttachments = pipelineColorBlendAttachmentState;
+
+	VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo = {};
+	pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	pipelineMultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
+	pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	pipelineViewportStateCreateInfo.viewportCount = 1;
+	pipelineViewportStateCreateInfo.scissorCount = 1;
+
+	VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
+	pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
+	pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
+
+	VkDescriptorSetLayoutBinding layoutBinding = {};
+	layoutBinding.binding = 0;
+	layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	layoutBinding.descriptorCount = 1;
+	layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+	VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo = { };
+	descSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	descSetLayoutCreateInfo.bindingCount = 0; // TODO: 1;
+	descSetLayoutCreateInfo.pBindings = &layoutBinding;
+
+	VkDescriptorSetLayout descriptorSetLayout;
+	err = vkCreateDescriptorSetLayout(device, &descSetLayoutCreateInfo, NULL, &descriptorSetLayout);
+	assert(err == VK_SUCCESS);
+
+	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
+	pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
+	pipelineLayoutCreateInfo.setLayoutCount = 1;
+
+	VkPipelineLayout pipelineLayout;
+	vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, NULL, &pipelineLayout);
+
+	VkDynamicState dynamicStateEnables[] = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo = {};
+	pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
+	pipelineDynamicStateCreateInfo.dynamicStateCount = ARRAY_SIZE(dynamicStateEnables);
+
+	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
+	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineCreateInfo.layout = pipelineLayout;
+	pipelineCreateInfo.renderPass = renderPass;
+	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
+	pipelineCreateInfo.pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo;
+	pipelineCreateInfo.pRasterizationState = &pipelineRasterizationStateCreateInfo;
+	pipelineCreateInfo.pColorBlendState = &pipelineColorBlendStateCreateInfo;
+	pipelineCreateInfo.pMultisampleState = &pipelineMultisampleStateCreateInfo;
+	pipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
+	pipelineCreateInfo.pDepthStencilState = &pipelineDepthStencilStateCreateInfo;
+	pipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
+	pipelineCreateInfo.stageCount = ARRAY_SIZE(shaderStages);
+	pipelineCreateInfo.pStages = shaderStages;
+
+	VkPipeline pipeline;
+	err = vkCreateGraphicsPipelines(device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	assert(err == VK_SUCCESS);
+
+	VkDescriptorPoolSize descriptorPoolSizes[1];
+	descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorPoolSizes[0].descriptorCount = 1;
+
+	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
+	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	descriptorPoolCreateInfo.poolSizeCount = ARRAY_SIZE(descriptorPoolSizes);
+	descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes;
+	descriptorPoolCreateInfo.maxSets = 1;
+
+	VkDescriptorPool descriptorPool;
+	err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, NULL, &descriptorPool);
+	assert(err == VK_SUCCESS);
+
+	VkDescriptorSetAllocateInfo descAllocInfo = {};
+	// from pool descPool, with layout descSetLayout
+
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &descriptorSetLayout;
+
+	VkDescriptorSet descriptorSet;
+	err = vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
+	assert(err == VK_SUCCESS);
+
+	/*
+	VkDescriptorBufferInfo descriptorBufferInfo = {};
+	descriptorBufferInfo.buffer = nullptr;
+	descriptorBufferInfo.offset = 0;
+	descriptorBufferInfo.range = 0;
+
+	VkWriteDescriptorSet writeDescriptorSet = {};
+	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writeDescriptorSet.dstSet = descriptorSet;
+	writeDescriptorSet.descriptorCount = 1;
+	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
+	writeDescriptorSet.dstBinding = 0;
+	vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, NULL);
+	*/
+
+
+	// Go make vertex buffer yo!
+
+	float vertexData[] = {
+		 1.0f,  1.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f,
+		 0.0f, -1.0f, 0.0f
+	};
+
+	uint32_t indexData[] = {
+		0, 1, 2
+	};
+
+	VkBufferCreateInfo bufferCreateInfo = {};
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.size = sizeof(vertexData);
+	bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	VkBuffer vertexBuffer;
+	err = vkCreateBuffer(device, &bufferCreateInfo, nullptr, &vertexBuffer);
+	assert(err == VK_SUCCESS);
+
+	VkMemoryRequirements bufferMemoryRequirements;
+	vkGetBufferMemoryRequirements(device, vertexBuffer, &bufferMemoryRequirements);
+
+	VkMemoryAllocateInfo memoryAllocateInfo = {};
+	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryAllocateInfo.allocationSize = bufferMemoryRequirements.size;
+
+	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+
+	for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+		if (((bufferMemoryRequirements.memoryTypeBits >> i) & 1) == 1) {
+			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
+				memoryAllocateInfo.memoryTypeIndex = i;
+				break;
+			}
+		}
+	}
+
+	VkDeviceMemory deviceMemory;
+	err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
+	assert(err == VK_SUCCESS);
+
+	void *mappedMemory;
+	err = vkMapMemory(device, deviceMemory, 0, memoryAllocateInfo.allocationSize, 0, &mappedMemory);
+	assert(err == VK_SUCCESS);
+	memcpy(mappedMemory, vertexData, sizeof(vertexData));
+	vkUnmapMemory(device, deviceMemory);
+
+	err = vkBindBufferMemory(device, vertexBuffer, deviceMemory, 0);
+	assert(!err);
 
 	// Main message loop:
 	bool done = false;
@@ -250,6 +511,29 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		renderPassBeginInfo.framebuffer = framebuffers[currentSwapImage];
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkViewport viewport = {};
+		viewport.height = (float)height;
+		viewport.width = (float)width;
+		viewport.minDepth = (float) 0.0f;
+		viewport.maxDepth = (float) 1.0f;
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+		VkRect2D scissor = {};
+		scissor.extent.width = width;
+		scissor.extent.height = height;
+		scissor.offset.x = 0;
+		scissor.offset.y = 0;
+		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+//		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+		VkDeviceSize offsets[1] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+
+		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
 		vkCmdEndRenderPass(commandBuffer);
 
 		err = vkEndCommandBuffer(commandBuffer);
