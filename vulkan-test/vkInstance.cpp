@@ -13,15 +13,7 @@ VkDebugReportCallbackEXT vulkan::debugReportCallback;
 
 #ifndef NDEBUG
 static const char *validationLayerNames[] = {
-	"VK_LAYER_GOOGLE_unique_objects",
-	"VK_LAYER_LUNARG_device_limits",
-	"VK_LAYER_LUNARG_draw_state",
-	"VK_LAYER_LUNARG_image",
-	"VK_LAYER_LUNARG_mem_tracker",
-	"VK_LAYER_LUNARG_object_tracker",
-	"VK_LAYER_LUNARG_param_checker",
-	"VK_LAYER_LUNARG_swapchain",
-	"VK_LAYER_LUNARG_threading",
+	"VK_LAYER_LUNARG_standard_validation"
 };
 #endif
 
@@ -31,7 +23,7 @@ void instanceInit(const char *appName)
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = appName;
 	appInfo.pEngineName = "very lastest engine ever";
-	appInfo.apiVersion = VK_API_VERSION;
+	appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 3); // VK_API_VERSION;
 
 	const char *enabledExtensions[] = {
 		VK_KHR_SURFACE_EXTENSION_NAME,

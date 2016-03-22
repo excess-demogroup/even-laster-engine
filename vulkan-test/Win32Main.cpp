@@ -153,7 +153,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	swapchainCreateInfo.clipped = true;
 	swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-	VkSwapchainKHR swapChain = nullptr;
+	VkSwapchainKHR swapChain = VK_NULL_HANDLE;
 	// ERROR: [Swapchain] Code 4 : vkCreateSwapchainKHR() called with pCreateInfo->surface that was not returned by vkGetPhysicalDeviceSurfaceSupportKHR() for the device.
 	err = vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapChain);
 	assert(err == VK_SUCCESS);
@@ -378,7 +378,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	pipelineCreateInfo.pStages = shaderStages;
 
 	VkPipeline pipeline;
-	err = vkCreateGraphicsPipelines(device, nullptr, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	err = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
 	assert(err == VK_SUCCESS);
 
 	VkDescriptorPoolSize descriptorPoolSizes[1];
