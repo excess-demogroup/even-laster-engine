@@ -11,6 +11,7 @@ VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
 VkQueue vulkan::graphicsQueue;
 VkDebugReportCallbackEXT vulkan::debugReportCallback;
 
+#ifndef NDEBUG
 static const char *validationLayerNames[] = {
 	"VK_LAYER_GOOGLE_unique_objects",
 	"VK_LAYER_LUNARG_device_limits",
@@ -22,6 +23,7 @@ static const char *validationLayerNames[] = {
 	"VK_LAYER_LUNARG_swapchain",
 	"VK_LAYER_LUNARG_threading",
 };
+#endif
 
 void instanceInit(const char *appName)
 {
