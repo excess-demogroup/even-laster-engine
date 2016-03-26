@@ -535,24 +535,12 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		vkUnmapMemory(device, vertexDeviceMemory);
 	}
 
-	float uniformData[] = {
-		1.0f, 0.0f, 0.0f, 0.0f,
-		0.0f, 1.0f, 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f,
-	};
-
-	{
-		void *mappedUniformMemory = nullptr;
-		err = vkMapMemory(device, uniformDeviceMemory, 0, uniformBufferSize, 0, &mappedUniformMemory);
-		assert(err == VK_SUCCESS);
-
-		memcpy(mappedUniformMemory, uniformData, sizeof(uniformData));
-		vkUnmapMemory(device, uniformDeviceMemory);
-	}
-
 	bool done = false;
+	DWORD startTick = GetTickCount();
 	while (!done) {
+		DWORD tick = GetTickCount() - startTick;
+		float time = tick / 1000.0f;
+
 		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
 		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 		VkSemaphore presentCompleteSemaphore;
@@ -595,8 +583,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		VkViewport viewport = {};
 		viewport.height = (float)height;
 		viewport.width = (float)width;
-		viewport.minDepth = (float) 0.0f;
-		viewport.maxDepth = (float) 1.0f;
+		viewport.minDepth = (float)0.0f;
+		viewport.maxDepth = (float)1.0f;
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
 		VkRect2D scissor = {};
@@ -605,6 +593,22 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		scissor.offset.x = 0;
 		scissor.offset.y = 0;
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+		float uniformData[] = {
+			1.0f * abs(cos(time)), 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f,
+		};
+
+		{
+			void *mappedUniformMemory = nullptr;
+			err = vkMapMemory(device, uniformDeviceMemory, 0, uniformBufferSize, 0, &mappedUniformMemory);
+			assert(err == VK_SUCCESS);
+
+			memcpy(mappedUniformMemory, uniformData, sizeof(uniformData));
+			vkUnmapMemory(device, uniformDeviceMemory);
+		}
 
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
