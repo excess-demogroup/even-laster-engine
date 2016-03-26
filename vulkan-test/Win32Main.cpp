@@ -207,7 +207,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
 	VkSwapchainKHR swapChain = VK_NULL_HANDLE;
-	// ERROR: [Swapchain] Code 4 : vkCreateSwapchainKHR() called with pCreateInfo->surface that was not returned by vkGetPhysicalDeviceSurfaceSupportKHR() for the device.
 	err = vkCreateSwapchainKHR(device, &swapchainCreateInfo, nullptr, &swapChain);
 	assert(err == VK_SUCCESS);
 
@@ -251,7 +250,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	attachments[0].format = colorFormat;
 	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-//	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
