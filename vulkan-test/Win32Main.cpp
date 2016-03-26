@@ -108,6 +108,46 @@ int setup(int width, int height, bool fullscreen, const char *appName, HINSTANCE
 	return true;
 }
 
+void createBuffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkBuffer *buffer)
+{
+	VkBufferCreateInfo bufferCreateInfo = {};
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.size = size;
+	bufferCreateInfo.usage = usageFlags;
+	VkResult err = vkCreateBuffer(device, &bufferCreateInfo, nullptr, buffer);
+	assert(err == VK_SUCCESS);
+}
+
+void allocateDeviceMemory(VkBuffer buffer, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
+{
+	VkMemoryRequirements bufferMemoryRequirements;
+	vkGetBufferMemoryRequirements(device, buffer, &bufferMemoryRequirements);
+
+	VkMemoryAllocateInfo memoryAllocateInfo = {};
+	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memoryAllocateInfo.allocationSize = bufferMemoryRequirements.size;
+
+	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+
+	for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+		if (((bufferMemoryRequirements.memoryTypeBits >> i) & 1) == 1) {
+			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
+				memoryAllocateInfo.memoryTypeIndex = i;
+				break;
+			}
+		}
+	}
+
+	VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, deviceMemory);
+	if (deviceMemorySize != nullptr)
+		*deviceMemorySize = bufferMemoryRequirements.size;
+	assert(err == VK_SUCCESS);
+
+	err = vkBindBufferMemory(device, buffer, *deviceMemory, 0);
+	assert(!err);
+}
+
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPTSTR    lpCmdLine,
@@ -382,7 +422,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo = { };
 	descSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	descSetLayoutCreateInfo.bindingCount = 0; // TODO: 1;
+	descSetLayoutCreateInfo.bindingCount = 1;
 	descSetLayoutCreateInfo.pBindings = &layoutBinding;
 
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -440,24 +480,28 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, NULL, &descriptorPool);
 	assert(err == VK_SUCCESS);
 
-	VkDescriptorSetAllocateInfo descAllocInfo = {};
-	// from pool descPool, with layout descSetLayout
-
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = &descriptorSetLayout;
 
+	VkBuffer uniformBuffer;
+	VkDeviceSize uniformBufferSize = sizeof(float) * 4 * 4;
+	createBuffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, &uniformBuffer);
+
+	VkDeviceMemory uniformDeviceMemory;
+	VkDeviceSize uniformDeviceMemorySize;
+	allocateDeviceMemory(uniformBuffer, &uniformDeviceMemory, &uniformDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+	VkDescriptorBufferInfo descriptorBufferInfo = {};
+	descriptorBufferInfo.buffer = uniformBuffer;
+	descriptorBufferInfo.offset = 0;
+	descriptorBufferInfo.range = VK_WHOLE_SIZE;
+
 	VkDescriptorSet descriptorSet;
 	err = vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
 	assert(err == VK_SUCCESS);
-
-	/*
-	VkDescriptorBufferInfo descriptorBufferInfo = {};
-	descriptorBufferInfo.buffer = nullptr;
-	descriptorBufferInfo.offset = 0;
-	descriptorBufferInfo.range = 0;
 
 	VkWriteDescriptorSet writeDescriptorSet = {};
 	writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -467,8 +511,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
 	writeDescriptorSet.dstBinding = 0;
 	vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, NULL);
-	*/
-
 
 	// Go make vertex buffer yo!
 
@@ -478,45 +520,36 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		 0.0f, -1.0f, 0.0f
 	};
 
-	VkBufferCreateInfo bufferCreateInfo = {};
-	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.size = sizeof(vertexData);
-	bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
 	VkBuffer vertexBuffer;
-	err = vkCreateBuffer(device, &bufferCreateInfo, nullptr, &vertexBuffer);
-	assert(err == VK_SUCCESS);
+	createBuffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, &vertexBuffer);
 
-	VkMemoryRequirements bufferMemoryRequirements;
-	vkGetBufferMemoryRequirements(device, vertexBuffer, &bufferMemoryRequirements);
+	VkDeviceMemory vertexDeviceMemory;
+	VkDeviceSize vertexDeviceMemorySize;
+	allocateDeviceMemory(vertexBuffer, &vertexDeviceMemory, &vertexDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-	VkMemoryAllocateInfo memoryAllocateInfo = {};
-	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memoryAllocateInfo.allocationSize = bufferMemoryRequirements.size;
-
-	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
-
-	for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
-		if (((bufferMemoryRequirements.memoryTypeBits >> i) & 1) == 1) {
-			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
-				memoryAllocateInfo.memoryTypeIndex = i;
-				break;
-			}
-		}
+	{
+		void *mappedMemory;
+		err = vkMapMemory(device, vertexDeviceMemory, 0, vertexDeviceMemorySize, 0, &mappedMemory);
+		assert(err == VK_SUCCESS);
+		memcpy(mappedMemory, vertexData, sizeof(vertexData));
+		vkUnmapMemory(device, vertexDeviceMemory);
 	}
 
-	VkDeviceMemory deviceMemory;
-	err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
-	assert(err == VK_SUCCESS);
+	float uniformData[] = {
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+	};
 
-	void *mappedMemory;
-	err = vkMapMemory(device, deviceMemory, 0, memoryAllocateInfo.allocationSize, 0, &mappedMemory);
-	assert(err == VK_SUCCESS);
-	memcpy(mappedMemory, vertexData, sizeof(vertexData));
-	vkUnmapMemory(device, deviceMemory);
+	{
+		void *mappedUniformMemory = nullptr;
+		err = vkMapMemory(device, uniformDeviceMemory, 0, uniformBufferSize, 0, &mappedUniformMemory);
+		assert(err == VK_SUCCESS);
 
-	err = vkBindBufferMemory(device, vertexBuffer, deviceMemory, 0);
-	assert(!err);
+		memcpy(mappedUniformMemory, uniformData, sizeof(uniformData));
+		vkUnmapMemory(device, uniformDeviceMemory);
+	}
 
 	bool done = false;
 	while (!done) {
@@ -573,7 +606,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		scissor.offset.y = 0;
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-//		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		VkDeviceSize offsets[1] = { 0 };
