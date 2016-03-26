@@ -480,10 +480,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		 0.0f, -1.0f, 0.0f
 	};
 
-	uint32_t indexData[] = {
-		0, 1, 2
-	};
-
 	VkBufferCreateInfo bufferCreateInfo = {};
 	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferCreateInfo.size = sizeof(vertexData);
