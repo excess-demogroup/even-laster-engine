@@ -5,6 +5,7 @@ namespace vulkan
 	extern VkPhysicalDevice physicalDevice;
 	extern VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
 	extern VkQueue graphicsQueue;
+	extern int graphicsQueueIndex;
 
 	extern VkDebugReportCallbackEXT debugReportCallback;
 

@@ -125,18 +125,40 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	assert(anySupportsPresent);
 #endif
 
+	// cheapo-version of the above:
+	VkBool32 surfaceSupported = VK_FALSE;
+	err = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueIndex, surface, &surfaceSupported);
+	assert(err == VK_SUCCESS);
+	assert(surfaceSupported == VK_TRUE);
+
 	VkSurfaceCapabilitiesKHR surfCaps;
 	err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfCaps);
 	assert(err == VK_SUCCESS);
 
-	VkFormat colorFormat = VK_FORMAT_B8G8R8A8_UNORM; // TODO: find optimal
+	uint32_t surfaceFormatCount = 0;
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, NULL);
+	assert(err == VK_SUCCESS);
+	assert(surfaceFormatCount > 0);
+	auto surfaces = new VkSurfaceFormatKHR[surfaceFormatCount];
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, surfaces);
+	assert(err == VK_SUCCESS);
+
+	VkFormat colorFormat = surfaces[0].format; // TODO: find optimal
+
+	uint32_t presentModeCount = 0;
+	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, NULL);
+	assert(err == VK_SUCCESS);
+	assert(presentModeCount > 0);
+	auto presentModes = new VkPresentModeKHR[presentModeCount];
+	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes);
+	assert(err == VK_SUCCESS);
 
 	VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
 	swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchainCreateInfo.surface = surface;
 	swapchainCreateInfo.minImageCount = min(surfCaps.minImageCount + 1, surfCaps.maxImageCount);
 	swapchainCreateInfo.imageFormat = colorFormat;
-	swapchainCreateInfo.imageColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
+	swapchainCreateInfo.imageColorSpace = surfaces[0].colorSpace;
 	swapchainCreateInfo.imageExtent = { width, height };
 	swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	swapchainCreateInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
@@ -145,7 +167,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	swapchainCreateInfo.queueFamilyIndexCount = 0;
 	swapchainCreateInfo.pQueueFamilyIndices = NULL;
 #if 1
-	swapchainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; // TODO: prefer VK_PRESENT_MODE_MAILBOX_KHR
+	swapchainCreateInfo.presentMode = presentModes[0]; // TODO: prefer VK_PRESENT_MODE_MAILBOX_KHR
 #else
 	swapchainCreateInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
 #endif
@@ -193,12 +215,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		assert(err == VK_SUCCESS);
 	}
 
-	VkSemaphoreCreateInfo semaphoreCreateInfo = {};
-	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-	VkSemaphore presentCompleteSemaphore;
-	err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentCompleteSemaphore);
-	assert(err == VK_SUCCESS);
-
 	VkAttachmentDescription attachments[1];
 	attachments[0].flags = 0;
 	attachments[0].format = colorFormat;
@@ -208,8 +224,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	VkAttachmentReference colorReference = {};
 	colorReference.attachment = 0;
@@ -250,7 +266,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	commandPoolCreateInfo.queueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	commandPoolCreateInfo.queueFamilyIndex = graphicsQueueIndex;
 	commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	VkCommandPool commandPool;
@@ -480,6 +496,12 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	// Main message loop:
 	bool done = false;
 	while (!done) {
+		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		VkSemaphore presentCompleteSemaphore;
+		err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentCompleteSemaphore);
+		assert(err == VK_SUCCESS);
+
 		uint32_t currentSwapImage;
 		err = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, presentCompleteSemaphore, NULL, &currentSwapImage);
 		assert(err == VK_SUCCESS);
@@ -539,10 +561,15 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		err = vkEndCommandBuffer(commandBuffer);
 		assert(err == VK_SUCCESS);
 
+		VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
 		VkSubmitInfo submitInfo = {};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = &presentCompleteSemaphore;
+		submitInfo.pWaitDstStageMask = &waitDstStageMask;
+		submitInfo.waitSemaphoreCount = 0;
+
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &commandBuffer;
 

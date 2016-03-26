@@ -8,6 +8,7 @@ VkInstance vulkan::instance;
 VkDevice vulkan::device;
 VkPhysicalDevice vulkan::physicalDevice;
 VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
+int vulkan::graphicsQueueIndex = -1;
 VkQueue vulkan::graphicsQueue;
 VkDebugReportCallbackEXT vulkan::debugReportCallback;
 
@@ -136,7 +137,7 @@ VkResult vulkan::init(const char *appName)
 
 	VkQueueFamilyProperties *props = new VkQueueFamilyProperties[queueCount];
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, props);
-	int graphicsQueueIndex = -1;
+	graphicsQueueIndex = -1;
 	for (size_t i = 0; i < queueCount; i++) {
 		if (props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 			graphicsQueueIndex = (int)i;
