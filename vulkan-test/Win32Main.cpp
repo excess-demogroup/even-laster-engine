@@ -85,11 +85,35 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	ATOM windowClass = registerWindowClass(hInstance);
 
 	int width = 1280, height = 720;
+#ifdef NDEBUG
+	bool fullscreen = true;
+#else
+	bool fullscreen = false;
+#endif
+
+	if (fullscreen) {
+		DEVMODE devmode;
+		memset(&devmode, 0, sizeof(DEVMODE));
+		devmode.dmSize = sizeof(DEVMODE);
+		devmode.dmPelsWidth = width;
+		devmode.dmPelsHeight = height;
+		devmode.dmBitsPerPel = 32;
+		devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+
+		auto err = ChangeDisplaySettings(&devmode, CDS_FULLSCREEN);
+		assert(err == DISP_CHANGE_SUCCESSFUL);
+
+		ShowCursor(FALSE);
+	}
 
 	// Perform application initialization:
 	DWORD ws = WS_OVERLAPPEDWINDOW;
 	RECT rect = { 0, 0, width, height };
-	AdjustWindowRect(&rect, ws, FALSE);
+	if (!fullscreen)
+		AdjustWindowRect(&rect, ws, FALSE);
+	else
+		ws = WS_POPUP;
+
 	hWnd = CreateWindow((LPCSTR)windowClass, appName, ws, 0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, hInstance, NULL);
 	if (!hWnd)
 		return FALSE;
