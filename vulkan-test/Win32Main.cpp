@@ -71,25 +71,10 @@ VkPipelineShaderStageCreateInfo loadShader(const char * fileName, VkDevice devic
 	return shaderStage;
 }
 
-int APIENTRY WinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPTSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+int setup(int width, int height, bool fullscreen, const char *appName, HINSTANCE hInstance, int nCmdShow)
 {
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
-
-	const char *appName = "some excess demo";
-
 	// Initialize global strings
 	ATOM windowClass = registerWindowClass(hInstance);
-
-	int width = 1280, height = 720;
-#ifdef NDEBUG
-	bool fullscreen = true;
-#else
-	bool fullscreen = false;
-#endif
 
 	if (fullscreen) {
 		DEVMODE devmode;
@@ -100,8 +85,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		devmode.dmBitsPerPel = 32;
 		devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 
-		auto err = ChangeDisplaySettings(&devmode, CDS_FULLSCREEN);
-		assert(err == DISP_CHANGE_SUCCESSFUL);
+		if (ChangeDisplaySettings(&devmode, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+			return false;
 
 		ShowCursor(FALSE);
 	}
@@ -116,10 +101,31 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	hWnd = CreateWindow((LPCSTR)windowClass, appName, ws, 0, 0, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, hInstance, NULL);
 	if (!hWnd)
-		return FALSE;
+		return false;
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
+	return true;
+}
+
+int APIENTRY WinMain(_In_ HINSTANCE hInstance,
+                     _In_opt_ HINSTANCE hPrevInstance,
+                     _In_ LPTSTR    lpCmdLine,
+                     _In_ int       nCmdShow)
+{
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
+
+	const char *appName = "some excess demo";
+	int width = 1280, height = 720;
+#ifdef NDEBUG
+	bool fullscreen = true;
+#else
+	bool fullscreen = false;
+#endif
+
+	if (!setup(width, height, fullscreen, appName, hInstance, nCmdShow))
+		return FALSE;
 
 	VkResult err = init(appName);
 	if (err != VK_SUCCESS)
