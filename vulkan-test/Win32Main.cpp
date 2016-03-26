@@ -196,11 +196,12 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	swapchainCreateInfo.queueFamilyIndexCount = 0;
 	swapchainCreateInfo.pQueueFamilyIndices = NULL;
-#if 1
-	swapchainCreateInfo.presentMode = presentModes[0]; // TODO: prefer VK_PRESENT_MODE_MAILBOX_KHR
-#else
-	swapchainCreateInfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
-#endif
+
+	swapchainCreateInfo.presentMode = presentModes[0];
+	for (uint32_t i = 0; i < presentModeCount; ++i)
+		if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
+			swapchainCreateInfo.presentMode = presentModes[i];
+
 	swapchainCreateInfo.oldSwapchain = NULL;
 	swapchainCreateInfo.clipped = true;
 	swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
