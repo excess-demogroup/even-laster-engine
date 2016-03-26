@@ -517,7 +517,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkBindBufferMemory(device, vertexBuffer, deviceMemory, 0);
 	assert(!err);
 
-	// Main message loop:
 	bool done = false;
 	while (!done) {
 		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
@@ -543,7 +542,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 			float(rand()) / RAND_MAX,
 			float(rand()) / RAND_MAX,
 			float(rand()) / RAND_MAX,
-			1.0f } } };
+			1.0f
+		} } };
 
 		VkRenderPassBeginInfo renderPassBeginInfo = {};
 		renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
