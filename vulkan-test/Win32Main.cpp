@@ -396,7 +396,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	VkDeviceMemory textureDeviceMemory;
 	VkDeviceSize textureDeviceMemorySize;
-	allocateImageDeviceMemory(textureImage, &textureDeviceMemory, &textureDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	allocateImageDeviceMemory(textureImage, &textureDeviceMemory, &textureDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 
 	{
 		VkImageSubresource subRes = {};
