@@ -225,11 +225,21 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, NULL);
 	assert(err == VK_SUCCESS);
 	assert(surfaceFormatCount > 0);
-	auto surfaces = new VkSurfaceFormatKHR[surfaceFormatCount];
-	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, surfaces);
+	auto surfaceFormats = new VkSurfaceFormatKHR[surfaceFormatCount];
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, surfaceFormats);
 	assert(err == VK_SUCCESS);
 
-	VkFormat colorFormat = surfaces[0].format; // TODO: find optimal
+	// find color format
+	// TODO: handle error when not found
+	VkFormat colorFormat = surfaceFormats[0].format;
+	VkColorSpaceKHR colorSpace = surfaceFormats[0].colorSpace;
+	for (int i = 1; i < surfaceFormatCount; ++i) {
+		if (surfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) {
+			colorFormat = surfaceFormats[i].format;
+			colorSpace = surfaceFormats[i].colorSpace;
+			break;
+		}
+	}
 
 	uint32_t presentModeCount = 0;
 	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, NULL);
@@ -244,7 +254,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	swapchainCreateInfo.surface = surface;
 	swapchainCreateInfo.minImageCount = min(surfCaps.minImageCount + 1, surfCaps.maxImageCount);
 	swapchainCreateInfo.imageFormat = colorFormat;
-	swapchainCreateInfo.imageColorSpace = surfaces[0].colorSpace;
+	swapchainCreateInfo.imageColorSpace = colorSpace;
 	swapchainCreateInfo.imageExtent = { width, height };
 	swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	swapchainCreateInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
