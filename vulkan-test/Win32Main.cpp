@@ -594,9 +594,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		scissor.offset.y = 0;
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+		float th = time;
+		float a = float(width) / height;
 		float uniformData[] = {
-			1.0f * abs(cos(time)), 0.0f, 0.0f, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
+			cos(th) / a, -sin(th), 0.0f, 0.0f,
+			sin(th) / a,  cos(th), 0.0f, 0.0f,
 			0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 1.0f,
 		};
