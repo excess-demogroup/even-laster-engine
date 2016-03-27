@@ -118,20 +118,17 @@ void createBuffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkBuffer *bu
 	assert(err == VK_SUCCESS);
 }
 
-void allocateDeviceMemory(VkBuffer buffer, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
+void allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
 {
-	VkMemoryRequirements bufferMemoryRequirements;
-	vkGetBufferMemoryRequirements(device, buffer, &bufferMemoryRequirements);
-
 	VkMemoryAllocateInfo memoryAllocateInfo = {};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memoryAllocateInfo.allocationSize = bufferMemoryRequirements.size;
+	memoryAllocateInfo.allocationSize = memoryRequirements.size;
 
 	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
 
 	for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
-		if (((bufferMemoryRequirements.memoryTypeBits >> i) & 1) == 1) {
+		if (((memoryRequirements.memoryTypeBits >> i) & 1) == 1) {
 			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
 				memoryAllocateInfo.memoryTypeIndex = i;
 				break;
@@ -141,10 +138,29 @@ void allocateDeviceMemory(VkBuffer buffer, VkDeviceMemory *deviceMemory, VkDevic
 
 	VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, deviceMemory);
 	if (deviceMemorySize != nullptr)
-		*deviceMemorySize = bufferMemoryRequirements.size;
+		*deviceMemorySize = memoryRequirements.size;
 	assert(err == VK_SUCCESS);
+}
 
-	err = vkBindBufferMemory(device, buffer, *deviceMemory, 0);
+void allocateBufferDeviceMemory(VkBuffer buffer, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
+{
+	VkMemoryRequirements memoryRequirements;
+	vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
+
+	allocateDeviceMemory(memoryRequirements, deviceMemory, deviceMemorySize, propertyFlags);
+
+	VkResult err = vkBindBufferMemory(device, buffer, *deviceMemory, 0);
+	assert(!err);
+}
+
+void allocateImageDeviceMemory(VkImage image, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
+{
+	VkMemoryRequirements memoryRequirements;
+	vkGetImageMemoryRequirements(device, image, &memoryRequirements);
+
+	allocateDeviceMemory(memoryRequirements, deviceMemory, deviceMemorySize, propertyFlags);
+
+	VkResult err = vkBindImageMemory(device, image, *deviceMemory, 0);
 	assert(!err);
 }
 
@@ -354,6 +370,94 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	// OK, let's prepare for rendering!
 
+	VkImageCreateInfo imageCreateInfo = {};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+	imageCreateInfo.mipLevels = 1;
+	imageCreateInfo.arrayLayers = 1;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR; // TODO: VK_IMAGE_TILING_OPTIMAL;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	imageCreateInfo.flags = 0;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+	imageCreateInfo.extent = { 64, 64, 1 };
+	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+
+	VkImage textureImage;
+	err = vkCreateImage(device, &imageCreateInfo, nullptr, &textureImage);
+	assert(err == VK_SUCCESS);
+
+/*
+	VkImageLayout textureImageLayout;
+	textureImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+*/
+
+	VkDeviceMemory textureDeviceMemory;
+	VkDeviceSize textureDeviceMemorySize;
+	allocateImageDeviceMemory(textureImage, &textureDeviceMemory, &textureDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+	{
+		VkImageSubresource subRes = {};
+		subRes.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+		VkSubresourceLayout subresourceLayout;
+		vkGetImageSubresourceLayout(device, textureImage, &subRes, &subresourceLayout);
+
+		void *mappedMemory;
+		// ERROR: [DS] Code 6 : Cannot map an image with layout VK_IMAGE_LAYOUT_UNDEFINED. Only GENERAL or PREINITIALIZED are supported.
+		err = vkMapMemory(device, textureDeviceMemory, 0, textureDeviceMemorySize, 0, &mappedMemory);
+		assert(err == VK_SUCCESS);
+		for (int y = 0; y < 64; ++y) {
+			uint8_t *row = (uint8_t *)mappedMemory + subresourceLayout.rowPitch * y;
+			for (int x = 0; x < 64; ++x) {
+				uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
+				row[x * 4 + 0] = tmp;
+				row[x * 4 + 1] = ~tmp;
+				row[x * 4 + 2] = tmp;
+				row[x * 4 + 3] = 0xFF;
+			}
+		}
+		vkUnmapMemory(device, textureDeviceMemory);
+	}
+
+	VkImageViewCreateInfo imageViewCreateInfo = {};
+	imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	imageViewCreateInfo.image = textureImage;
+	imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	imageViewCreateInfo.format = imageCreateInfo.format;
+	imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+	imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+	imageViewCreateInfo.subresourceRange.layerCount = 1;
+	imageViewCreateInfo.subresourceRange.levelCount = 1;
+
+	VkImageView textureImageView;
+	err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &textureImageView);
+	assert(err == VK_SUCCESS);
+
+	VkSamplerCreateInfo samplerCreateInfo = {};
+	samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+	samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+	samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	samplerCreateInfo.mipLodBias = 0.0f;
+	samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
+	samplerCreateInfo.minLod = 0.0f;
+	samplerCreateInfo.maxLod = 0.0f;
+	samplerCreateInfo.maxAnisotropy = 8;
+	samplerCreateInfo.anisotropyEnable = VK_TRUE;
+	samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+
+	VkSampler textureSampler;
+	err = vkCreateSampler(device, &samplerCreateInfo, nullptr, &textureSampler);
+	assert(err == VK_SUCCESS);
+
 	VkPipelineShaderStageCreateInfo shaderStages[] = {
 		loadShader("shaders/triangle.vert.spv", device, VK_SHADER_STAGE_VERTEX_BIT),
 		loadShader("shaders/triangle.frag.spv", device, VK_SHADER_STAGE_FRAGMENT_BIT)
@@ -414,16 +518,20 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
 	pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
 
-	VkDescriptorSetLayoutBinding layoutBinding = {};
-	layoutBinding.binding = 0;
-	layoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	layoutBinding.descriptorCount = 1;
-	layoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	VkDescriptorSetLayoutBinding layoutBindings[2] = {};
+	layoutBindings[0].binding = 0;
+	layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	layoutBindings[0].descriptorCount = 1;
+	layoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	layoutBindings[1].binding = 1;
+	layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	layoutBindings[1].descriptorCount = 1;
+	layoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 	VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo = { };
 	descSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	descSetLayoutCreateInfo.bindingCount = 1;
-	descSetLayoutCreateInfo.pBindings = &layoutBinding;
+	descSetLayoutCreateInfo.bindingCount = ARRAY_SIZE(layoutBindings);
+	descSetLayoutCreateInfo.pBindings = layoutBindings;
 
 	VkDescriptorSetLayout descriptorSetLayout;
 	err = vkCreateDescriptorSetLayout(device, &descSetLayoutCreateInfo, NULL, &descriptorSetLayout);
@@ -466,9 +574,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
 	assert(err == VK_SUCCESS);
 
-	VkDescriptorPoolSize descriptorPoolSizes[1];
+	VkDescriptorPoolSize descriptorPoolSizes[2];
 	descriptorPoolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorPoolSizes[0].descriptorCount = 1;
+	descriptorPoolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorPoolSizes[1].descriptorCount = 1;
 
 	VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
 	descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -492,12 +602,17 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	VkDeviceMemory uniformDeviceMemory;
 	VkDeviceSize uniformDeviceMemorySize;
-	allocateDeviceMemory(uniformBuffer, &uniformDeviceMemory, &uniformDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	allocateBufferDeviceMemory(uniformBuffer, &uniformDeviceMemory, &uniformDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	VkDescriptorBufferInfo descriptorBufferInfo = {};
 	descriptorBufferInfo.buffer = uniformBuffer;
 	descriptorBufferInfo.offset = 0;
 	descriptorBufferInfo.range = VK_WHOLE_SIZE;
+
+	VkDescriptorImageInfo descriptorImageInfo = {};
+	descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	descriptorImageInfo.imageView = textureImageView;
+	descriptorImageInfo.sampler = textureSampler;
 
 	VkDescriptorSet descriptorSet;
 	err = vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
@@ -510,6 +625,13 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
 	writeDescriptorSet.dstBinding = 0;
+	vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, NULL);
+
+	writeDescriptorSet.descriptorCount = 1;
+	writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	writeDescriptorSet.pBufferInfo = NULL;
+	writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+	writeDescriptorSet.dstBinding = 1;
 	vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, NULL);
 
 	// Go make vertex buffer yo!
@@ -525,7 +647,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 	VkDeviceMemory vertexDeviceMemory;
 	VkDeviceSize vertexDeviceMemorySize;
-	allocateDeviceMemory(vertexBuffer, &vertexDeviceMemory, &vertexDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	allocateBufferDeviceMemory(vertexBuffer, &vertexDeviceMemory, &vertexDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 	{
 		void *mappedMemory;
