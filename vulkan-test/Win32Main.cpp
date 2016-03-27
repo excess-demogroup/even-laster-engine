@@ -683,9 +683,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
 		VkClearValue clearValue;
 		clearValue = { { {
-			float(rand()) / RAND_MAX,
-			float(rand()) / RAND_MAX,
-			float(rand()) / RAND_MAX,
+			0.5f,
+			0.5f,
+			0.5f,
 			1.0f
 		} } };
 
