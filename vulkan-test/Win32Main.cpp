@@ -187,8 +187,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	if (err != VK_SUCCESS)
 		return FALSE;
 
-//	vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, uint32_t queueFamilyIndex, VkSurfaceKHR surface, VkBool32* pSupported);
-
 	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
 	surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 	surfaceCreateInfo.hinstance = hInstance;
@@ -196,22 +194,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
 	assert(err == VK_SUCCESS);
 
-#if 0
-	uint32_t queueCount;
-	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, NULL);
-	assert(queueCount >= 1);
-
-	bool *supportsPresent = new bool[queueCount], anySupportsPresent = false;
-	for (uint32_t i = 0; i < queueCount; i++) {
-		VkBool32 tmp;
-		vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &tmp);
-		supportsPresent[i] = !!tmp;
-		anySupportsPresent = anySupportsPresent || supportsPresent[i];
-	}
-	assert(anySupportsPresent);
-#endif
-
-	// cheapo-version of the above:
+	// TODO: It seems like in theory, we might not be able to use the same queue for rendering and presenting
+	// on all GPUs. So we might want to support presenting with a different queue
 	VkBool32 surfaceSupported = VK_FALSE;
 	err = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueIndex, surface, &surfaceSupported);
 	assert(err == VK_SUCCESS);
