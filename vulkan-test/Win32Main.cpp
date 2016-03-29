@@ -233,7 +233,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	// TODO: handle error when not found
 	VkFormat colorFormat = surfaceFormats[0].format;
 	VkColorSpaceKHR colorSpace = surfaceFormats[0].colorSpace;
-	for (int i = 1; i < surfaceFormatCount; ++i) {
+	for (size_t i = 1; i < surfaceFormatCount; ++i) {
 		if (surfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) {
 			colorFormat = surfaceFormats[i].format;
 			colorSpace = surfaceFormats[i].colorSpace;
