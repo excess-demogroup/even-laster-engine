@@ -213,17 +213,17 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, surfaceFormats);
 	assert(err == VK_SUCCESS);
 
-	// find color format
-	// TODO: handle error when not found
+	// find sRGB color format
 	VkFormat colorFormat = surfaceFormats[0].format;
 	VkColorSpaceKHR colorSpace = surfaceFormats[0].colorSpace;
 	for (size_t i = 1; i < surfaceFormatCount; ++i) {
-		if (surfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB) {
+		if (surfaceFormats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
 			colorFormat = surfaceFormats[i].format;
 			colorSpace = surfaceFormats[i].colorSpace;
 			break;
 		}
 	}
+	assert(colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR);
 
 	uint32_t presentModeCount = 0;
 	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, NULL);
