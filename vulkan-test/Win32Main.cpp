@@ -383,11 +383,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkCreateImage(device, &imageCreateInfo, nullptr, &textureImage);
 	assert(err == VK_SUCCESS);
 
-/*
-	VkImageLayout textureImageLayout;
-	textureImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-*/
-
 	VkDeviceMemory textureDeviceMemory;
 	VkDeviceSize textureDeviceMemorySize;
 	allocateImageDeviceMemory(textureImage, &textureDeviceMemory, &textureDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
