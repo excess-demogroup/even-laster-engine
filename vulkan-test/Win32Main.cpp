@@ -579,12 +579,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, NULL, &descriptorPool);
 	assert(err == VK_SUCCESS);
 
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &descriptorSetLayout;
-
 	VkBuffer uniformBuffer;
 	VkDeviceSize uniformBufferSize = sizeof(float) * 4 * 4;
 	createBuffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, &uniformBuffer);
@@ -603,8 +597,14 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	descriptorImageInfo.imageView = textureImageView;
 	descriptorImageInfo.sampler = textureSampler;
 
+	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
+	descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	descriptorSetAllocateInfo.descriptorPool = descriptorPool;
+	descriptorSetAllocateInfo.descriptorSetCount = 1;
+	descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
+
 	VkDescriptorSet descriptorSet;
-	err = vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
+	err = vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &descriptorSet);
 	assert(err == VK_SUCCESS);
 
 	VkWriteDescriptorSet writeDescriptorSet = {};
