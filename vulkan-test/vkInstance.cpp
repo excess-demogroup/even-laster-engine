@@ -88,9 +88,7 @@ VkResult vulkan::init(const char *appName)
 #ifndef NDEBUG
 	VkDebugReportCallbackCreateInfoEXT debugReportCallbackCreateInfo = { };
 	debugReportCallbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-	debugReportCallbackCreateInfo.pNext = NULL;
 	debugReportCallbackCreateInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT)messageCallback;
-	debugReportCallbackCreateInfo.pUserData = NULL;
 	debugReportCallbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 	err = instanceFuncs.vkCreateDebugReportCallbackEXT(instance, &debugReportCallbackCreateInfo,
 	                                                   nullptr, &debugReportCallback);
