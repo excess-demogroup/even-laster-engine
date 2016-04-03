@@ -53,7 +53,6 @@ VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStage
 
 	moduleCreateInfo.codeSize = shaderCode.size();
 	moduleCreateInfo.pCode = (uint32_t *)shaderCode.data();
-	moduleCreateInfo.flags = 0;
 	err = vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule);
 	assert(!err);
 
@@ -288,7 +287,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		colorAttachmentView.subresourceRange.baseArrayLayer = 0;
 		colorAttachmentView.subresourceRange.layerCount = 1;
 		colorAttachmentView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		colorAttachmentView.flags = 0;
 		colorAttachmentView.image = images[i];
 
 		err = vkCreateImageView(device, &colorAttachmentView, nullptr, &imageViews[i]);
@@ -473,7 +471,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
 	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	pipelineInputAssemblyStateCreateInfo.flags = 0;
 	pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
 	VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {};
@@ -481,7 +478,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	pipelineRasterizationStateCreateInfo.flags = 0;
 	pipelineRasterizationStateCreateInfo.depthClampEnable = VK_TRUE;
 
 	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1];
