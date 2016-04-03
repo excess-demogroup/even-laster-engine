@@ -162,26 +162,17 @@ VkResult vulkan::init(const char *appName)
 
 	const char *enabledExtensions[] = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-
-/*		VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef _WIN32
-		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#endif
-		VK_EXT_DEBUG_REPORT_EXTENSION_NAME */
 	};
 	deviceCreateInfo.enabledExtensionCount = ARRAY_SIZE(enabledExtensions);
 	deviceCreateInfo.ppEnabledExtensionNames = enabledExtensions;
 
 #ifndef NDEBUG
-//	deviceCreateInfo.enabledExtensionCount++;
 	deviceCreateInfo.ppEnabledLayerNames = validationLayerNames;
 	deviceCreateInfo.enabledLayerCount = ARRAY_SIZE(validationLayerNames);
 #endif
 
-
 	err = vkCreateDevice(physicalDevice, &deviceCreateInfo, NULL, &device);
 	assert(err == VK_SUCCESS);
-	deviceFuncsInit(device);
 
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
 	vkGetDeviceQueue(device, graphicsQueueIndex, 0, &graphicsQueue);
@@ -197,12 +188,6 @@ static T getDeviceProc(VkDevice device, const char *entrypoint)
 	return (T)ret;
 }
 
-void vulkan::deviceFuncsInit(VkDevice device)
-{
-	deviceFuncs.vkQueuePresentKHR = getDeviceProc<PFN_vkQueuePresentKHR>(device, "vkQueuePresentKHR");
-}
-
-struct vulkan::device_funcs vulkan::deviceFuncs;
 struct vulkan::instance_funcs vulkan::instanceFuncs;
 
 template <typename T>
@@ -215,8 +200,6 @@ static T getInstanceProc(VkInstance instance, const char *entrypoint)
 
 void vulkan::instanceFuncsInit(VkInstance instance)
 {
-	instanceFuncs.vkCreateSwapchainKHR = getInstanceProc<PFN_vkCreateSwapchainKHR >(instance, "vkCreateSwapchainKHR");
-
 	instanceFuncs.vkCreateDebugReportCallbackEXT = getInstanceProc<PFN_vkCreateDebugReportCallbackEXT>(instance, "vkCreateDebugReportCallbackEXT");
 	instanceFuncs.vkDestroyDebugReportCallbackEXT = getInstanceProc<PFN_vkDestroyDebugReportCallbackEXT>(instance, "vkDestroyDebugReportCallbackEXT");
 	instanceFuncs.vkDebugReportMessageEXT = getInstanceProc<PFN_vkDebugReportMessageEXT>(instance, "vkDebugReportMessageEXT");
