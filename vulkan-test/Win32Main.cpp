@@ -393,7 +393,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		vkGetImageSubresourceLayout(device, textureImage, &subRes, &subresourceLayout);
 
 		void *mappedMemory;
-		// ERROR: [DS] Code 6 : Cannot map an image with layout VK_IMAGE_LAYOUT_UNDEFINED. Only GENERAL or PREINITIALIZED are supported.
 		err = vkMapMemory(device, textureDeviceMemory, 0, textureDeviceMemorySize, 0, &mappedMemory);
 		assert(err == VK_SUCCESS);
 		for (int y = 0; y < 64; ++y) {
