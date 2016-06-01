@@ -193,8 +193,6 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	err = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
 	assert(err == VK_SUCCESS);
 
-	// TODO: It seems like in theory, we might not be able to use the same queue for rendering and presenting
-	// on all GPUs. So we might want to support presenting with a different queue
 	VkBool32 surfaceSupported = VK_FALSE;
 	err = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueIndex, surface, &surfaceSupported);
 	assert(err == VK_SUCCESS);
