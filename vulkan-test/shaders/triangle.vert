@@ -12,6 +12,11 @@ layout (binding = 0) uniform UBO
 
 layout (location = 0) out vec3 outColor;
 
+// WORK-AROUND: https://github.com/KhronosGroup/glslang/issues/240
+out gl_PerVertex {
+	vec4 gl_Position;
+};
+
 void main()
 {
 	outColor = 0.5f + 0.5f * inPos.xyz;
