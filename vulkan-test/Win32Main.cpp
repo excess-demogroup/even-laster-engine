@@ -476,8 +476,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pipelineRasterizationStateCreateInfo.depthClampEnable = VK_TRUE;
+	pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
 
-	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1];
+	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1] = { { 0 } };
 	pipelineColorBlendAttachmentState[0].colorWriteMask = 0xf;
 	pipelineColorBlendAttachmentState[0].blendEnable = VK_FALSE;
 
