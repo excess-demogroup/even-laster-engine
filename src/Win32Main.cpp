@@ -6,8 +6,6 @@
 
 using namespace vulkan;
 
-#define MAX_LOADSTRING 100
-
 // Global Variables:
 static HWND hWnd;
 
