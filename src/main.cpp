@@ -10,8 +10,6 @@ using namespace vulkan;
 
 static VkSurfaceKHR surface;
 
-#include <vector>
-
 VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
 {
 	MemoryMappedFile shaderCode(path);
