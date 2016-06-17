@@ -1,1 +1,9 @@
 *.spv
+Debug/
+Release/
+/ipch/
+/packages/
+*.sdf
+*.opensdf
+*.suo
+*.filters
