@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "vulkan.h"
+#include "memorymappedfile.h"
 #include <GLFW/glfw3.h>
 
 using namespace vulkan;
@@ -11,28 +12,10 @@ static VkSurfaceKHR surface;
 
 #include <vector>
 
-std::vector<uint8_t> loadBinaryFile(const char *path)
-{
-	FILE *fp = fopen(path, "rb");
-	if (!fp)
-		throw new std::exception("no such file!");
-
-	fseek(fp, 0L, SEEK_END);
-	long int size = ftell(fp);
-	fseek(fp, 0L, SEEK_SET);
-
-	std::vector<uint8_t> data;
-	data.resize(size);
-	size_t read = fread(data.data(), size, 1, fp);
-	assert(read == 1);
-
-	return data;
-}
-
 VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
 {
-	std::vector<uint8_t> shaderCode = loadBinaryFile(path);
-	assert(shaderCode.size() > 0);
+	MemoryMappedFile shaderCode(path);
+	assert(shaderCode.getSize() > 0);
 
 	VkShaderModule shaderModule;
 	VkShaderModuleCreateInfo moduleCreateInfo;
@@ -41,8 +24,8 @@ VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStage
 	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	moduleCreateInfo.pNext = NULL;
 
-	moduleCreateInfo.codeSize = shaderCode.size();
-	moduleCreateInfo.pCode = (uint32_t *)shaderCode.data();
+	moduleCreateInfo.codeSize = shaderCode.getSize();
+	moduleCreateInfo.pCode = (uint32_t *)shaderCode.getData();
 	err = vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule);
 	assert(!err);
 
