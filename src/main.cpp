@@ -178,16 +178,14 @@ int main(int argc, char *argv[])
 		assert(err == VK_SUCCESS);
 
 		// find sRGB color format
-		VkFormat colorFormat = surfaceFormats[0].format;
-		VkColorSpaceKHR colorSpace = surfaceFormats[0].colorSpace;
+		VkSurfaceFormatKHR surfaceFormat = surfaceFormats[0];
 		for (size_t i = 1; i < surfaceFormatCount; ++i) {
 			if (surfaceFormats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
-				colorFormat = surfaceFormats[i].format;
-				colorSpace = surfaceFormats[i].colorSpace;
+				surfaceFormat = surfaceFormats[i];
 				break;
 			}
 		}
-		assert(colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR);
+		assert(surfaceFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR);
 
 		uint32_t presentModeCount = 0;
 		err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, NULL);
@@ -201,8 +199,8 @@ int main(int argc, char *argv[])
 		swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 		swapchainCreateInfo.surface = surface;
 		swapchainCreateInfo.minImageCount = min(surfCaps.minImageCount + 1, surfCaps.maxImageCount);
-		swapchainCreateInfo.imageFormat = colorFormat;
-		swapchainCreateInfo.imageColorSpace = colorSpace;
+		swapchainCreateInfo.imageFormat = surfaceFormat.format;
+		swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
 		swapchainCreateInfo.imageExtent = { width, height };
 		swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		swapchainCreateInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
@@ -239,7 +237,7 @@ int main(int argc, char *argv[])
 			VkImageViewCreateInfo colorAttachmentView = {};
 			colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			colorAttachmentView.pNext = NULL;
-			colorAttachmentView.format = colorFormat;
+			colorAttachmentView.format = surfaceFormat.format;
 			colorAttachmentView.components = {
 				VK_COMPONENT_SWIZZLE_R,
 				VK_COMPONENT_SWIZZLE_G,
@@ -260,7 +258,7 @@ int main(int argc, char *argv[])
 
 		VkAttachmentDescription attachments[1];
 		attachments[0].flags = 0;
-		attachments[0].format = colorFormat;
+		attachments[0].format = surfaceFormat.format;
 		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
