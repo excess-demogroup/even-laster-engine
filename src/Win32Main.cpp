@@ -728,9 +728,12 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 			glfwDestroyWindow(window);
 
 		// TODO: deal with it!
+#ifdef WIN32
 		MessageBox(nullptr, e.what(), NULL, MB_OK);
+#else
+		fprintf(stderr, "FATAIL ERROR: %s\n", e.what());
+#endif
 	}
-
 
 	glfwTerminate();
 	return 0;
