@@ -158,9 +158,12 @@ int main(int argc, char *argv[])
 		if (!glfwVulkanSupported())
 			throw std::exception("no vulkan support!");
 
-		// TODO: push down to instanceInit
 		uint32_t requiredExtentionCount;
-		const char **requiredExtentions = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
+		const char **tmp = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
+		std::vector<const char *> requiredExtensions(tmp, tmp + requiredExtentionCount);
+#ifndef NDEBUG
+		requiredExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		win = glfwCreateWindow(width, height, appName, NULL, NULL);
@@ -170,7 +173,7 @@ int main(int argc, char *argv[])
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			});
 
-		VkResult err = init(appName);
+		VkResult err = init(appName, requiredExtensions);
 		if (err != VK_SUCCESS)
 			throw std::exception("init() failed!");
 

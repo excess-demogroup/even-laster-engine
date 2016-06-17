@@ -9,7 +9,7 @@ namespace vulkan
 
 	extern VkDebugReportCallbackEXT debugReportCallback;
 
-	VkResult init(const char *appName);
+	VkResult init(const char *appName, const std::vector<const char *> &enabledExtensions);
 
 	extern struct instance_funcs {
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;

@@ -18,7 +18,7 @@ static const char *validationLayerNames[] = {
 };
 #endif
 
-void instanceInit(const char *appName)
+void instanceInit(const char *appName, const std::vector<const char *> &enabledExtensions)
 {
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -26,25 +26,15 @@ void instanceInit(const char *appName)
 	appInfo.pEngineName = "very lastest engine ever";
 	appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 3); // VK_API_VERSION;
 
-	// TODO: push down from main!
-	const char *enabledExtensions[] = {
-		VK_KHR_SURFACE_EXTENSION_NAME,
-#ifdef _WIN32
-		VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
-#endif
-		VK_EXT_DEBUG_REPORT_EXTENSION_NAME
-	};
-
 	VkInstanceCreateInfo instanceCreateInfo = {};
 	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instanceCreateInfo.pNext = NULL;
 	instanceCreateInfo.pApplicationInfo = &appInfo;
 
-	instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions;
-	instanceCreateInfo.enabledExtensionCount = ARRAY_SIZE(enabledExtensions) - 1;
+	instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
+	instanceCreateInfo.enabledExtensionCount = enabledExtensions.size();
 
 #ifndef NDEBUG
-	instanceCreateInfo.enabledExtensionCount++;
 	instanceCreateInfo.ppEnabledLayerNames = validationLayerNames;
 	instanceCreateInfo.enabledLayerCount = ARRAY_SIZE(validationLayerNames);
 #endif
@@ -79,9 +69,9 @@ static VkBool32 messageCallback(
 	return false;
 }
 
-VkResult vulkan::init(const char *appName)
+VkResult vulkan::init(const char *appName, const std::vector<const char *> &enabledExtensions)
 {
-	instanceInit(appName);
+	instanceInit(appName, enabledExtensions);
 	instanceFuncsInit(instance);
 
 	VkResult err;
