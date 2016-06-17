@@ -116,6 +116,17 @@ void allocateImageDeviceMemory(VkImage image, VkDeviceMemory *deviceMemory, VkDe
 	assert(!err);
 }
 
+void uploadMemory(VkDeviceMemory deviceMemory, size_t offset, void *data, size_t size)
+{
+	void *mappedUniformMemory = nullptr;
+	VkResult err = vkMapMemory(device, deviceMemory, offset, size, 0, &mappedUniformMemory);
+	assert(err == VK_SUCCESS);
+
+	memcpy(mappedUniformMemory, data, size);
+
+	vkUnmapMemory(device, deviceMemory);
+}
+
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPTSTR    lpCmdLine,
@@ -597,14 +608,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 		VkDeviceMemory vertexDeviceMemory;
 		VkDeviceSize vertexDeviceMemorySize;
 		allocateBufferDeviceMemory(vertexBuffer, &vertexDeviceMemory, &vertexDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-
-		{
-			void *mappedMemory;
-			err = vkMapMemory(device, vertexDeviceMemory, 0, vertexDeviceMemorySize, 0, &mappedMemory);
-			assert(err == VK_SUCCESS);
-			memcpy(mappedMemory, vertexData, sizeof(vertexData));
-			vkUnmapMemory(device, vertexDeviceMemory);
-		}
+		uploadMemory(vertexDeviceMemory, 0, vertexData, sizeof(vertexData));
 
 		double startTime = glfwGetTime();
 		while (!glfwWindowShouldClose(window)) {
@@ -672,14 +676,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 				0.0f, 0.0f, 0.0f, 1.0f,
 			};
 
-			{
-				void *mappedUniformMemory = nullptr;
-				err = vkMapMemory(device, uniformDeviceMemory, 0, uniformBufferSize, 0, &mappedUniformMemory);
-				assert(err == VK_SUCCESS);
-
-				memcpy(mappedUniformMemory, uniformData, sizeof(uniformData));
-				vkUnmapMemory(device, uniformDeviceMemory);
-			}
+			uploadMemory(uniformDeviceMemory, 0, uniformData, sizeof(uniformData));
 
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
