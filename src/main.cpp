@@ -133,8 +133,10 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_ LPTSTR lpCmdLine,
                      _In_ int nCmdShow)
 {
+	UNREFERENCED_PARAMETER(hInstance);
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+	UNREFERENCED_PARAMETER(nCmdShow);
 #else
 int main(int argc, char *argv[])
 {
