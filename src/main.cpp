@@ -368,15 +368,15 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 			vkGetImageSubresourceLayout(device, textureImage, &subRes, &subresourceLayout);
 
 			void *mappedMemory;
-			err = vkMapMemory(device, textureDeviceMemory, 0, textureDeviceMemorySize, 0, &mappedMemory);
+			err = vkMapMemory(device, textureDeviceMemory, subresourceLayout.offset, textureDeviceMemorySize, 0, &mappedMemory);
 			assert(err == VK_SUCCESS);
 			for (int y = 0; y < 64; ++y) {
 				uint8_t *row = (uint8_t *)mappedMemory + subresourceLayout.rowPitch * y;
 				for (int x = 0; x < 64; ++x) {
 					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
-					row[x * 4 + 0] = tmp;
-					row[x * 4 + 1] = ~tmp;
-					row[x * 4 + 2] = tmp;
+					row[x * 4 + 0] = 0x80 + (tmp >> 1);
+					row[x * 4 + 1] = 0xFF - (tmp >> 1);
+					row[x * 4 + 2] = 0x80 + (tmp >> 1);
 					row[x * 4 + 3] = 0xFF;
 				}
 			}
