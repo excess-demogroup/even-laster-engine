@@ -17,16 +17,14 @@ VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStage
 	MemoryMappedFile shaderCode(path);
 	assert(shaderCode.getSize() > 0);
 
-	VkShaderModule shaderModule;
 	VkShaderModuleCreateInfo moduleCreateInfo;
-	VkResult err;
-
 	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	moduleCreateInfo.pNext = NULL;
-
 	moduleCreateInfo.codeSize = shaderCode.getSize();
 	moduleCreateInfo.pCode = (uint32_t *)shaderCode.getData();
-	err = vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule);
+
+	VkShaderModule shaderModule;
+	VkResult err = vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule);
 	assert(!err);
 
 	return shaderModule;
