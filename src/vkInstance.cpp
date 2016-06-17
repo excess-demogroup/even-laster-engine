@@ -24,7 +24,7 @@ void instanceInit(const char *appName, const std::vector<const char *> &enabledE
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = appName;
 	appInfo.pEngineName = "very lastest engine ever";
-	appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 3); // VK_API_VERSION;
+	appInfo.apiVersion = VK_API_VERSION_1_0;
 
 	VkInstanceCreateInfo instanceCreateInfo = {};
 	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
