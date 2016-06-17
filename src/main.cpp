@@ -735,7 +735,6 @@ int main(int argc, char *argv[])
 		if (win != nullptr)
 			glfwDestroyWindow(win);
 
-		// TODO: deal with it!
 #ifdef WIN32
 		MessageBox(nullptr, e.what(), NULL, MB_OK);
 #else
