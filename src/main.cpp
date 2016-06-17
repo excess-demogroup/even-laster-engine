@@ -127,13 +127,18 @@ void uploadMemory(VkDeviceMemory deviceMemory, size_t offset, void *data, size_t
 	vkUnmapMemory(device, deviceMemory);
 }
 
+#ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPTSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+                     _In_ LPTSTR lpCmdLine,
+                     _In_ int nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+#else
+int main(int argc, char *argv[])
+{
+#endif
 
 	const char *appName = "some excess demo";
 	int width = 1280, height = 720;
