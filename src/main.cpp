@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 #else
 	bool fullscreen = false;
 #endif
-	GLFWwindow *window = nullptr;
+	GLFWwindow *win = nullptr;
 
 	try {
 		if (!glfwInit())
@@ -162,9 +162,9 @@ int main(int argc, char *argv[])
 		const char **requiredExtentions = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		window = glfwCreateWindow(width, height, appName, NULL, NULL);
+		win = glfwCreateWindow(width, height, appName, NULL, NULL);
 
-		glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+		glfwSetKeyCallback(win, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			});
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 		if (err != VK_SUCCESS)
 			throw std::exception("init() failed!");
 
-		err = glfwCreateWindowSurface(instance, window, NULL, &surface);
+		err = glfwCreateWindowSurface(instance, win, NULL, &surface);
 		if (err)
 			throw std::exception("glfwCreateWindowSurface failed!");
 
@@ -618,7 +618,7 @@ int main(int argc, char *argv[])
 		uploadMemory(vertexDeviceMemory, 0, vertexData, sizeof(vertexData));
 
 		double startTime = glfwGetTime();
-		while (!glfwWindowShouldClose(window)) {
+		while (!glfwWindowShouldClose(win)) {
 			double time = glfwGetTime() - startTime;
 
 			VkSemaphoreCreateInfo semaphoreCreateInfo = {};
@@ -728,8 +728,8 @@ int main(int argc, char *argv[])
 			glfwPollEvents();
 		}
 	} catch (const std::exception &e) {
-		if (window != nullptr)
-			glfwDestroyWindow(window);
+		if (win != nullptr)
+			glfwDestroyWindow(win);
 
 		// TODO: deal with it!
 #ifdef WIN32
