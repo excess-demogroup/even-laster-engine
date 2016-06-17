@@ -26,6 +26,7 @@ void instanceInit(const char *appName)
 	appInfo.pEngineName = "very lastest engine ever";
 	appInfo.apiVersion = VK_MAKE_VERSION(1, 0, 3); // VK_API_VERSION;
 
+	// TODO: push down from main!
 	const char *enabledExtensions[] = {
 		VK_KHR_SURFACE_EXTENSION_NAME,
 #ifdef _WIN32

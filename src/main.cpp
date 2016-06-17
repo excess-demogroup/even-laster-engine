@@ -158,6 +158,7 @@ int main(int argc, char *argv[])
 		if (!glfwVulkanSupported())
 			throw std::exception("no vulkan support!");
 
+		// TODO: push down to instanceInit
 		uint32_t requiredExtentionCount;
 		const char **requiredExtentions = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
 
