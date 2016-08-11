@@ -121,6 +121,13 @@ VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBu
 	return commandBuffers;
 }
 
+std::vector<const char *> getRequiredInstanceExtensions()
+{
+	uint32_t requiredExtentionCount;
+	const char **tmp = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
+	return std::vector<const char *>(tmp, tmp + requiredExtentionCount);
+}
+
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -160,14 +167,13 @@ int main(int argc, char *argv[])
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			});
 
-		uint32_t requiredExtentionCount;
-		const char **tmp = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
-		std::vector<const char *> requiredExtensions(tmp, tmp + requiredExtentionCount);
+
+		auto enabledExtensions = getRequiredInstanceExtensions();
 #ifndef NDEBUG
-		requiredExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		enabledExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
-		VkResult err = init(appName, requiredExtensions);
+		VkResult err = init(appName, enabledExtensions);
 		if (err != VK_SUCCESS)
 			throw std::exception("init() failed!");
 
