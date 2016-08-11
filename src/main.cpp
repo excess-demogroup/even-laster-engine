@@ -8,8 +8,6 @@
 
 using namespace vulkan;
 
-static VkSurfaceKHR surface;
-
 VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
 {
 	MemoryMappedFile shaderCode(path);
@@ -182,6 +180,7 @@ int main(int argc, char *argv[])
 		if (err != VK_SUCCESS)
 			throw std::exception("init() failed!");
 
+		VkSurfaceKHR surface;
 		err = glfwCreateWindowSurface(instance, win, nullptr, &surface);
 		if (err)
 			throw std::exception("glfwCreateWindowSurface failed!");
