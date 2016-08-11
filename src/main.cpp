@@ -49,7 +49,7 @@ void createBuffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkBuffer *bu
 	assert(err == VK_SUCCESS);
 }
 
-void allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
+void allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkDeviceMemory *deviceMemory, VkMemoryPropertyFlags propertyFlags)
 {
 	VkMemoryAllocateInfo memoryAllocateInfo = {};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -68,28 +68,26 @@ void allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkDevi
 	}
 
 	VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, deviceMemory);
-	if (deviceMemorySize != nullptr)
-		*deviceMemorySize = memoryRequirements.size;
 	assert(err == VK_SUCCESS);
 }
 
-void allocateBufferDeviceMemory(VkBuffer buffer, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
+void allocateBufferDeviceMemory(VkBuffer buffer, VkDeviceMemory *deviceMemory, VkMemoryPropertyFlags propertyFlags)
 {
 	VkMemoryRequirements memoryRequirements;
 	vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
 
-	allocateDeviceMemory(memoryRequirements, deviceMemory, deviceMemorySize, propertyFlags);
+	allocateDeviceMemory(memoryRequirements, deviceMemory, propertyFlags);
 
 	VkResult err = vkBindBufferMemory(device, buffer, *deviceMemory, 0);
 	assert(!err);
 }
 
-void allocateImageDeviceMemory(VkImage image, VkDeviceMemory *deviceMemory, VkDeviceSize *deviceMemorySize, VkMemoryPropertyFlags propertyFlags)
+void allocateImageDeviceMemory(VkImage image, VkDeviceMemory *deviceMemory, VkMemoryPropertyFlags propertyFlags)
 {
 	VkMemoryRequirements memoryRequirements;
 	vkGetImageMemoryRequirements(device, image, &memoryRequirements);
 
-	allocateDeviceMemory(memoryRequirements, deviceMemory, deviceMemorySize, propertyFlags);
+	allocateDeviceMemory(memoryRequirements, deviceMemory, propertyFlags);
 
 	VkResult err = vkBindImageMemory(device, image, *deviceMemory, 0);
 	assert(!err);
@@ -345,8 +343,7 @@ int main(int argc, char *argv[])
 		assert(err == VK_SUCCESS);
 
 		VkDeviceMemory textureDeviceMemory;
-		VkDeviceSize textureDeviceMemorySize;
-		allocateImageDeviceMemory(textureImage, &textureDeviceMemory, &textureDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		allocateImageDeviceMemory(textureImage, &textureDeviceMemory, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 
 		{
 			VkImageSubresource subRes = {};
@@ -356,7 +353,7 @@ int main(int argc, char *argv[])
 			vkGetImageSubresourceLayout(device, textureImage, &subRes, &subresourceLayout);
 
 			void *mappedMemory;
-			err = vkMapMemory(device, textureDeviceMemory, subresourceLayout.offset, textureDeviceMemorySize, 0, &mappedMemory);
+			err = vkMapMemory(device, textureDeviceMemory, subresourceLayout.offset, subresourceLayout.size, 0, &mappedMemory);
 			assert(err == VK_SUCCESS);
 			for (int y = 0; y < 64; ++y) {
 				uint8_t *row = (uint8_t *)mappedMemory + subresourceLayout.rowPitch * y;
@@ -543,8 +540,7 @@ int main(int argc, char *argv[])
 		createBuffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, &uniformBuffer);
 
 		VkDeviceMemory uniformDeviceMemory;
-		VkDeviceSize uniformDeviceMemorySize;
-		allocateBufferDeviceMemory(uniformBuffer, &uniformDeviceMemory, &uniformDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		allocateBufferDeviceMemory(uniformBuffer, &uniformDeviceMemory, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		VkDescriptorBufferInfo descriptorBufferInfo = {};
 		descriptorBufferInfo.buffer = uniformBuffer;
@@ -594,8 +590,7 @@ int main(int argc, char *argv[])
 		createBuffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, &vertexBuffer);
 
 		VkDeviceMemory vertexDeviceMemory;
-		VkDeviceSize vertexDeviceMemorySize;
-		allocateBufferDeviceMemory(vertexBuffer, &vertexDeviceMemory, &vertexDeviceMemorySize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		allocateBufferDeviceMemory(vertexBuffer, &vertexDeviceMemory, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		uploadMemory(vertexDeviceMemory, 0, vertexData, sizeof(vertexData));
 
 		double startTime = glfwGetTime();
