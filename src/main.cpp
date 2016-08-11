@@ -468,10 +468,21 @@ int main(int argc, char *argv[])
 		pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		pipelineMultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+		VkViewport viewport = {
+			0, 0, (float)width, (float)height, 0.0f, 1.0f
+		};
+
+		VkRect2D scissor = {
+			{0, 0},
+			{width, height}
+		};
+
 		VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
 		pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 		pipelineViewportStateCreateInfo.viewportCount = 1;
+		pipelineViewportStateCreateInfo.pViewports = &viewport;
 		pipelineViewportStateCreateInfo.scissorCount = 1;
+		pipelineViewportStateCreateInfo.pScissors = &scissor;
 
 		VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
 		pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
