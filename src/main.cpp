@@ -54,6 +54,7 @@ void allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkDevi
 	VkMemoryAllocateInfo memoryAllocateInfo = {};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocateInfo.allocationSize = memoryRequirements.size;
+	memoryAllocateInfo.memoryTypeIndex = UINT32_MAX;
 
 	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
@@ -66,6 +67,7 @@ void allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkDevi
 			}
 		}
 	}
+	assert(memoryAllocateInfo.memoryTypeIndex != UINT32_MAX);
 
 	VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, deviceMemory);
 	assert(err == VK_SUCCESS);
