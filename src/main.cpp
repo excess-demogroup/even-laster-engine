@@ -15,7 +15,7 @@ VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStage
 	MemoryMappedFile shaderCode(path);
 	assert(shaderCode.getSize() > 0);
 
-	VkShaderModuleCreateInfo moduleCreateInfo;
+	VkShaderModuleCreateInfo moduleCreateInfo = {};
 	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	moduleCreateInfo.pNext = NULL;
 	moduleCreateInfo.codeSize = shaderCode.getSize();
