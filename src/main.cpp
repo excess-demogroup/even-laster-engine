@@ -106,6 +106,21 @@ void uploadMemory(VkDeviceMemory deviceMemory, size_t offset, void *data, size_t
 	vkUnmapMemory(device, deviceMemory);
 }
 
+VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
+{
+	VkCommandBufferAllocateInfo commandAllocInfo = {};
+	commandAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	commandAllocInfo.commandPool = commandPool;
+	commandAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	commandAllocInfo.commandBufferCount = commandBufferCount;
+
+	auto commandBuffers = new VkCommandBuffer[commandBufferCount];
+	VkResult err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers);
+	assert(err == VK_SUCCESS);
+
+	return commandBuffers;
+}
+
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -313,15 +328,7 @@ int main(int argc, char *argv[])
 		err = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool);
 		assert(err == VK_SUCCESS);
 
-		VkCommandBufferAllocateInfo commandAllocInfo = { };
-		commandAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		commandAllocInfo.commandPool = commandPool;
-		commandAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		commandAllocInfo.commandBufferCount = imageCount;
-	
-		auto commandBuffers = new VkCommandBuffer[imageCount];
-		err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers);
-		assert(err == VK_SUCCESS);
+		auto commandBuffers = allocateCommandBuffers(commandPool, imageCount);
 
 		// OK, let's prepare for rendering!
 
