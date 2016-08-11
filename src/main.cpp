@@ -74,7 +74,7 @@ VkDeviceMemory allocateDeviceMemory(const VkMemoryRequirements &memoryRequiremen
 	return deviceMemory;
 }
 
-VkDeviceMemory allocateBufferDeviceMemory(VkBuffer buffer, VkMemoryPropertyFlags propertyFlags)
+VkDeviceMemory allocateAndBindBufferDeviceMemory(VkBuffer buffer, VkMemoryPropertyFlags propertyFlags)
 {
 	VkMemoryRequirements memoryRequirements;
 	vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
@@ -87,7 +87,7 @@ VkDeviceMemory allocateBufferDeviceMemory(VkBuffer buffer, VkMemoryPropertyFlags
 	return deviceMemory;
 }
 
-VkDeviceMemory allocateImageDeviceMemory(VkImage image, VkMemoryPropertyFlags propertyFlags)
+VkDeviceMemory allocateAndBindImageDeviceMemory(VkImage image, VkMemoryPropertyFlags propertyFlags)
 {
 	VkMemoryRequirements memoryRequirements;
 	vkGetImageMemoryRequirements(device, image, &memoryRequirements);
@@ -361,7 +361,7 @@ int main(int argc, char *argv[])
 		err = vkCreateImage(device, &imageCreateInfo, nullptr, &textureImage);
 		assert(err == VK_SUCCESS);
 
-		VkDeviceMemory textureDeviceMemory = allocateImageDeviceMemory(textureImage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VkDeviceMemory textureDeviceMemory = allocateAndBindImageDeviceMemory(textureImage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 
 		{
 			VkImageSubresource subRes = {};
@@ -567,7 +567,7 @@ int main(int argc, char *argv[])
 		VkDeviceSize uniformBufferSize = sizeof(float) * 4 * 4;
 		createBuffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, &uniformBuffer);
 
-		VkDeviceMemory uniformDeviceMemory = allocateBufferDeviceMemory(uniformBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		VkDeviceMemory uniformDeviceMemory = allocateAndBindBufferDeviceMemory(uniformBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		VkDescriptorBufferInfo descriptorBufferInfo = {};
 		descriptorBufferInfo.buffer = uniformBuffer;
@@ -616,7 +616,7 @@ int main(int argc, char *argv[])
 		VkBuffer vertexBuffer;
 		createBuffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, &vertexBuffer);
 
-		VkDeviceMemory vertexDeviceMemory = allocateBufferDeviceMemory(vertexBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		VkDeviceMemory vertexDeviceMemory = allocateAndBindBufferDeviceMemory(vertexBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		uploadMemory(vertexDeviceMemory, 0, vertexData, sizeof(vertexData));
 
 		double startTime = glfwGetTime();
