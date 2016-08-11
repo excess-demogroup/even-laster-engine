@@ -705,8 +705,6 @@ int main(int argc, char *argv[])
 			submitInfo.waitSemaphoreCount = 1;
 			submitInfo.pWaitSemaphores = &presentCompleteSemaphore;
 			submitInfo.pWaitDstStageMask = &waitDstStageMask;
-			submitInfo.waitSemaphoreCount = 0;
-
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &commandBuffer;
 
