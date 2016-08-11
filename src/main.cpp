@@ -640,8 +640,7 @@ int main(int argc, char *argv[])
 			err = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
 			assert(err == VK_SUCCESS);
 
-			VkClearValue clearValue;
-			clearValue = { { {
+			VkClearValue clearValue = { { {
 				0.5f,
 				0.5f,
 				0.5f,
