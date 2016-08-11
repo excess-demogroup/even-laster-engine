@@ -17,12 +17,11 @@ VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStage
 
 	VkShaderModuleCreateInfo moduleCreateInfo = {};
 	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	moduleCreateInfo.pNext = NULL;
 	moduleCreateInfo.codeSize = shaderCode.getSize();
 	moduleCreateInfo.pCode = (uint32_t *)shaderCode.getData();
 
 	VkShaderModule shaderModule;
-	VkResult err = vkCreateShaderModule(device, &moduleCreateInfo, NULL, &shaderModule);
+	VkResult err = vkCreateShaderModule(device, &moduleCreateInfo, nullptr, &shaderModule);
 	assert(!err);
 
 	return shaderModule;
@@ -35,7 +34,6 @@ VkPipelineShaderStageCreateInfo loadShader(const char * fileName, VkDevice devic
 	shaderStage.stage = stage;
 	shaderStage.module = loadShaderModule(fileName, device, stage);
 	shaderStage.pName = name;
-	assert(shaderStage.module != NULL);
 	return shaderStage;
 }
 
@@ -160,7 +158,7 @@ int main(int argc, char *argv[])
 			throw std::exception("no vulkan support!");
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		win = glfwCreateWindow(width, height, appName, NULL, NULL);
+		win = glfwCreateWindow(width, height, appName, nullptr, nullptr);
 
 		glfwSetKeyCallback(win, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
 			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -177,7 +175,7 @@ int main(int argc, char *argv[])
 		if (err != VK_SUCCESS)
 			throw std::exception("init() failed!");
 
-		err = glfwCreateWindowSurface(instance, win, NULL, &surface);
+		err = glfwCreateWindowSurface(instance, win, nullptr, &surface);
 		if (err)
 			throw std::exception("glfwCreateWindowSurface failed!");
 
@@ -191,7 +189,7 @@ int main(int argc, char *argv[])
 		assert(err == VK_SUCCESS);
 
 		uint32_t surfaceFormatCount = 0;
-		err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, NULL);
+		err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr);
 		assert(err == VK_SUCCESS);
 		assert(surfaceFormatCount > 0);
 		auto surfaceFormats = new VkSurfaceFormatKHR[surfaceFormatCount];
@@ -209,7 +207,7 @@ int main(int argc, char *argv[])
 		assert(surfaceFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR);
 
 		uint32_t presentModeCount = 0;
-		err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, NULL);
+		err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
 		assert(err == VK_SUCCESS);
 		assert(presentModeCount > 0);
 		auto presentModes = new VkPresentModeKHR[presentModeCount];
@@ -228,14 +226,14 @@ int main(int argc, char *argv[])
 		swapchainCreateInfo.imageArrayLayers = 1;
 		swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		swapchainCreateInfo.queueFamilyIndexCount = 0;
-		swapchainCreateInfo.pQueueFamilyIndices = NULL;
+		swapchainCreateInfo.pQueueFamilyIndices = nullptr;
 
 		swapchainCreateInfo.presentMode = presentModes[0];
 		for (uint32_t i = 0; i < presentModeCount; ++i)
 			if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
 				swapchainCreateInfo.presentMode = presentModes[i];
 
-		swapchainCreateInfo.oldSwapchain = NULL;
+		swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 		swapchainCreateInfo.clipped = true;
 		swapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
@@ -244,7 +242,7 @@ int main(int argc, char *argv[])
 		assert(err == VK_SUCCESS);
 
 		uint32_t imageCount;
-		err = vkGetSwapchainImagesKHR(device, swapChain, &imageCount, NULL);
+		err = vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
 		assert(err == VK_SUCCESS);
 		assert(imageCount > 0);
 
@@ -257,7 +255,6 @@ int main(int argc, char *argv[])
 		for (uint32_t i = 0; i < imageCount; i++) {
 			VkImageViewCreateInfo colorAttachmentView = {};
 			colorAttachmentView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			colorAttachmentView.pNext = NULL;
 			colorAttachmentView.format = surfaceFormat.format;
 			colorAttachmentView.components = {
 				VK_COMPONENT_SWIZZLE_R,
@@ -505,7 +502,7 @@ int main(int argc, char *argv[])
 		descSetLayoutCreateInfo.pBindings = layoutBindings;
 
 		VkDescriptorSetLayout descriptorSetLayout;
-		err = vkCreateDescriptorSetLayout(device, &descSetLayoutCreateInfo, NULL, &descriptorSetLayout);
+		err = vkCreateDescriptorSetLayout(device, &descSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
 		assert(err == VK_SUCCESS);
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
@@ -514,7 +511,7 @@ int main(int argc, char *argv[])
 		pipelineLayoutCreateInfo.setLayoutCount = 1;
 
 		VkPipelineLayout pipelineLayout;
-		vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, NULL, &pipelineLayout);
+		vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 
 		VkDynamicState dynamicStateEnables[] = {
 			VK_DYNAMIC_STATE_VIEWPORT,
@@ -557,7 +554,7 @@ int main(int argc, char *argv[])
 		descriptorPoolCreateInfo.maxSets = 1;
 
 		VkDescriptorPool descriptorPool;
-		err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, NULL, &descriptorPool);
+		err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
 		assert(err == VK_SUCCESS);
 
 		VkBuffer uniformBuffer;
@@ -594,14 +591,14 @@ int main(int argc, char *argv[])
 		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
 		writeDescriptorSet.dstBinding = 0;
-		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, NULL);
+		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 
 		writeDescriptorSet.descriptorCount = 1;
 		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		writeDescriptorSet.pBufferInfo = NULL;
+		writeDescriptorSet.pBufferInfo = nullptr;
 		writeDescriptorSet.pImageInfo = &descriptorImageInfo;
 		writeDescriptorSet.dstBinding = 1;
-		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, NULL);
+		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 
 		// Go make vertex buffer yo!
 
@@ -629,7 +626,7 @@ int main(int argc, char *argv[])
 			assert(err == VK_SUCCESS);
 
 			uint32_t currentSwapImage;
-			err = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, presentCompleteSemaphore, NULL, &currentSwapImage);
+			err = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, presentCompleteSemaphore, VK_NULL_HANDLE, &currentSwapImage);
 			assert(err == VK_SUCCESS);
 
 			VkCommandBuffer commandBuffer = commandBuffers[currentSwapImage];
@@ -685,7 +682,7 @@ int main(int argc, char *argv[])
 
 			uploadMemory(uniformDeviceMemory, 0, uniformData, sizeof(uniformData));
 
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 			VkDeviceSize offsets[1] = { 0 };
@@ -730,7 +727,7 @@ int main(int argc, char *argv[])
 			glfwDestroyWindow(win);
 
 #ifdef WIN32
-		MessageBox(nullptr, e.what(), NULL, MB_OK);
+		MessageBox(nullptr, e.what(), nullptr, MB_OK);
 #else
 		fprintf(stderr, "FATAIL ERROR: %s\n", e.what());
 #endif
