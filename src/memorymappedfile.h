@@ -8,11 +8,11 @@ public:
 			throw std::runtime_error("failed to get file attributes");
 		size = attr.nFileSizeLow; // TODO: care about nFileSizeHigh?
 
-		hfile = CreateFile(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		hfile = CreateFile(path, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (INVALID_HANDLE_VALUE == hfile)
 			throw std::runtime_error("failed to open file for reading");
 
-		hmap = CreateFileMapping(hfile, 0, PAGE_READONLY, 0, 0, NULL);
+		hmap = CreateFileMapping(hfile, 0, PAGE_READONLY, 0, 0, nullptr);
 		if (!hmap)
 			throw std::runtime_error("failed to create file mapping");
 

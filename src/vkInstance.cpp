@@ -28,7 +28,7 @@ void instanceInit(const char *appName, const std::vector<const char *> &enabledE
 
 	VkInstanceCreateInfo instanceCreateInfo = {};
 	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	instanceCreateInfo.pNext = NULL;
+	instanceCreateInfo.pNext = nullptr;
 	instanceCreateInfo.pApplicationInfo = &appInfo;
 
 	instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
@@ -86,7 +86,7 @@ VkResult vulkan::init(const char *appName, const std::vector<const char *> &enab
 	assert(err == VK_SUCCESS);
 
 	// SELF-TEST:
-	// instanceFuncs.vkDebugReportMessageEXT(instance, VK_DEBUG_REPORT_WARNING_BIT_EXT, VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, NULL, 0, 0, "self-test", "This is a dummy warning");
+	// instanceFuncs.vkDebugReportMessageEXT(instance, VK_DEBUG_REPORT_WARNING_BIT_EXT, VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, nullptr, 0, 0, "self-test", "This is a dummy warning");
 #endif
 
 	// Get number of available physical devices
@@ -108,7 +108,7 @@ VkResult vulkan::init(const char *appName, const std::vector<const char *> &enab
 		vkGetPhysicalDeviceFeatures(physicalDevices[i], &deviceFeats);
 
 		uint32_t propCount;
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevices[i], &propCount, NULL);
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevices[i], &propCount, nullptr);
 		assert(propCount > 0);
 
 		VkQueueFamilyProperties *props = new VkQueueFamilyProperties[propCount];
@@ -121,7 +121,7 @@ VkResult vulkan::init(const char *appName, const std::vector<const char *> &enab
 	physicalDevice = physicalDevices[0];
 
 	uint32_t queueCount;
-	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, NULL);
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, nullptr);
 	assert(queueCount > 0);
 
 	VkQueueFamilyProperties *props = new VkQueueFamilyProperties[queueCount];
@@ -144,10 +144,10 @@ VkResult vulkan::init(const char *appName, const std::vector<const char *> &enab
 
 	VkDeviceCreateInfo deviceCreateInfo = {};
 	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	deviceCreateInfo.pNext = NULL;
+	deviceCreateInfo.pNext = nullptr;
 	deviceCreateInfo.queueCreateInfoCount = 1;
 	deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-	deviceCreateInfo.pEnabledFeatures = NULL;
+	deviceCreateInfo.pEnabledFeatures = nullptr;
 
 	const char *enabledExtensions[] = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -160,7 +160,7 @@ VkResult vulkan::init(const char *appName, const std::vector<const char *> &enab
 	deviceCreateInfo.enabledLayerCount = ARRAY_SIZE(validationLayerNames);
 #endif
 
-	err = vkCreateDevice(physicalDevice, &deviceCreateInfo, NULL, &device);
+	err = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
 	assert(err == VK_SUCCESS);
 
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
