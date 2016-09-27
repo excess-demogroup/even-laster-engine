@@ -533,11 +533,13 @@ int main(int argc, char *argv[])
 
 			VkSemaphoreCreateInfo semaphoreCreateInfo = {};
 			semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-			VkSemaphore presentCompleteSemaphore;
+			VkSemaphore backBufferSemaphore, presentCompleteSemaphore;
+			err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &backBufferSemaphore);
+			assert(err == VK_SUCCESS);
 			err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentCompleteSemaphore);
 			assert(err == VK_SUCCESS);
 
-			auto currentSwapImage = swapChain.aquireNextImage(presentCompleteSemaphore);
+			auto currentSwapImage = swapChain.aquireNextImage(backBufferSemaphore);
 
 			VkCommandBuffer commandBuffer = commandBuffers[currentSwapImage];
 			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
@@ -610,7 +612,9 @@ int main(int argc, char *argv[])
 			VkSubmitInfo submitInfo = {};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 			submitInfo.waitSemaphoreCount = 1;
-			submitInfo.pWaitSemaphores = &presentCompleteSemaphore;
+			submitInfo.pWaitSemaphores = &backBufferSemaphore;
+			submitInfo.signalSemaphoreCount = 1;
+			submitInfo.pSignalSemaphores = &presentCompleteSemaphore;
 			submitInfo.pWaitDstStageMask = &waitDstStageMask;
 			submitInfo.commandBufferCount = 1;
 			submitInfo.pCommandBuffers = &commandBuffer;
@@ -619,7 +623,7 @@ int main(int argc, char *argv[])
 			err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 			assert(err == VK_SUCCESS);
 
-			swapChain.queuePresent(currentSwapImage);
+			swapChain.queuePresent(currentSwapImage, &presentCompleteSemaphore, 1);
 
 			err = vkQueueWaitIdle(graphicsQueue);
 			assert(err == VK_SUCCESS);

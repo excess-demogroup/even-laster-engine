@@ -15,7 +15,7 @@ public:
 
 	uint32_t aquireNextImage(VkSemaphore presentCompleteSemaphore);
 
-	void queuePresent(uint32_t currentSwapImage);
+	void queuePresent(uint32_t currentSwapImage, const VkSemaphore *waitSemaphores, uint32_t numWaitSemaphores);
 
 private:
 	VkSurfaceFormatKHR surfaceFormat;

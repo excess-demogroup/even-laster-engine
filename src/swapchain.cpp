@@ -113,13 +113,15 @@ uint32_t SwapChain::aquireNextImage(VkSemaphore presentCompleteSemaphore)
 	return currentSwapImage;
 }
 
-void SwapChain::queuePresent(uint32_t currentSwapImage)
+void SwapChain::queuePresent(uint32_t currentSwapImage, const VkSemaphore *waitSemaphores, uint32_t numWaitSemaphores)
 {
 	VkPresentInfoKHR presentInfo = {};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = &swapChain;
 	presentInfo.pImageIndices = &currentSwapImage;
+	presentInfo.pWaitSemaphores = waitSemaphores;
+	presentInfo.waitSemaphoreCount = numWaitSemaphores;
 	VkResult err = vkQueuePresentKHR(graphicsQueue, &presentInfo);
 	assert(err == VK_SUCCESS);
 }
