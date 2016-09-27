@@ -527,17 +527,17 @@ int main(int argc, char *argv[])
 		VkDeviceMemory vertexDeviceMemory = allocateAndBindBufferDeviceMemory(vertexBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		uploadMemory(vertexDeviceMemory, 0, vertexData, sizeof(vertexData));
 
+		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		VkSemaphore backBufferSemaphore, presentCompleteSemaphore;
+		err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &backBufferSemaphore);
+		assert(err == VK_SUCCESS);
+		err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentCompleteSemaphore);
+		assert(err == VK_SUCCESS);
+
 		double startTime = glfwGetTime();
 		while (!glfwWindowShouldClose(win)) {
 			double time = glfwGetTime() - startTime;
-
-			VkSemaphoreCreateInfo semaphoreCreateInfo = {};
-			semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-			VkSemaphore backBufferSemaphore, presentCompleteSemaphore;
-			err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &backBufferSemaphore);
-			assert(err == VK_SUCCESS);
-			err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentCompleteSemaphore);
-			assert(err == VK_SUCCESS);
 
 			auto currentSwapImage = swapChain.aquireNextImage(backBufferSemaphore);
 
