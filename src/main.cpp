@@ -6,6 +6,9 @@
 #include "memorymappedfile.h"
 #include "swapchain.h"
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace vulkan;
 
@@ -584,15 +587,10 @@ int main(int argc, char *argv[])
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 			float th = (float)time;
-			float a = float(width) / height;
-			float uniformData[] = {
-				cos(th) / a, -sin(th), 0.0f, 0.0f,
-				sin(th) / a,  cos(th), 0.0f, 0.0f,
-				0.0f, 0.0f, 1.0f, 0.0f,
-				0.0f, 0.0f, 0.0f, 1.0f,
-			};
+			float a = float(height) / width;
+			glm::mat4 rotationMatrix = glm::rotate(glm::scale(glm::mat4(1), glm::vec3(a, 1, 1)), th, glm::vec3(0, 0, 1));
 
-			uploadMemory(uniformDeviceMemory, 0, uniformData, sizeof(uniformData));
+			uploadMemory(uniformDeviceMemory, 0, glm::value_ptr(rotationMatrix), sizeof(rotationMatrix));
 
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
