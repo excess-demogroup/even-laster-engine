@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <vector>
+#include <stdexcept>
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*a))
 

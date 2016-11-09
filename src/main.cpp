@@ -161,10 +161,10 @@ int main(int argc, char *argv[])
 
 	try {
 		if (!glfwInit())
-			throw std::exception("glfwInit failed!");
+			throw std::runtime_error("glfwInit failed!");
 
 		if (!glfwVulkanSupported())
-			throw std::exception("no vulkan support!");
+			throw std::runtime_error("no vulkan support!");
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		win = glfwCreateWindow(width, height, appName, nullptr, nullptr);
@@ -182,12 +182,12 @@ int main(int argc, char *argv[])
 
 		VkResult err = init(appName, enabledExtensions);
 		if (err != VK_SUCCESS)
-			throw std::exception("init() failed!");
+			throw std::runtime_error("init() failed!");
 
 		VkSurfaceKHR surface;
 		err = glfwCreateWindowSurface(instance, win, nullptr, &surface);
 		if (err)
-			throw std::exception("glfwCreateWindowSurface failed!");
+			throw std::runtime_error("glfwCreateWindowSurface failed!");
 
 		auto swapChain = SwapChain(surface, width, height);
 
