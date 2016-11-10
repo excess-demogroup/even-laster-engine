@@ -69,6 +69,10 @@ void vulkan::instanceInit(const char *appName, const std::vector<const char *> &
 #endif
 
 	VkResult err = vkCreateInstance(&instanceCreateInfo, nullptr, &vulkan::instance);
+
+	if (err == VK_ERROR_INCOMPATIBLE_DRIVER)
+		throw std::runtime_error("Your GPU is from Hønefoss!");
+
 	assert(err == VK_SUCCESS);
 
 	instanceFuncsInit(vulkan::instance);
