@@ -135,6 +135,82 @@ std::vector<const char *> getRequiredInstanceExtensions()
 	return std::vector<const char *>(tmp, tmp + requiredExtentionCount);
 }
 
+class Texture2D
+{
+public:
+	Texture2D(int width, int height, VkFormat format, int mipLevels = 1)
+	{
+		assert(width > 0);
+		assert(height > 0);
+		assert(mipLevels > 0);
+
+		VkImageCreateInfo imageCreateInfo = {};
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.format = format;
+		imageCreateInfo.mipLevels = mipLevels;
+		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR; // TODO: VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageCreateInfo.flags = 0;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+		imageCreateInfo.extent = { width, height, 1 };
+		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+
+		VkResult err = vkCreateImage(device, &imageCreateInfo, nullptr, &image);
+		assert(err == VK_SUCCESS);
+
+		deviceMemory = allocateAndBindImageDeviceMemory(image, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+
+		VkImageViewCreateInfo imageViewCreateInfo = {};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.image = image;
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = format;
+		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		imageViewCreateInfo.subresourceRange.layerCount = 1;
+		imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
+
+		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
+		assert(err == VK_SUCCESS);
+	}
+
+	VkSubresourceLayout Lock(int mipLevel, void **ptr)
+	{
+		VkImageSubresource subRes = {};
+		subRes.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subRes.mipLevel = mipLevel;
+
+		VkSubresourceLayout subresourceLayout;
+		vkGetImageSubresourceLayout(device, image, &subRes, &subresourceLayout);
+
+		VkResult err = vkMapMemory(device, deviceMemory, subresourceLayout.offset, subresourceLayout.size, 0, ptr);
+		assert(err == VK_SUCCESS);
+
+		return subresourceLayout;
+	}
+
+	void Unlock()
+	{
+		vkUnmapMemory(device, deviceMemory);
+	}
+
+	VkImageView GetImageView()
+	{
+		return imageView;
+	}
+
+private:
+	VkImage image;
+	VkImageView imageView;
+	VkDeviceMemory deviceMemory;
+};
+
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -251,42 +327,17 @@ int main(int argc, char *argv[])
 
 		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
 
+		auto setupCommandBuffer = allocateCommandBuffers(commandPool, 1);
+
 		// OK, let's prepare for rendering!
 
-		VkImageCreateInfo imageCreateInfo = {};
-		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
-		imageCreateInfo.mipLevels = 1;
-		imageCreateInfo.arrayLayers = 1;
-		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR; // TODO: VK_IMAGE_TILING_OPTIMAL;
-		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		imageCreateInfo.flags = 0;
-		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-		imageCreateInfo.extent = { 64, 64, 1 };
-		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
-
-		VkImage textureImage;
-		err = vkCreateImage(device, &imageCreateInfo, nullptr, &textureImage);
-		assert(err == VK_SUCCESS);
-
-		VkDeviceMemory textureDeviceMemory = allocateAndBindImageDeviceMemory(textureImage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT); // TODO: get rid of VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-
+		Texture2D texture(64, 64, VK_FORMAT_R8G8B8A8_UNORM);
 		{
-			VkImageSubresource subRes = {};
-			subRes.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-
-			VkSubresourceLayout subresourceLayout;
-			vkGetImageSubresourceLayout(device, textureImage, &subRes, &subresourceLayout);
-
-			void *mappedMemory;
-			err = vkMapMemory(device, textureDeviceMemory, subresourceLayout.offset, subresourceLayout.size, 0, &mappedMemory);
-			assert(err == VK_SUCCESS);
-			for (int y = 0; y < 64; ++y) {
-				uint8_t *row = (uint8_t *)mappedMemory + subresourceLayout.rowPitch * y;
-				for (int x = 0; x < 64; ++x) {
+			void *ptr;
+			VkSubresourceLayout subresourceLayout = texture.Lock(0, &ptr);
+			for (auto y = 0; y < 64; ++y) {
+				auto *row = (uint8_t *)ptr + subresourceLayout.rowPitch * y;
+				for (auto x = 0; x < 64; ++x) {
 					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
 					row[x * 4 + 0] = 0x80 + (tmp >> 1);
 					row[x * 4 + 1] = 0xFF - (tmp >> 1);
@@ -294,24 +345,8 @@ int main(int argc, char *argv[])
 					row[x * 4 + 3] = 0xFF;
 				}
 			}
-			vkUnmapMemory(device, textureDeviceMemory);
+			texture.Unlock();
 		}
-
-		VkImageViewCreateInfo imageViewCreateInfo = {};
-		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageViewCreateInfo.image = textureImage;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = imageCreateInfo.format;
-		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-		imageViewCreateInfo.subresourceRange.layerCount = 1;
-		imageViewCreateInfo.subresourceRange.levelCount = 1;
-
-		VkImageView textureImageView;
-		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &textureImageView);
-		assert(err == VK_SUCCESS);
 
 		VkSamplerCreateInfo samplerCreateInfo = {};
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -487,7 +522,7 @@ int main(int argc, char *argv[])
 
 		VkDescriptorImageInfo descriptorImageInfo = {};
 		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		descriptorImageInfo.imageView = textureImageView;
+		descriptorImageInfo.imageView = texture.GetImageView();
 		descriptorImageInfo.sampler = textureSampler;
 
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
