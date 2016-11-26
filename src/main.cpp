@@ -59,7 +59,7 @@ VkDeviceMemory allocateDeviceMemory(const VkMemoryRequirements &memoryRequiremen
 	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
 
-	for (uint32_t i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
+	for (auto i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
 		if (((memoryRequirements.memoryTypeBits >> i) & 1) == 1) {
 			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
 				memoryAllocateInfo.memoryTypeIndex = i;
@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
 
 		auto imageViews = swapChain.getImageViews();
 		auto framebuffers = new VkFramebuffer[imageViews.size()];
-		for (uint32_t i = 0; i < imageViews.size(); i++) {
+		for (auto i = 0u; i < imageViews.size(); i++) {
 			framebufferAttachments[0] = imageViews[i];
 			VkResult err = vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]);
 			assert(err == VK_SUCCESS);
