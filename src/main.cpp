@@ -135,21 +135,23 @@ std::vector<const char *> getRequiredInstanceExtensions()
 	return std::vector<const char *>(tmp, tmp + requiredExtentionCount);
 }
 
-class Texture2D
+class TextureBase
 {
-public:
-	Texture2D(int width, int height, VkFormat format, int mipLevels = 1)
+protected:
+	TextureBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int mipLevels = 1, int arrayLayers = 1)
 	{
 		assert(width > 0);
 		assert(height > 0);
+		assert(depth > 0);
 		assert(mipLevels > 0);
+		assert(arrayLayers > 0);
 
 		VkImageCreateInfo imageCreateInfo = {};
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.imageType = imageType;
 		imageCreateInfo.format = format;
 		imageCreateInfo.mipLevels = mipLevels;
-		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.arrayLayers = arrayLayers;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCreateInfo.tiling = VK_IMAGE_TILING_LINEAR; // TODO: VK_IMAGE_TILING_OPTIMAL;
 		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -167,24 +169,26 @@ public:
 		VkImageViewCreateInfo imageViewCreateInfo = {};
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.image = image;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.viewType = imageViewType;
 		imageViewCreateInfo.format = format;
 		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
 		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-		imageViewCreateInfo.subresourceRange.layerCount = 1;
+		imageViewCreateInfo.subresourceRange.layerCount = arrayLayers;
 		imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
 
 		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
 		assert(err == VK_SUCCESS);
 	}
 
-	VkSubresourceLayout Lock(int mipLevel, void **ptr)
+public:
+	VkSubresourceLayout Lock(void **ptr, int mipLevel = 0, int arrayLayer = 0)
 	{
 		VkImageSubresource subRes = {};
 		subRes.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		subRes.mipLevel = mipLevel;
+		subRes.arrayLayer = arrayLayer;
 
 		VkSubresourceLayout subresourceLayout;
 		vkGetImageSubresourceLayout(device, image, &subRes, &subresourceLayout);
@@ -205,10 +209,19 @@ public:
 		return imageView;
 	}
 
-private:
+protected:
 	VkImage image;
 	VkImageView imageView;
 	VkDeviceMemory deviceMemory;
+};
+
+class Texture2D : public TextureBase
+{
+public:
+	Texture2D(VkFormat format, int width, int height, int mipLevels = 1) :
+		TextureBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, mipLevels)
+	{
+	}
 };
 
 #ifdef WIN32
@@ -331,10 +344,10 @@ int main(int argc, char *argv[])
 
 		// OK, let's prepare for rendering!
 
-		Texture2D texture(64, 64, VK_FORMAT_R8G8B8A8_UNORM);
+		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, 64, 64);
 		{
 			void *ptr;
-			VkSubresourceLayout subresourceLayout = texture.Lock(0, &ptr);
+			VkSubresourceLayout subresourceLayout = texture.Lock(&ptr);
 			for (auto y = 0; y < 64; ++y) {
 				auto *row = (uint8_t *)ptr + subresourceLayout.rowPitch * y;
 				for (auto x = 0; x < 64; ++x) {
