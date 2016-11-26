@@ -158,7 +158,7 @@ protected:
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		imageCreateInfo.flags = 0;
 		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-		imageCreateInfo.extent = { width, height, 1 };
+		imageCreateInfo.extent = { width, height, depth };
 		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 
 		VkResult err = vkCreateImage(device, &imageCreateInfo, nullptr, &image);
