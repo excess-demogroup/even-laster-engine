@@ -338,8 +338,6 @@ int main(int argc, char *argv[])
 		err = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool);
 		assert(err == VK_SUCCESS);
 
-		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
-
 		auto setupCommandBuffer = allocateCommandBuffers(commandPool, 1);
 
 		// OK, let's prepare for rendering!
@@ -586,11 +584,29 @@ int main(int argc, char *argv[])
 		err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentCompleteSemaphore);
 		assert(err == VK_SUCCESS);
 
+		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
+
+		VkFenceCreateInfo fenceCreateInfo = {};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		auto commandBufferFences = new VkFence[imageViews.size()];
+		for (auto i = 0u; i < imageViews.size(); ++i) {
+			err = vkCreateFence(device, &fenceCreateInfo, nullptr, commandBufferFences + i);
+			assert(err == VK_SUCCESS);
+		}
+
 		double startTime = glfwGetTime();
 		while (!glfwWindowShouldClose(win)) {
 			double time = glfwGetTime() - startTime;
 
 			auto currentSwapImage = swapChain.aquireNextImage(backBufferSemaphore);
+
+			err = vkWaitForFences(device, 1, &commandBufferFences[currentSwapImage], VK_TRUE, UINT64_MAX);
+			assert(err == VK_SUCCESS);
+
+			err = vkResetFences(device, 1, &commandBufferFences[currentSwapImage]);
+			assert(err == VK_SUCCESS);
 
 			VkCommandBuffer commandBuffer = commandBuffers[currentSwapImage];
 			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
@@ -666,13 +682,10 @@ int main(int argc, char *argv[])
 			submitInfo.pCommandBuffers = &commandBuffer;
 
 			// Submit draw command buffer
-			err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+			err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, commandBufferFences[currentSwapImage]);
 			assert(err == VK_SUCCESS);
 
 			swapChain.queuePresent(currentSwapImage, &presentCompleteSemaphore, 1);
-
-			err = vkQueueWaitIdle(graphicsQueue);
-			assert(err == VK_SUCCESS);
 
 			glfwPollEvents();
 		}
