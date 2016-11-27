@@ -49,25 +49,31 @@ void createBuffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkBuffer *bu
 	assert(err == VK_SUCCESS);
 }
 
+uint32_t getMemoryTypeIndex(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
+{
+	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
+	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
+
+	for (auto i = 0u; i < VK_MAX_MEMORY_TYPES; i++) {
+		if (((memoryRequirements.memoryTypeBits >> i) & 1) == 1) {
+			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
+				return i;
+				break;
+			}
+		}
+	}
+
+	assert(false);
+	// critical error!
+	throw std::runtime_error("invalid memory type!");
+}
+
 VkDeviceMemory allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
 {
 	VkMemoryAllocateInfo memoryAllocateInfo = {};
 	memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	memoryAllocateInfo.allocationSize = memoryRequirements.size;
-	memoryAllocateInfo.memoryTypeIndex = UINT32_MAX;
-
-	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
-	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
-
-	for (auto i = 0; i < VK_MAX_MEMORY_TYPES; i++) {
-		if (((memoryRequirements.memoryTypeBits >> i) & 1) == 1) {
-			if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
-				memoryAllocateInfo.memoryTypeIndex = i;
-				break;
-			}
-		}
-	}
-	assert(memoryAllocateInfo.memoryTypeIndex != UINT32_MAX);
+	memoryAllocateInfo.memoryTypeIndex = getMemoryTypeIndex(memoryRequirements, propertyFlags);
 
 	VkDeviceMemory deviceMemory;
 	VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
