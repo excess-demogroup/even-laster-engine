@@ -189,7 +189,7 @@ protected:
 	}
 
 public:
-	VkSubresourceLayout Lock(void **ptr, int mipLevel = 0, int arrayLayer = 0)
+	VkSubresourceLayout lock(void **ptr, int mipLevel = 0, int arrayLayer = 0)
 	{
 		VkImageSubresource subRes = {};
 		subRes.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -205,12 +205,12 @@ public:
 		return subresourceLayout;
 	}
 
-	void Unlock()
+	void unlock()
 	{
 		vkUnmapMemory(device, deviceMemory);
 	}
 
-	VkImageView GetImageView()
+	VkImageView getImageView()
 	{
 		return imageView;
 	}
@@ -351,7 +351,7 @@ int main(int argc, char *argv[])
 		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, 64, 64);
 		{
 			void *ptr;
-			VkSubresourceLayout subresourceLayout = texture.Lock(&ptr);
+			VkSubresourceLayout subresourceLayout = texture.lock(&ptr);
 			for (auto y = 0; y < 64; ++y) {
 				auto *row = (uint8_t *)ptr + subresourceLayout.rowPitch * y;
 				for (auto x = 0; x < 64; ++x) {
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
 					row[x * 4 + 3] = 0xFF;
 				}
 			}
-			texture.Unlock();
+			texture.unlock();
 		}
 
 		VkSamplerCreateInfo samplerCreateInfo = {};
@@ -539,7 +539,7 @@ int main(int argc, char *argv[])
 
 		VkDescriptorImageInfo descriptorImageInfo = {};
 		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		descriptorImageInfo.imageView = texture.GetImageView();
+		descriptorImageInfo.imageView = texture.getImageView();
 		descriptorImageInfo.sampler = textureSampler;
 
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
