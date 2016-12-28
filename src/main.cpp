@@ -108,13 +108,13 @@ VkDeviceMemory allocateAndBindImageDeviceMemory(VkImage image, VkMemoryPropertyF
 	return deviceMemory;
 }
 
-void uploadMemory(VkDeviceMemory deviceMemory, size_t offset, void *data, size_t size)
+void uploadMemory(VkDeviceMemory deviceMemory, VkDeviceSize offset, void *data, VkDeviceSize size)
 {
 	void *mappedUniformMemory = nullptr;
 	VkResult err = vkMapMemory(device, deviceMemory, offset, size, 0, &mappedUniformMemory);
 	assert(err == VK_SUCCESS);
 
-	memcpy(mappedUniformMemory, data, size);
+	memcpy(mappedUniformMemory, data, (size_t)size);
 
 	vkUnmapMemory(device, deviceMemory);
 }
