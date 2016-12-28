@@ -10,6 +10,7 @@ VkPhysicalDevice vulkan::physicalDevice;
 VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
 int vulkan::graphicsQueueIndex = -1;
 VkQueue vulkan::graphicsQueue;
+VkCommandPool vulkan::setupCommandPool;
 VkDebugReportCallbackEXT vulkan::debugReportCallback;
 
 #ifndef NDEBUG
@@ -165,6 +166,14 @@ VkResult vulkan::init(const char *appName, const std::vector<const char *> &enab
 
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
 	vkGetDeviceQueue(device, graphicsQueueIndex, 0, &graphicsQueue);
+
+	VkCommandPoolCreateInfo commandPoolCreateInfo = {};
+	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	commandPoolCreateInfo.queueFamilyIndex = graphicsQueueIndex;
+	commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+	err = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &setupCommandPool);
+	assert(err == VK_SUCCESS);
 
 	return err;
 }

@@ -7,6 +7,8 @@ namespace vulkan
 	extern VkQueue graphicsQueue;
 	extern int graphicsQueueIndex;
 
+	extern VkCommandPool setupCommandPool;
+
 	extern VkDebugReportCallbackEXT debugReportCallback;
 
 	VkResult init(const char *appName, const std::vector<const char *> &enabledExtensions);
