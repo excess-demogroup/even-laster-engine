@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 #include <algorithm>
+#include <list>
+#include <map>
 
 #include "vulkan.h"
 #include "memorymappedfile.h"
@@ -356,6 +358,208 @@ public:
 	}
 };
 
+struct Vertex
+{
+	glm::vec3 position;
+	glm::vec3 normal, tangent, binormal;
+	glm::vec2 uv[8];
+};
+
+class Mesh
+{
+public:
+	Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices) :
+		vertices(vertices),
+		indices(indices)
+	{
+	}
+
+	const std::vector<Vertex> getVertices() const { return vertices; }
+	const std::vector<uint32_t> getIndices() const { return indices; }
+
+private:
+	std::vector<Vertex> vertices;
+	std::vector<uint32_t> indices;
+};
+
+class Material
+{
+	Texture2D *albedoMap;
+	glm::vec4 albedoColor;
+
+	// TODO: these should be baked (shinyness)
+	Texture2D *normalMap;
+	Texture2D *specularMap;
+};
+
+class Model
+{
+public:
+	Model(const Mesh *mesh, const Material *material) :
+		mesh(mesh),
+		material(material)
+	{
+	}
+
+private:
+	const Mesh *mesh;
+	const Material *material;
+};
+
+class Transform
+{
+public:
+	Transform() : parent(nullptr)
+	{
+	}
+
+	void setParent(Transform *parent)
+	{
+		if (this->parent != nullptr) {
+			this->parent = nullptr;
+			unrooted();
+		}
+
+		this->parent = parent;
+
+		if (parent != nullptr)
+			rooted();
+	}
+
+	virtual glm::mat4 getAbsoluteMatrix() const
+	{
+		glm::mat4 absoluteMatrix = getLocalMatrix();
+
+		const Transform *curr = getParent();
+		while (nullptr != curr) {
+			absoluteMatrix = curr->getLocalMatrix() * absoluteMatrix;
+			curr = curr->getParent();
+		}
+
+		return absoluteMatrix;
+	}
+
+	const Transform *getRootTransform() const
+	{
+		const Transform *curr = this;
+		while (nullptr != curr->parent)
+			curr = curr->parent;
+
+		return curr;
+	}
+
+	Transform *getParent() const { return parent; }
+	virtual glm::mat4 getLocalMatrix() const = 0;
+
+protected:
+	virtual void rooted() {}
+	virtual void unrooted() {}
+
+private:
+	Transform *parent;
+};
+
+class RootTransform : public Transform
+{
+public:
+	RootTransform() : Transform()
+	{
+	}
+
+	glm::mat4 getLocalMatrix() const override
+	{
+		return glm::mat4(1);
+	}
+};
+
+class MatrixTransform : public Transform
+{
+public:
+	MatrixTransform() : Transform()
+	{
+		localMatrix = glm::mat4(1);
+	}
+
+	glm::mat4 getLocalMatrix() const override
+	{
+		return localMatrix;
+	}
+
+	void setLocalMatrix(glm::mat4 localMatrix)
+	{
+		this->localMatrix = localMatrix;
+	}
+
+private:
+	glm::mat4 localMatrix;
+};
+
+class Object
+{
+public:
+	Object(Model *model, Transform *transform) :
+		model(model),
+		transform(transform)
+	{
+		assert(model != nullptr);
+		assert(transform != nullptr);
+	}
+
+	const Transform *getTransform() const { return transform; }
+
+private:
+	Model *model;
+	Transform *transform;
+};
+
+class Scene
+{
+public:
+	Scene()
+	{
+		transforms.push_back(&rootTransform);
+	}
+
+	MatrixTransform *createMatrixTransform(Transform *parent = nullptr)
+	{
+		auto trans = new MatrixTransform();
+
+		if (parent == nullptr)
+			parent = &rootTransform;
+
+		trans->setParent(parent);
+		transforms.push_back(trans);
+		return trans;
+	}
+
+	Object *createObject(Model *model, Transform *transform = nullptr)
+	{
+		if (transform == nullptr)
+			transform = &rootTransform;
+
+		assert(transform->getRootTransform() == &rootTransform);
+
+		auto obj = new Object(model, transform);
+		objects.push_back(obj);
+		return obj;
+	}
+
+	const Transform *getRootTransform() const { return &rootTransform; }
+
+	const std::list<Object*> &getObjects() const { return objects; }
+	const std::list<Transform*> &getTransforms() const { return transforms; }
+
+private:
+	std::list<Transform*> transforms;
+	std::list<Object*> objects;
+	RootTransform rootTransform;
+};
+
+VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
+{
+	return ((value + alignment - 1) / alignment) * alignment;
+}
+
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -470,7 +674,32 @@ int main(int argc, char *argv[])
 		err = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool);
 		assert(err == VK_SUCCESS);
 
-		auto setupCommandBuffer = allocateCommandBuffers(commandPool, 1);
+		Scene scene;
+
+		glm::vec3 vertexData[] = {
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(-1.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f)
+		};
+
+		Vertex v = { };
+		v.position = glm::vec3(0, 0, 0);
+		std::vector<Vertex> vertices;
+		for (int i = 0; i < ARRAYSIZE(vertexData); ++i) {
+			v.position = vertexData[i];
+			vertices.push_back(v);
+		}
+		std::vector<uint32_t> indices;
+		indices.push_back(0);
+		indices.push_back(1);
+		indices.push_back(2);
+		auto mesh = Mesh(vertices, indices);
+		auto material = Material();
+		auto model = new Model(&mesh, &material);
+		auto t1 = scene.createMatrixTransform();
+		auto t2 = scene.createMatrixTransform(t1);
+		auto obj1 = scene.createObject(model, t1);
+		auto obj2 = scene.createObject(model, t2);
 
 		// OK, let's prepare for rendering!
 
@@ -583,7 +812,7 @@ int main(int argc, char *argv[])
 
 		VkDescriptorSetLayoutBinding layoutBindings[2] = {};
 		layoutBindings[0].binding = 0;
-		layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		layoutBindings[0].descriptorCount = 1;
 		layoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 		layoutBindings[1].binding = 1;
@@ -638,7 +867,7 @@ int main(int argc, char *argv[])
 		assert(err == VK_SUCCESS);
 
 		VkDescriptorPoolSize descriptorPoolSizes[] = {
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		};
 
@@ -652,8 +881,12 @@ int main(int argc, char *argv[])
 		err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
 		assert(err == VK_SUCCESS);
 
+		VkPhysicalDeviceProperties physicalDeviceProperties;
+		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+
 		VkBuffer uniformBuffer;
-		VkDeviceSize uniformBufferSize = sizeof(float) * 4 * 4;
+		uint32_t uniformBufferSpacing = (uint32_t)alignSize(sizeof(float) * 4 * 4, physicalDeviceProperties.limits.minUniformBufferOffsetAlignment);
+		VkDeviceSize uniformBufferSize = uniformBufferSpacing * scene.getTransforms().size();
 		createBuffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, &uniformBuffer);
 
 		VkDeviceMemory uniformDeviceMemory = allocateAndBindBufferDeviceMemory(uniformBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
@@ -682,7 +915,7 @@ int main(int argc, char *argv[])
 		writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		writeDescriptorSet.dstSet = descriptorSet;
 		writeDescriptorSet.descriptorCount = 1;
-		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 		writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
 		writeDescriptorSet.dstBinding = 0;
 		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
@@ -695,12 +928,6 @@ int main(int argc, char *argv[])
 		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 
 		// Go make vertex buffer yo!
-
-		float vertexData[] = {
-			 1.0f,  1.0f, 0.0f,
-			-1.0f,  1.0f, 0.0f,
-			 0.0f, -1.0f, 0.0f
-		};
 
 		VkBuffer vertexBuffer;
 		createBuffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, &vertexBuffer);
@@ -787,17 +1014,33 @@ int main(int argc, char *argv[])
 
 			float th = (float)time;
 			float a = float(height) / width;
-			glm::mat4 rotationMatrix = glm::rotate(glm::scale(glm::mat4(1), glm::vec3(a, 1, 1)), th, glm::vec3(0, 0, 1));
 
-			uploadMemory(uniformDeviceMemory, 0, glm::value_ptr(rotationMatrix), sizeof(rotationMatrix));
+			// animate, yo
+			t1->setLocalMatrix(glm::rotate(glm::scale(glm::mat4(1), glm::vec3(a, 1, 1)), th, glm::vec3(0, 0, 1)));
+			t2->setLocalMatrix(glm::translate(glm::mat4(1), glm::vec3(cos(th), 1, 1)));
 
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			int offset = 0;
+			std::map<const Transform*, int> offsetMap;
+			for each (auto transform in scene.getTransforms()) {
+				auto modelMatrix = transform->getAbsoluteMatrix();
+				uploadMemory(uniformDeviceMemory, offset, glm::value_ptr(modelMatrix), sizeof(modelMatrix));
+				offsetMap[transform] = offset;
+				offset += uniformBufferSpacing;
+			}
 
 			VkDeviceSize offsets[1] = { 0 };
 			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-			vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+			for each (auto object in scene.getObjects()) {
+				assert(offsetMap.count(object->getTransform()) > 0);
+
+				auto offset = offsetMap[object->getTransform()];
+				assert(offset <= uniformBufferSize - sizeof(float) * 4 * 4);
+				uint32_t dynamicOffsets[] = { offset };
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);
+				vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+			}
 
 			vkCmdEndRenderPass(commandBuffer);
 
