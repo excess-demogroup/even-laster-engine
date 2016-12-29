@@ -11,5 +11,5 @@ layout (binding = 1) uniform sampler2D samplerColor;
 
 void main()
 {
-  outFragColor = vec4(texture(samplerColor, inColor.xy).xyz * inColor, 1.0);
+    outFragColor = vec4(textureLod(samplerColor, inColor.xy, 0.25).xyz * inColor, 1.0);
 }

@@ -231,12 +231,14 @@ protected:
 		assert(err == VK_SUCCESS);
 	}
 
+public:
+
 	static int mipSize(int size, int mipLevel)
 	{
+		assert(mipLevel >= 0);
 		return std::max(size >> mipLevel, 1);
 	}
 
-public:
 	void *lock(size_t size, int mipLevel = 0, int arrayLayer = 0)
 	{
 		assert(lockedMipLevel < 0);
@@ -725,21 +727,30 @@ int main(int argc, char *argv[])
 
 		// OK, let's prepare for rendering!
 
-		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, 64, 64);
+		int baseWidth = 64, baseHeight = 64;
+		int mipLevels = 2;
+		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels);
 		{
-			size_t size = 64 * 4 * 64;
-			void *ptr = texture.lock(size);
-			for (auto y = 0; y < 64; ++y) {
-				auto *row = (uint8_t *)ptr + 64 * 4 * y;
-				for (auto x = 0; x < 64; ++x) {
-					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
-					row[x * 4 + 0] = 0x80 + (tmp >> 1);
-					row[x * 4 + 1] = 0xFF - (tmp >> 1);
-					row[x * 4 + 2] = 0x80 + (tmp >> 1);
-					row[x * 4 + 3] = 0xFF;
+			for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
+
+				int mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
+				    mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
+
+				int pitch = mipWidth * 4;
+				size_t size = pitch * mipHeight;
+				void *ptr = texture.lock(size, mipLevel);
+				for (auto y = 0; y < mipHeight; ++y) {
+					auto *row = (uint8_t *)ptr + pitch * y;
+					for (auto x = 0; x < mipWidth; ++x) {
+						uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
+						row[x * 4 + 0] = 0x80 + (tmp >> 1);
+						row[x * 4 + 1] = 0xFF - (tmp >> 1);
+						row[x * 4 + 2] = 0x80 + (tmp >> 1);
+						row[x * 4 + 3] = 0xFF;
+					}
 				}
+				texture.unlock(mipLevel);
 			}
-			texture.unlock();
 		}
 
 		VkSamplerCreateInfo samplerCreateInfo = {};
@@ -753,7 +764,7 @@ int main(int argc, char *argv[])
 		samplerCreateInfo.mipLodBias = 0.0f;
 		samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
 		samplerCreateInfo.minLod = 0.0f;
-		samplerCreateInfo.maxLod = 0.0f;
+		samplerCreateInfo.maxLod = (float)mipLevels;
 		samplerCreateInfo.maxAnisotropy = 8;
 		samplerCreateInfo.anisotropyEnable = VK_TRUE;
 		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
