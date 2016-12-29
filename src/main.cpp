@@ -189,8 +189,7 @@ public:
 	}
 };
 
-class TextureBase
-{
+class TextureBase {
 protected:
 	TextureBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int mipLevels = 1, int arrayLayers = 1) :
 		format(format),
@@ -382,8 +381,7 @@ private:
 
 };
 
-class Texture2D : public TextureBase
-{
+class Texture2D : public TextureBase {
 public:
 	Texture2D(VkFormat format, int width, int height, int mipLevels = 1) :
 		TextureBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, mipLevels)
@@ -391,15 +389,13 @@ public:
 	}
 };
 
-struct Vertex
-{
+struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal, tangent, binormal;
 	glm::vec2 uv[8];
 };
 
-class Mesh
-{
+class Mesh {
 public:
 	Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices) :
 		vertices(vertices),
@@ -415,8 +411,7 @@ private:
 	std::vector<uint32_t> indices;
 };
 
-class Material
-{
+class Material {
 	Texture2D *albedoMap;
 	glm::vec4 albedoColor;
 
@@ -425,8 +420,7 @@ class Material
 	Texture2D *specularMap;
 };
 
-class Model
-{
+class Model {
 public:
 	Model(const Mesh *mesh, const Material *material) :
 		mesh(mesh),
@@ -439,8 +433,7 @@ private:
 	const Material *material;
 };
 
-class Transform
-{
+class Transform {
 public:
 	Transform() : parent(nullptr)
 	{
@@ -492,8 +485,7 @@ private:
 	Transform *parent;
 };
 
-class RootTransform : public Transform
-{
+class RootTransform : public Transform {
 public:
 	RootTransform() : Transform()
 	{
@@ -505,8 +497,7 @@ public:
 	}
 };
 
-class MatrixTransform : public Transform
-{
+class MatrixTransform : public Transform {
 public:
 	MatrixTransform() : Transform()
 	{
@@ -527,8 +518,7 @@ private:
 	glm::mat4 localMatrix;
 };
 
-class Object
-{
+class Object {
 public:
 	Object(Model *model, Transform *transform) :
 		model(model),
@@ -545,8 +535,7 @@ private:
 	Transform *transform;
 };
 
-class Scene
-{
+class Scene {
 public:
 	Scene()
 	{
