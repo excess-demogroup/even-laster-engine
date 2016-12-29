@@ -10,10 +10,10 @@ layout (binding = 0) uniform UBO
 	mat4 modelViewProjectionMatrix;
 } ubo;
 
-layout (location = 0) out vec3 outColor;
+layout (location = 0) out vec2 outTexCoord;
 
 void main()
 {
-	outColor = 0.5f + 0.5f * inPos.xyz;
+	outTexCoord = 0.5f + 0.5f * inPos.xy;
 	gl_Position = ubo.modelViewProjectionMatrix * vec4(inPos.xyz, 1.0);
 }
