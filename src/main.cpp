@@ -145,6 +145,43 @@ std::vector<const char *> getRequiredInstanceExtensions()
 	return std::vector<const char *>(tmp, tmp + requiredExtentionCount);
 }
 
+class StagingBuffer {
+public:
+	StagingBuffer(VkDeviceSize size)
+	{
+		createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, &buffer);
+		deviceMemory = allocateAndBindBufferDeviceMemory(buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+	}
+
+	~StagingBuffer()
+	{
+		vkDestroyBuffer(device, buffer, nullptr);
+		vkFreeMemory(device, deviceMemory, nullptr);
+	}
+
+	void *map(VkDeviceSize size)
+	{
+		void *ret;
+		VkResult err = vkMapMemory(device, deviceMemory, 0, size, 0, &ret);
+		assert(err == VK_SUCCESS);
+		return ret;
+	}
+
+	void unmap()
+	{
+		vkUnmapMemory(device, deviceMemory);
+	}
+
+	VkBuffer getBuffer()
+	{
+		return buffer;
+	}
+
+private:
+	VkBuffer buffer;
+	VkDeviceMemory deviceMemory;
+};
+
 class TextureBase
 {
 protected:
@@ -155,8 +192,7 @@ protected:
 		baseWidth(width),
 		baseHeight(height),
 		baseDepth(depth),
-		stagingBuffer(VK_NULL_HANDLE),
-		stagingBufferDeviceMemory(VK_NULL_HANDLE),
+		stagingBuffer(nullptr),
 		lockedMipLevel(-1),
 		lockedArrayLayer(-1)
 	{
@@ -199,8 +235,7 @@ public:
 	{
 		assert(lockedMipLevel < 0);
 		assert(lockedArrayLayer < 0);
-		assert(stagingBufferDeviceMemory == VK_NULL_HANDLE);
-		assert(stagingBuffer == VK_NULL_HANDLE);
+		assert(stagingBuffer == nullptr);
 
 		assert(mipLevel >= 0);
 		assert(arrayLayer >= 0);
@@ -210,12 +245,8 @@ public:
 		subRes.mipLevel = mipLevel;
 		subRes.arrayLayer = arrayLayer;
 
-		createBuffer((VkDeviceSize)size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, &stagingBuffer);
-		stagingBufferDeviceMemory = allocateAndBindBufferDeviceMemory(stagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-
-		void *ret;
-		VkResult err = vkMapMemory(device, stagingBufferDeviceMemory, 0, (VkDeviceSize)size, 0, &ret);
-		assert(err == VK_SUCCESS);
+		stagingBuffer = new StagingBuffer(size);
+		void *ret = stagingBuffer->map(size);
 
 		lockedMipLevel = mipLevel;
 		lockedArrayLayer = arrayLayer;
@@ -227,10 +258,9 @@ public:
 	{
 		assert(mipLevel == lockedMipLevel);
 		assert(arrayLayer == lockedArrayLayer);
-		assert(stagingBufferDeviceMemory != VK_NULL_HANDLE);
-		assert(stagingBuffer != VK_NULL_HANDLE);
+		assert(stagingBuffer != nullptr);
 
-		vkUnmapMemory(device, stagingBufferDeviceMemory);
+		stagingBuffer->unmap();
 
 		VkBufferImageCopy copyRegion = {};
 		copyRegion.bufferOffset = 0;
@@ -277,7 +307,7 @@ public:
 			0, nullptr,
 			0, nullptr,
 			1, &imageBarrier);
-		vkCmdCopyBufferToImage(commandBuffer, stagingBuffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+		vkCmdCopyBufferToImage(commandBuffer, stagingBuffer->getBuffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		err = vkEndCommandBuffer(commandBuffer);
 		assert(err == VK_SUCCESS);
@@ -295,11 +325,8 @@ public:
 		lockedArrayLayer = -1;
 
 		// TODO: delete memory once init is done!
-		// vkDestroyBuffer(device, stagingBuffer, nullptr);
-		// vkFreeMemory(device, stagingBufferDeviceMemory, nullptr);
-
-		stagingBufferDeviceMemory = VK_NULL_HANDLE;
-		stagingBuffer = VK_NULL_HANDLE;
+		// delete stagingBuffer;
+		stagingBuffer = nullptr;
 	}
 
 	VkImageView getImageView()
@@ -313,8 +340,7 @@ protected:
 	VkImageViewType imageViewType;
 	int baseWidth, baseHeight, baseDepth;
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferDeviceMemory;
+	StagingBuffer *stagingBuffer;
 	int lockedMipLevel, lockedArrayLayer;
 
 	VkImage image;
