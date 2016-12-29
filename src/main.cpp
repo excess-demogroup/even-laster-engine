@@ -145,15 +145,15 @@ std::vector<const char *> getRequiredInstanceExtensions()
 	return std::vector<const char *>(tmp, tmp + requiredExtentionCount);
 }
 
-class StagingBuffer {
+class Buffer {
 public:
-	StagingBuffer(VkDeviceSize size)
+	Buffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags)
 	{
-		createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, &buffer);
-		deviceMemory = allocateAndBindBufferDeviceMemory(buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		createBuffer(size, usageFlags, &buffer);
+		deviceMemory = allocateAndBindBufferDeviceMemory(buffer, memoryPropertyFlags);
 	}
 
-	~StagingBuffer()
+	~Buffer()
 	{
 		vkDestroyBuffer(device, buffer, nullptr);
 		vkFreeMemory(device, deviceMemory, nullptr);
@@ -180,6 +180,13 @@ public:
 private:
 	VkBuffer buffer;
 	VkDeviceMemory deviceMemory;
+};
+
+class StagingBuffer : public Buffer {
+public:
+	StagingBuffer(VkDeviceSize size) : Buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+	{
+	}
 };
 
 class TextureBase
