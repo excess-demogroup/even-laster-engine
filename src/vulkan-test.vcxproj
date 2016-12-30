@@ -157,8 +157,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="core\memorymappedfile.h" />
     <ClInclude Include="swapchain.h" />
-    <ClInclude Include="memorymappedfile.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="vulkan.h" />
   </ItemGroup>
