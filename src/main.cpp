@@ -43,16 +43,6 @@ VkPipelineShaderStageCreateInfo loadShader(const char * fileName, VkDevice devic
 	return shaderStage;
 }
 
-void createBuffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkBuffer *buffer)
-{
-	VkBufferCreateInfo bufferCreateInfo = {};
-	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.size = size;
-	bufferCreateInfo.usage = usageFlags;
-	VkResult err = vkCreateBuffer(device, &bufferCreateInfo, nullptr, buffer);
-	assert(err == VK_SUCCESS);
-}
-
 uint32_t getMemoryTypeIndex(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
 {
 	VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
@@ -82,32 +72,6 @@ VkDeviceMemory allocateDeviceMemory(const VkMemoryRequirements &memoryRequiremen
 	VkDeviceMemory deviceMemory;
 	VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
 	assert(err == VK_SUCCESS);
-
-	return deviceMemory;
-}
-
-VkDeviceMemory allocateAndBindBufferDeviceMemory(VkBuffer buffer, VkMemoryPropertyFlags propertyFlags)
-{
-	VkMemoryRequirements memoryRequirements;
-	vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
-
-	auto deviceMemory = allocateDeviceMemory(memoryRequirements, propertyFlags);
-
-	VkResult err = vkBindBufferMemory(device, buffer, deviceMemory, 0);
-	assert(!err);
-
-	return deviceMemory;
-}
-
-VkDeviceMemory allocateAndBindImageDeviceMemory(VkImage image, VkMemoryPropertyFlags propertyFlags)
-{
-	VkMemoryRequirements memoryRequirements;
-	vkGetImageMemoryRequirements(device, image, &memoryRequirements);
-
-	auto deviceMemory = allocateDeviceMemory(memoryRequirements, propertyFlags);
-
-	VkResult err = vkBindImageMemory(device, image, deviceMemory, 0);
-	assert(!err);
 
 	return deviceMemory;
 }
@@ -149,8 +113,21 @@ class Buffer {
 public:
 	Buffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags)
 	{
-		createBuffer(size, usageFlags, &buffer);
-		deviceMemory = allocateAndBindBufferDeviceMemory(buffer, memoryPropertyFlags);
+		VkBufferCreateInfo bufferCreateInfo = {};
+		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferCreateInfo.size = size;
+		bufferCreateInfo.usage = usageFlags;
+
+		VkResult err = vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer);
+		assert(err == VK_SUCCESS);
+
+		VkMemoryRequirements memoryRequirements;
+		vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
+
+		deviceMemory = allocateDeviceMemory(memoryRequirements, memoryPropertyFlags);
+
+		err = vkBindBufferMemory(device, buffer, deviceMemory, 0);
+		assert(err == VK_SUCCESS);
 	}
 
 	~Buffer()
@@ -213,12 +190,32 @@ protected:
 		assert(mipLevels > 0);
 		assert(arrayLayers > 0);
 
-		image = createImage(format, imageType, width, height, depth, mipLevels, arrayLayers,
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT
-		);
+		VkImageCreateInfo imageCreateInfo = {};
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.flags = 0;
+		imageCreateInfo.imageType = imageType;
+		imageCreateInfo.format = format;
+		imageCreateInfo.extent = { width, height, depth };
+		imageCreateInfo.mipLevels = mipLevels;
+		imageCreateInfo.arrayLayers = arrayLayers;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		// imageCreateInfo.queueFamilyIndexCount - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
+		// imageCreateInfo.pQueueFamilyIndices - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
+		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-		deviceMemory = allocateAndBindImageDeviceMemory(image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VkResult err = vkCreateImage(device, &imageCreateInfo, nullptr, &image);
+		assert(err == VK_SUCCESS);
+
+		VkMemoryRequirements memoryRequirements;
+		vkGetImageMemoryRequirements(device, image, &memoryRequirements);
+
+		deviceMemory = allocateDeviceMemory(memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		err = vkBindImageMemory(device, image, deviceMemory, 0);
+		assert(err == VK_SUCCESS);
 
 		VkImageViewCreateInfo imageViewCreateInfo = {};
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -232,7 +229,7 @@ protected:
 		imageViewCreateInfo.subresourceRange.layerCount = arrayLayers;
 		imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
 
-		VkResult err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
+		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
 		assert(err == VK_SUCCESS);
 	}
 
@@ -359,33 +356,6 @@ protected:
 	VkImage image;
 	VkImageView imageView;
 	VkDeviceMemory deviceMemory;
-
-private:
-	static VkImage createImage(VkFormat format, VkImageType imageType, int width, int height, int depth, int mipLevels, int arrayLayers, VkImageTiling tiling, VkImageUsageFlags usage)
-	{
-		VkImageCreateInfo imageCreateInfo = {};
-		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageCreateInfo.flags = 0;
-		imageCreateInfo.imageType = imageType;
-		imageCreateInfo.format = format;
-		imageCreateInfo.extent = { width, height, depth };
-		imageCreateInfo.mipLevels = mipLevels;
-		imageCreateInfo.arrayLayers = arrayLayers;
-		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageCreateInfo.tiling = tiling;
-		imageCreateInfo.usage = usage;
-		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		// imageCreateInfo.queueFamilyIndexCount - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
-		// imageCreateInfo.pQueueFamilyIndices - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
-		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED; //  VK_IMAGE_LAYOUT_PREINITIALIZED;
-
-		VkImage ret;
-		VkResult err = vkCreateImage(device, &imageCreateInfo, nullptr, &ret);
-		assert(err == VK_SUCCESS);
-
-		return ret;
-	}
-
 };
 
 class Texture2D : public TextureBase {
