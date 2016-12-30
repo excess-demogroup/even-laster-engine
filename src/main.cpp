@@ -136,7 +136,7 @@ public:
 		vkFreeMemory(device, deviceMemory, nullptr);
 	}
 
-	void *map(VkDeviceSize size)
+	void *map(VkDeviceSize offset, VkDeviceSize size)
 	{
 		void *ret;
 		VkResult err = vkMapMemory(device, deviceMemory, 0, size, 0, &ret);
@@ -179,10 +179,7 @@ protected:
 		imageViewType(imageViewType),
 		baseWidth(width),
 		baseHeight(height),
-		baseDepth(depth),
-		stagingBuffer(nullptr),
-		lockedMipLevel(-1),
-		lockedArrayLayer(-1)
+		baseDepth(depth)
 	{
 		assert(width > 0);
 		assert(height > 0);
@@ -241,47 +238,9 @@ public:
 		return std::max(size >> mipLevel, 1);
 	}
 
-	void *lock(size_t size, int mipLevel = 0, int arrayLayer = 0)
+	void uploadFromStagingBuffer(StagingBuffer *stagingBuffer, int mipLevel = 0, int arrayLayer = 0)
 	{
-		assert(lockedMipLevel < 0);
-		assert(lockedArrayLayer < 0);
-		assert(stagingBuffer == nullptr);
-
-		assert(mipLevel >= 0);
-		assert(arrayLayer >= 0);
-
-		VkImageSubresource subRes = {};
-		subRes.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		subRes.mipLevel = mipLevel;
-		subRes.arrayLayer = arrayLayer;
-
-		stagingBuffer = new StagingBuffer(size);
-		void *ret = stagingBuffer->map(size);
-
-		lockedMipLevel = mipLevel;
-		lockedArrayLayer = arrayLayer;
-
-		return ret;
-	}
-
-	void unlock(int mipLevel = 0, int arrayLayer = 0)
-	{
-		assert(mipLevel == lockedMipLevel);
-		assert(arrayLayer == lockedArrayLayer);
 		assert(stagingBuffer != nullptr);
-
-		stagingBuffer->unmap();
-
-		VkBufferImageCopy copyRegion = {};
-		copyRegion.bufferOffset = 0;
-		copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		copyRegion.imageSubresource.baseArrayLayer = arrayLayer;
-		copyRegion.imageSubresource.mipLevel = mipLevel;
-		copyRegion.imageSubresource.layerCount = 1;
-		copyRegion.imageOffset = { 0, 0, 0 };
-		copyRegion.imageExtent.width = mipSize(baseWidth, mipLevel);
-		copyRegion.imageExtent.height = mipSize(baseHeight, mipLevel);
-		copyRegion.imageExtent.depth = mipSize(baseDepth, mipLevel);
 
 		auto commandBuffer = allocateCommandBuffers(setupCommandPool, 1)[0];
 
@@ -317,6 +276,18 @@ public:
 			0, nullptr,
 			0, nullptr,
 			1, &imageBarrier);
+
+		VkBufferImageCopy copyRegion = {};
+		copyRegion.bufferOffset = 0;
+		copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copyRegion.imageSubresource.baseArrayLayer = arrayLayer;
+		copyRegion.imageSubresource.mipLevel = mipLevel;
+		copyRegion.imageSubresource.layerCount = 1;
+		copyRegion.imageOffset = { 0, 0, 0 };
+		copyRegion.imageExtent.width = mipSize(baseWidth, mipLevel);
+		copyRegion.imageExtent.height = mipSize(baseHeight, mipLevel);
+		copyRegion.imageExtent.depth = mipSize(baseDepth, mipLevel);
+
 		vkCmdCopyBufferToImage(commandBuffer, stagingBuffer->getBuffer(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
 		err = vkEndCommandBuffer(commandBuffer);
@@ -330,13 +301,6 @@ public:
 		// Submit draw command buffer
 		err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 		assert(err == VK_SUCCESS);
-
-		lockedMipLevel = -1;
-		lockedArrayLayer = -1;
-
-		// TODO: delete memory once init is done!
-		// delete stagingBuffer;
-		stagingBuffer = nullptr;
 	}
 
 	VkImageView getImageView()
@@ -349,9 +313,6 @@ protected:
 	VkImageType imageType;
 	VkImageViewType imageViewType;
 	int baseWidth, baseHeight, baseDepth;
-
-	StagingBuffer *stagingBuffer;
-	int lockedMipLevel, lockedArrayLayer;
 
 	VkImage image;
 	VkImageView imageView;
@@ -713,7 +674,10 @@ int main(int argc, char *argv[])
 
 				int pitch = mipWidth * 4;
 				size_t size = pitch * mipHeight;
-				void *ptr = texture.lock(size, mipLevel);
+
+				auto stagingBuffer = new StagingBuffer(size);
+				void *ptr = stagingBuffer->map(0, size);
+
 				for (auto y = 0; y < mipHeight; ++y) {
 					auto *row = (uint8_t *)ptr + pitch * y;
 					for (auto x = 0; x < mipWidth; ++x) {
@@ -724,7 +688,9 @@ int main(int argc, char *argv[])
 						row[x * 4 + 3] = 0xFF;
 					}
 				}
-				texture.unlock(mipLevel);
+				stagingBuffer->unmap();
+				texture.uploadFromStagingBuffer(stagingBuffer, mipLevel);
+				// TODO: delete staging buffer
 			}
 		}
 
