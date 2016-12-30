@@ -173,7 +173,7 @@ public:
 
 class TextureBase {
 protected:
-	TextureBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int mipLevels = 1, int arrayLayers = 1) :
+	TextureBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int mipLevels = 1, int arrayLayers = 1, bool useStaging = true) :
 		format(format),
 		imageType(imageType),
 		imageViewType(imageViewType),
@@ -196,12 +196,15 @@ protected:
 		imageCreateInfo.mipLevels = mipLevels;
 		imageCreateInfo.arrayLayers = arrayLayers;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		imageCreateInfo.tiling = useStaging ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		// imageCreateInfo.queueFamilyIndexCount - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
 		// imageCreateInfo.pQueueFamilyIndices - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
-		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageCreateInfo.initialLayout = useStaging ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PREINITIALIZED;
+
+		if (useStaging)
+			imageCreateInfo.usage |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 		VkResult err = vkCreateImage(device, &imageCreateInfo, nullptr, &image);
 		assert(err == VK_SUCCESS);
@@ -209,7 +212,7 @@ protected:
 		VkMemoryRequirements memoryRequirements;
 		vkGetImageMemoryRequirements(device, image, &memoryRequirements);
 
-		deviceMemory = allocateDeviceMemory(memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		deviceMemory = allocateDeviceMemory(memoryRequirements, useStaging ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		err = vkBindImageMemory(device, image, deviceMemory, 0);
 		assert(err == VK_SUCCESS);
@@ -308,6 +311,31 @@ public:
 		return imageView;
 	}
 
+	VkSubresourceLayout getSubresourceLayout(int mipLevel = 0, int arrayLayer = 0)
+	{
+		VkImageSubresource subRes = {};
+		subRes.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subRes.mipLevel = mipLevel;
+		subRes.arrayLayer = arrayLayer;
+
+		VkSubresourceLayout ret;
+		vkGetImageSubresourceLayout(device, image, &subRes, &ret);
+		return ret;
+	}
+
+	void *map(VkDeviceSize offset, VkDeviceSize size)
+	{
+		void *ret;
+		VkResult err = vkMapMemory(device, deviceMemory, offset, size, 0, &ret);
+		assert(err == VK_SUCCESS);
+		return ret;
+	}
+
+	void unmap()
+	{
+		vkUnmapMemory(device, deviceMemory);
+	}
+
 protected:
 	VkFormat format;
 	VkImageType imageType;
@@ -321,8 +349,8 @@ protected:
 
 class Texture2D : public TextureBase {
 public:
-	Texture2D(VkFormat format, int width, int height, int mipLevels = 1) :
-		TextureBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, mipLevels)
+	Texture2D(VkFormat format, int width, int height, int mipLevels = 1, int arrayLayers = 1, bool useStaging = true) :
+		TextureBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, mipLevels, arrayLayers, useStaging)
 	{
 	}
 };
@@ -664,6 +692,7 @@ int main(int argc, char *argv[])
 		// OK, let's prepare for rendering!
 
 		int baseWidth = 64, baseHeight = 64;
+#if 1
 		int mipLevels = 2;
 		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels);
 		{
@@ -693,6 +722,26 @@ int main(int argc, char *argv[])
 				// TODO: delete staging buffer
 			}
 		}
+#else
+		int mipLevels = 1;
+		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, 1, 1, false);
+		{
+			auto layout = texture.getSubresourceLayout(0, 0);
+			void *ptr = texture.map(layout.offset, layout.size);
+
+			for (auto y = 0; y < baseHeight; ++y) {
+				auto *row = (uint8_t *)ptr + layout.rowPitch * y;
+				for (auto x = 0; x < baseWidth; ++x) {
+					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
+					row[x * 4 + 0] = 0x80 + (tmp >> 1);
+					row[x * 4 + 1] = 0xFF - (tmp >> 1);
+					row[x * 4 + 2] = 0x80 + (tmp >> 1);
+					row[x * 4 + 3] = 0xFF;
+				}
+			}
+			texture.unmap();
+		}
+#endif
 
 		VkSamplerCreateInfo samplerCreateInfo = {};
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
