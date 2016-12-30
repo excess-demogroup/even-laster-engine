@@ -172,9 +172,14 @@ public:
 		vkUnmapMemory(device, deviceMemory);
 	}
 
-	VkBuffer getBuffer()
+	VkBuffer getBuffer() const
 	{
 		return buffer;
+	}
+
+	VkDeviceMemory getDeviceMemory() const
+	{
+		return deviceMemory;
 	}
 
 private:
@@ -917,15 +922,13 @@ int main(int argc, char *argv[])
 		VkPhysicalDeviceProperties physicalDeviceProperties;
 		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
-		VkBuffer uniformBuffer;
 		uint32_t uniformBufferSpacing = (uint32_t)alignSize(sizeof(float) * 4 * 4, physicalDeviceProperties.limits.minUniformBufferOffsetAlignment);
 		VkDeviceSize uniformBufferSize = uniformBufferSpacing * scene.getTransforms().size();
-		createBuffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, &uniformBuffer);
 
-		VkDeviceMemory uniformDeviceMemory = allocateAndBindBufferDeviceMemory(uniformBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		VkDescriptorBufferInfo descriptorBufferInfo = {};
-		descriptorBufferInfo.buffer = uniformBuffer;
+		descriptorBufferInfo.buffer = uniformBuffer.getBuffer();
 		descriptorBufferInfo.offset = 0;
 		descriptorBufferInfo.range = VK_WHOLE_SIZE;
 
@@ -961,12 +964,8 @@ int main(int argc, char *argv[])
 		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 
 		// Go make vertex buffer yo!
-
-		VkBuffer vertexBuffer;
-		createBuffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, &vertexBuffer);
-
-		VkDeviceMemory vertexDeviceMemory = allocateAndBindBufferDeviceMemory(vertexBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		uploadMemory(vertexDeviceMemory, 0, vertexData, sizeof(vertexData));
+		auto vertexBuffer = Buffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		uploadMemory(vertexBuffer.getDeviceMemory(), 0, vertexData, sizeof(vertexData));
 
 		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
 		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -1056,13 +1055,14 @@ int main(int argc, char *argv[])
 			std::map<const Transform*, int> offsetMap;
 			for each (auto transform in scene.getTransforms()) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
-				uploadMemory(uniformDeviceMemory, offset, glm::value_ptr(modelMatrix), sizeof(modelMatrix));
+				uploadMemory(uniformBuffer.getDeviceMemory(), offset, glm::value_ptr(modelMatrix), sizeof(modelMatrix));
 				offsetMap[transform] = offset;
 				offset += uniformBufferSpacing;
 			}
 
-			VkDeviceSize offsets[1] = { 0 };
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+			VkDeviceSize vertexBufferOffsets[1] = { 0 };
+			VkBuffer vertexBuffers[1] = { vertexBuffer.getBuffer() };
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, vertexBufferOffsets);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 			for each (auto object in scene.getObjects()) {
@@ -1100,6 +1100,10 @@ int main(int argc, char *argv[])
 
 			glfwPollEvents();
 		}
+
+		err = vkQueueWaitIdle(graphicsQueue);
+		assert(err == VK_SUCCESS);
+
 	} catch (const std::exception &e) {
 		if (win != nullptr)
 			glfwDestroyWindow(win);
