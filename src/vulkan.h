@@ -1,3 +1,15 @@
+#ifndef VULKAN_H
+#define VULKAN_H
+
+#define VK_PROTOTYPES
+
+#ifdef WIN32
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
+#include <vulkan/vulkan.h>
+#include <vector>
+
 namespace vulkan
 {
 	extern VkInstance instance;
@@ -21,3 +33,5 @@ namespace vulkan
 
 	void instanceFuncsInit(VkInstance instance);
 };
+
+#endif // VULKAN_H

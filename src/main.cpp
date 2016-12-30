@@ -1,12 +1,12 @@
 // vulkan-test.cpp : Defines the entry point for the application.
 //
 
-#include "stdafx.h"
 #include <algorithm>
 #include <list>
 #include <map>
 
 #include "vulkan.h"
+#include "core/core.h"
 #include "core/memorymappedfile.h"
 #include "swapchain.h"
 #include <GLFW/glfw3.h>

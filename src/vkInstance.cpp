@@ -1,7 +1,9 @@
-#include "stdafx.h"
+#include "core/core.h"
+
+#include <assert.h>
+#include <stdio.h>
 
 #include "vulkan.h"
-#include <stdio.h>
 
 using namespace vulkan;
 VkInstance vulkan::instance;

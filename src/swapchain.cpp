@@ -1,7 +1,8 @@
-#include "stdafx.h"
 #include "swapchain.h"
 
 #include "vulkan.h"
+#include <assert.h>
+
 using namespace vulkan;
 
 SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
