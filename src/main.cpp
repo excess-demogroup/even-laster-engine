@@ -564,7 +564,7 @@ int main(int argc, char *argv[])
 #endif
 
 	const char *appName = "some excess demo";
-	int width = 1280, height = 720;
+	auto width = 1280, height = 720;
 #ifdef NDEBUG
 	bool fullscreen = true;
 #else
@@ -673,7 +673,7 @@ int main(int argc, char *argv[])
 		Vertex v = { };
 		v.position = glm::vec3(0, 0, 0);
 		std::vector<Vertex> vertices;
-		for (int i = 0; i < ARRAYSIZE(vertexData); ++i) {
+		for (auto i = 0; i < ARRAYSIZE(vertexData); ++i) {
 			v.position = vertexData[i];
 			vertices.push_back(v);
 		}
@@ -691,18 +691,18 @@ int main(int argc, char *argv[])
 
 		// OK, let's prepare for rendering!
 
-		int baseWidth = 64, baseHeight = 64;
+		auto baseWidth = 64, baseHeight = 64;
 #if 1
-		int mipLevels = 2;
+		auto mipLevels = 2;
 		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels);
 		{
 			for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
 
-				int mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
+				auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
 				    mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
 
-				int pitch = mipWidth * 4;
-				size_t size = pitch * mipHeight;
+				auto pitch = mipWidth * 4;
+				auto size = pitch * mipHeight;
 
 				auto stagingBuffer = new StagingBuffer(size);
 				void *ptr = stagingBuffer->map(0, size);
@@ -723,7 +723,7 @@ int main(int argc, char *argv[])
 			}
 		}
 #else
-		int mipLevels = 1;
+		auto mipLevels = 1;
 		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, 1, 1, false);
 		{
 			auto layout = texture.getSubresourceLayout(0, 0);
@@ -1036,7 +1036,7 @@ int main(int argc, char *argv[])
 			t1->setLocalMatrix(glm::rotate(glm::scale(glm::mat4(1), glm::vec3(a, 1, 1)), th, glm::vec3(0, 0, 1)));
 			t2->setLocalMatrix(glm::translate(glm::mat4(1), glm::vec3(cos(th), 1, 1)));
 
-			int offset = 0;
+			auto offset = 0;
 			std::map<const Transform*, int> offsetMap;
 			for each (auto transform in scene.getTransforms()) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
