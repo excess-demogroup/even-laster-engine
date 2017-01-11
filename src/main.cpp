@@ -282,6 +282,8 @@ public:
 
 		VkBufferImageCopy copyRegion = {};
 		copyRegion.bufferOffset = 0;
+		copyRegion.bufferRowLength = 0;
+		copyRegion.bufferImageHeight = 0;
 		copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		copyRegion.imageSubresource.baseArrayLayer = arrayLayer;
 		copyRegion.imageSubresource.mipLevel = mipLevel;
