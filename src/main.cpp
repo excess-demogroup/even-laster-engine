@@ -83,6 +83,68 @@ VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
 	return ((value + alignment - 1) / alignment) * alignment;
 }
 
+VkSemaphore createSemaphore()
+{
+	VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+	semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	VkSemaphore ret;
+	VkResult err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &ret);
+	assert(err == VK_SUCCESS);
+	return ret;
+}
+
+Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool useStaging = true)
+{
+	Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels, 1, useStaging);
+
+	if (useStaging) {
+		for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
+
+			auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
+				mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
+
+			auto pitch = mipWidth * 4;
+			auto size = pitch * mipHeight;
+
+			auto stagingBuffer = new StagingBuffer(size);
+			void *ptr = stagingBuffer->map(0, size);
+
+			for (auto y = 0; y < mipHeight; ++y) {
+				auto *row = (uint8_t *)ptr + pitch * y;
+				for (auto x = 0; x < mipWidth; ++x) {
+					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
+					row[x * 4 + 0] = 0x80 + (tmp >> 1);
+					row[x * 4 + 1] = 0xFF - (tmp >> 1);
+					row[x * 4 + 2] = 0x80 + (tmp >> 1);
+					row[x * 4 + 3] = 0xFF;
+				}
+			}
+			stagingBuffer->unmap();
+			texture.uploadFromStagingBuffer(stagingBuffer, mipLevel);
+			// TODO: delete staging buffer
+		}
+	}
+	else {
+		assert(mipLevels == 1);
+		auto layout = texture.getSubresourceLayout(0, 0);
+		void *ptr = texture.map(layout.offset, layout.size);
+
+		for (auto y = 0; y < baseHeight; ++y) {
+			auto *row = (uint8_t *)ptr + layout.rowPitch * y;
+			for (auto x = 0; x < baseWidth; ++x) {
+				uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
+				row[x * 4 + 0] = 0x80 + (tmp >> 1);
+				row[x * 4 + 1] = 0xFF - (tmp >> 1);
+				row[x * 4 + 2] = 0x80 + (tmp >> 1);
+				row[x * 4 + 3] = 0xFF;
+			}
+		}
+		texture.unmap();
+	}
+	return texture;
+}
+
+
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -229,53 +291,10 @@ int main(int argc, char *argv[])
 		auto baseWidth = 64, baseHeight = 64;
 #if 1
 		auto mipLevels = 2;
-		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels);
-		{
-			for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
-
-				auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
-				    mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
-
-				auto pitch = mipWidth * 4;
-				auto size = pitch * mipHeight;
-
-				auto stagingBuffer = new StagingBuffer(size);
-				void *ptr = stagingBuffer->map(0, size);
-
-				for (auto y = 0; y < mipHeight; ++y) {
-					auto *row = (uint8_t *)ptr + pitch * y;
-					for (auto x = 0; x < mipWidth; ++x) {
-						uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
-						row[x * 4 + 0] = 0x80 + (tmp >> 1);
-						row[x * 4 + 1] = 0xFF - (tmp >> 1);
-						row[x * 4 + 2] = 0x80 + (tmp >> 1);
-						row[x * 4 + 3] = 0xFF;
-					}
-				}
-				stagingBuffer->unmap();
-				texture.uploadFromStagingBuffer(stagingBuffer, mipLevel);
-				// TODO: delete staging buffer
-			}
-		}
+		Texture2D texture = generateXorTexture(baseWidth, baseHeight, mipLevels, true);
 #else
 		auto mipLevels = 1;
-		Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, 1, 1, false);
-		{
-			auto layout = texture.getSubresourceLayout(0, 0);
-			void *ptr = texture.map(layout.offset, layout.size);
-
-			for (auto y = 0; y < baseHeight; ++y) {
-				auto *row = (uint8_t *)ptr + layout.rowPitch * y;
-				for (auto x = 0; x < baseWidth; ++x) {
-					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
-					row[x * 4 + 0] = 0x80 + (tmp >> 1);
-					row[x * 4 + 1] = 0xFF - (tmp >> 1);
-					row[x * 4 + 2] = 0x80 + (tmp >> 1);
-					row[x * 4 + 3] = 0xFF;
-				}
-			}
-			texture.unmap();
-		}
+		Texture2D texture = generateXorTexture(baseWidth, baseHeight, mipLevels, false);
 #endif
 
 		VkSamplerCreateInfo samplerCreateInfo = {};
@@ -335,7 +354,7 @@ int main(int argc, char *argv[])
 		pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
 
 		VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1] = { { 0 } };
-		pipelineColorBlendAttachmentState[0].colorWriteMask = 0xf;
+		pipelineColorBlendAttachmentState[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		pipelineColorBlendAttachmentState[0].blendEnable = VK_FALSE;
 
 		VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = {};
@@ -487,13 +506,8 @@ int main(int argc, char *argv[])
 		auto vertexBuffer = Buffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		uploadMemory(vertexBuffer.getDeviceMemory(), 0, vertexData, sizeof(vertexData));
 
-		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
-		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		VkSemaphore backBufferSemaphore, presentCompleteSemaphore;
-		err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &backBufferSemaphore);
-		assert(err == VK_SUCCESS);
-		err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &presentCompleteSemaphore);
-		assert(err == VK_SUCCESS);
+		auto backBufferSemaphore = createSemaphore(),
+		     presentCompleteSemaphore = createSemaphore();
 
 		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
 
