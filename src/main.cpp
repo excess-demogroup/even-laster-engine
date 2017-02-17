@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
 
 		Scene scene;
 
-		glm::vec3 vertexData[] = {
+		glm::vec3 vertexPositions[] = {
 			glm::vec3(1.0f, 1.0f, 0.0f),
 			glm::vec3(-1.0f, 1.0f, 0.0f),
 			glm::vec3(0.0f, -1.0f, 0.0f)
@@ -282,8 +282,10 @@ int main(int argc, char *argv[])
 		Vertex v = { };
 		v.position = glm::vec3(0, 0, 0);
 		std::vector<Vertex> vertices;
-		for (auto i = 0; i < ARRAYSIZE(vertexData); ++i) {
-			v.position = vertexData[i];
+		for (auto i = 0; i < ARRAYSIZE(vertexPositions); ++i) {
+			glm::vec3 pos = vertexPositions[i];
+			v.position = pos;
+			v.uv[0] = 0.5f + 0.5f * glm::vec2(pos.x, pos.y);
 			vertices.push_back(v);
 		}
 		std::vector<uint32_t> indices;
@@ -515,8 +517,8 @@ int main(int argc, char *argv[])
 		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 
 		// Go make vertex buffer yo!
-		auto vertexBuffer = Buffer(sizeof(vertexData), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		uploadMemory(vertexBuffer.getDeviceMemory(), 0, vertexData, sizeof(vertexData));
+		auto vertexBuffer = Buffer(sizeof(vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		uploadMemory(vertexBuffer.getDeviceMemory(), 0, vertexPositions, sizeof(vertexPositions));
 
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();
