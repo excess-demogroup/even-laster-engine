@@ -53,25 +53,6 @@ public:
 		return deviceMemory;
 	}
 
-	static uint32_t getMemoryTypeIndex(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
-	{
-		VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
-
-		for (auto i = 0u; i < VK_MAX_MEMORY_TYPES; i++) {
-			if (((memoryRequirements.memoryTypeBits >> i) & 1) == 1) {
-				if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
-					return i;
-					break;
-				}
-			}
-		}
-
-		assert(false);
-		// critical error!
-		throw std::runtime_error("invalid memory type!");
-	}
-
 	static VkDeviceMemory allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
 	{
 		VkMemoryAllocateInfo memoryAllocateInfo = {};

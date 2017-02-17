@@ -9,6 +9,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <cassert>
 
 namespace vulkan
 {
@@ -30,6 +31,21 @@ namespace vulkan
 		PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT;
 		PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT;
 	} instanceFuncs;
+
+	static uint32_t getMemoryTypeIndex(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
+	{
+		for (auto i = 0u; i < VK_MAX_MEMORY_TYPES; i++) {
+			if (((memoryRequirements.memoryTypeBits >> i) & 1) == 1) {
+				if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & propertyFlags) == propertyFlags) {
+					return i;
+					break;
+				}
+			}
+		}
+
+		assert(false);
+		throw std::runtime_error("invalid memory type!");
+	}
 
 	void instanceFuncsInit(VkInstance instance);
 };
