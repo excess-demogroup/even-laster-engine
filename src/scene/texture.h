@@ -44,7 +44,8 @@ protected:
 		VkMemoryRequirements memoryRequirements;
 		vkGetImageMemoryRequirements(device, image, &memoryRequirements);
 
-		deviceMemory = Buffer::allocateDeviceMemory(memoryRequirements, useStaging ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		auto memoryTypeIndex = getMemoryTypeIndex(memoryRequirements, useStaging ? VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT : VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		deviceMemory = allocateDeviceMemory(memoryRequirements.size, memoryTypeIndex);
 
 		err = vkBindImageMemory(device, image, deviceMemory, 0);
 		assert(err == VK_SUCCESS);

@@ -47,6 +47,20 @@ namespace vulkan
 		throw std::runtime_error("invalid memory type!");
 	}
 
+	static VkDeviceMemory allocateDeviceMemory(VkDeviceSize size, uint32_t memoryTypeIndex)
+	{
+		VkMemoryAllocateInfo memoryAllocateInfo = {};
+		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		memoryAllocateInfo.allocationSize = size;
+		memoryAllocateInfo.memoryTypeIndex = memoryTypeIndex;
+
+		VkDeviceMemory deviceMemory;
+		VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
+		assert(err == VK_SUCCESS);
+
+		return deviceMemory;
+	}
+
 	void instanceFuncsInit(VkInstance instance);
 };
 

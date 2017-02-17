@@ -18,7 +18,8 @@ public:
 		VkMemoryRequirements memoryRequirements;
 		vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
 
-		deviceMemory = allocateDeviceMemory(memoryRequirements, memoryPropertyFlags);
+		auto memoryTypeIndex = getMemoryTypeIndex(memoryRequirements, memoryPropertyFlags);
+		deviceMemory = allocateDeviceMemory(memoryRequirements.size, memoryTypeIndex);
 
 		err = vkBindBufferMemory(device, buffer, deviceMemory, 0);
 		assert(err == VK_SUCCESS);
@@ -50,20 +51,6 @@ public:
 
 	VkDeviceMemory getDeviceMemory() const
 	{
-		return deviceMemory;
-	}
-
-	static VkDeviceMemory allocateDeviceMemory(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
-	{
-		VkMemoryAllocateInfo memoryAllocateInfo = {};
-		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		memoryAllocateInfo.allocationSize = memoryRequirements.size;
-		memoryAllocateInfo.memoryTypeIndex = getMemoryTypeIndex(memoryRequirements, propertyFlags);
-
-		VkDeviceMemory deviceMemory;
-		VkResult err = vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory);
-		assert(err == VK_SUCCESS);
-
 		return deviceMemory;
 	}
 
