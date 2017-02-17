@@ -83,6 +83,18 @@ VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
 	return ((value + alignment - 1) / alignment) * alignment;
 }
 
+VkFence createFence(VkFenceCreateFlags flags)
+{
+	VkFenceCreateInfo fenceCreateInfo = {};
+	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceCreateInfo.flags = flags;
+
+	VkFence ret;
+	VkResult err = vkCreateFence(device, &fenceCreateInfo, nullptr, &ret);
+	assert(err == VK_SUCCESS);
+	return ret;
+}
+
 VkSemaphore createSemaphore()
 {
 	VkSemaphoreCreateInfo semaphoreCreateInfo = {};
@@ -511,15 +523,9 @@ int main(int argc, char *argv[])
 
 		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
 
-		VkFenceCreateInfo fenceCreateInfo = {};
-		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
 		auto commandBufferFences = new VkFence[imageViews.size()];
-		for (auto i = 0u; i < imageViews.size(); ++i) {
-			err = vkCreateFence(device, &fenceCreateInfo, nullptr, commandBufferFences + i);
-			assert(err == VK_SUCCESS);
-		}
+		for (auto i = 0u; i < imageViews.size(); ++i)
+			commandBufferFences[i] = createFence(VK_FENCE_CREATE_SIGNALED_BIT);
 
 		err = vkQueueWaitIdle(graphicsQueue);
 		assert(err == VK_SUCCESS);
