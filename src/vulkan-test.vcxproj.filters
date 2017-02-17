@@ -20,6 +20,9 @@
     <ClInclude Include="scene\texture.h">
       <Filter>scene</Filter>
     </ClInclude>
+    <ClInclude Include="scene\buffer.h">
+      <Filter>scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\*.vert">
