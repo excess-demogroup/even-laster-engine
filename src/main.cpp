@@ -259,9 +259,15 @@ int main(int argc, char *argv[])
 		Scene scene;
 
 		glm::vec3 vertexPositions[] = {
-			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3( 1.0f, 1.0f, 0.0f),
 			glm::vec3(-1.0f, 1.0f, 0.0f),
-			glm::vec3(0.0f, -1.0f, 0.0f)
+			glm::vec3( 1.0f,-1.0f, 0.0f),
+			glm::vec3(-1.0f,-1.0f, 0.0f)
+		};
+
+		uint16_t vertexIndices[] = {
+			0, 1, 2,
+			2, 1, 3
 		};
 
 		Vertex v = { };
@@ -513,6 +519,9 @@ int main(int argc, char *argv[])
 		uploadMemory(vertexBuffer.getDeviceMemory(), 0, vertexPositions, sizeof(vertexPositions));
 #endif
 
+		auto indexBuffer = Buffer(sizeof(vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		uploadMemory(indexBuffer.getDeviceMemory(), 0, vertexIndices, sizeof(vertexIndices));
+
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();
 
@@ -598,6 +607,7 @@ int main(int argc, char *argv[])
 			VkDeviceSize vertexBufferOffsets[1] = { 0 };
 			VkBuffer vertexBuffers[1] = { vertexBuffer.getBuffer() };
 			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, vertexBufferOffsets);
+			vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getBuffer(), 0, VK_INDEX_TYPE_UINT16);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 			for each (auto object in scene.getObjects()) {
@@ -607,7 +617,8 @@ int main(int argc, char *argv[])
 				assert(offset <= uniformBufferSize - sizeof(float) * 4 * 4);
 				uint32_t dynamicOffsets[] = { offset };
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);
-				vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+				// vkCmdDraw(commandBuffer, ARRAY_SIZE(vertexPositions), 1, 0, 0);
+				vkCmdDrawIndexed(commandBuffer, ARRAY_SIZE(vertexIndices), 1, 0, 0, 0);
 			}
 
 			vkCmdEndRenderPass(commandBuffer);
