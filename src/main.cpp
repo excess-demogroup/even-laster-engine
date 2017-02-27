@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 		Vertex v = { };
 		v.position = glm::vec3(0, 0, 0);
 		std::vector<Vertex> vertices;
-		for (auto i = 0; i < ARRAYSIZE(vertexPositions); ++i) {
+		for (auto i = 0; i < ARRAY_SIZE(vertexPositions); ++i) {
 			glm::vec3 pos = vertexPositions[i];
 			v.position = pos;
 			v.uv[0] = 0.5f + 0.5f * glm::vec2(pos.x, pos.y);
