@@ -54,21 +54,6 @@ void uploadMemory(VkDeviceMemory deviceMemory, VkDeviceSize offset, void *data, 
 	vkUnmapMemory(device, deviceMemory);
 }
 
-VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
-{
-	VkCommandBufferAllocateInfo commandAllocInfo = {};
-	commandAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	commandAllocInfo.commandPool = commandPool;
-	commandAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	commandAllocInfo.commandBufferCount = commandBufferCount;
-
-	auto commandBuffers = new VkCommandBuffer[commandBufferCount];
-	VkResult err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers);
-	assert(err == VK_SUCCESS);
-
-	return commandBuffers;
-}
-
 std::vector<const char *> getRequiredInstanceExtensions()
 {
 	uint32_t requiredExtentionCount;
@@ -517,8 +502,16 @@ int main(int argc, char *argv[])
 		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 
 		// Go make vertex buffer yo!
+#if 1
+		auto vertexStagingBuffer = new StagingBuffer(sizeof(vertexPositions));
+		uploadMemory(vertexStagingBuffer->getDeviceMemory(), 0, vertexPositions, sizeof(vertexPositions));
+
+		auto vertexBuffer = Buffer(sizeof(vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		vertexBuffer.uploadFromStagingBuffer(vertexStagingBuffer, 0, 0, sizeof(vertexPositions));
+#else
 		auto vertexBuffer = Buffer(sizeof(vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		uploadMemory(vertexBuffer.getDeviceMemory(), 0, vertexPositions, sizeof(vertexPositions));
+#endif
 
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();

@@ -3,6 +3,8 @@
 
 #include "../vulkan.h"
 
+class StagingBuffer;
+
 class Buffer {
 public:
 	Buffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags)
@@ -12,36 +14,36 @@ public:
 		bufferCreateInfo.size = size;
 		bufferCreateInfo.usage = usageFlags;
 
-		VkResult err = vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer);
+		VkResult err = vkCreateBuffer(vulkan::device, &bufferCreateInfo, nullptr, &buffer);
 		assert(err == VK_SUCCESS);
 
 		VkMemoryRequirements memoryRequirements;
-		vkGetBufferMemoryRequirements(device, buffer, &memoryRequirements);
+		vkGetBufferMemoryRequirements(vulkan::device, buffer, &memoryRequirements);
 
-		auto memoryTypeIndex = getMemoryTypeIndex(memoryRequirements, memoryPropertyFlags);
-		deviceMemory = allocateDeviceMemory(memoryRequirements.size, memoryTypeIndex);
+		auto memoryTypeIndex = vulkan::getMemoryTypeIndex(memoryRequirements, memoryPropertyFlags);
+		deviceMemory = vulkan::allocateDeviceMemory(memoryRequirements.size, memoryTypeIndex);
 
-		err = vkBindBufferMemory(device, buffer, deviceMemory, 0);
+		err = vkBindBufferMemory(vulkan::device, buffer, deviceMemory, 0);
 		assert(err == VK_SUCCESS);
 	}
 
 	~Buffer()
 	{
-		vkDestroyBuffer(device, buffer, nullptr);
-		vkFreeMemory(device, deviceMemory, nullptr);
+		vkDestroyBuffer(vulkan::device, buffer, nullptr);
+		vkFreeMemory(vulkan::device, deviceMemory, nullptr);
 	}
 
 	void *map(VkDeviceSize offset, VkDeviceSize size)
 	{
 		void *ret;
-		VkResult err = vkMapMemory(device, deviceMemory, 0, size, 0, &ret);
+		VkResult err = vkMapMemory(vulkan::device, deviceMemory, 0, size, 0, &ret);
 		assert(err == VK_SUCCESS);
 		return ret;
 	}
 
 	void unmap()
 	{
-		vkUnmapMemory(device, deviceMemory);
+		vkUnmapMemory(vulkan::device, deviceMemory);
 	}
 
 	VkBuffer getBuffer() const
@@ -53,6 +55,8 @@ public:
 	{
 		return deviceMemory;
 	}
+
+	void uploadFromStagingBuffer(StagingBuffer *stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 
 private:
 	VkBuffer buffer;

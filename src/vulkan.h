@@ -61,6 +61,21 @@ namespace vulkan
 		return deviceMemory;
 	}
 
+	static VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
+	{
+		VkCommandBufferAllocateInfo commandAllocInfo = {};
+		commandAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		commandAllocInfo.commandPool = commandPool;
+		commandAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		commandAllocInfo.commandBufferCount = commandBufferCount;
+
+		auto commandBuffers = new VkCommandBuffer[commandBufferCount];
+		VkResult err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers);
+		assert(err == VK_SUCCESS);
+
+		return commandBuffers;
+	}
+
 	void instanceFuncsInit(VkInstance instance);
 };
 

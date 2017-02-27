@@ -4,6 +4,9 @@
     <ClCompile Include="swapchain.cpp" />
     <ClCompile Include="vkInstance.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="scene\buffer.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="swapchain.h" />

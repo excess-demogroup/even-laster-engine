@@ -166,6 +166,7 @@
     <ClInclude Include="vulkan.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="scene\buffer.cpp" />
     <ClCompile Include="swapchain.cpp" />
     <ClCompile Include="vkInstance.cpp" />
     <ClCompile Include="main.cpp" />
