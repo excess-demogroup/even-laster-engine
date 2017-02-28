@@ -1,6 +1,3 @@
-// vulkan-test.cpp : Defines the entry point for the application.
-//
-
 #include <algorithm>
 #include <list>
 #include <map>
