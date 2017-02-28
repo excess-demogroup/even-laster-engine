@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <algorithm>
 #include <list>
 #include <map>
@@ -586,17 +588,24 @@ int main(int argc, char *argv[])
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 			float th = (float)time;
-			float a = float(height) / width;
 
 			// animate, yo
-			t1->setLocalMatrix(glm::rotate(glm::scale(glm::mat4(1), glm::vec3(a, 1, 1)), th, glm::vec3(0, 0, 1)));
+			t1->setLocalMatrix(glm::rotate(glm::mat4(1), th, glm::vec3(0, 0, 1)));
 			t2->setLocalMatrix(glm::translate(glm::mat4(1), glm::vec3(cos(th), 1, 1)));
+
+			auto viewPosition = glm::vec3(sin(th * 0.1f) * 10.0f, 0, abs(cos(th * 0.1f)) * 10.0f);
+			auto viewMatrix = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
+			auto fov = 60.0f;
+			auto projectionMatrix = glm::perspective(fov * float(M_PI / 180.0f), float(width) / height, 0.01f, 100.0f);
+			auto viewProjectionMatrix = projectionMatrix * viewMatrix;
 
 			auto offset = 0;
 			std::map<const Transform*, int> offsetMap;
 			for each (auto transform in scene.getTransforms()) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
-				uploadMemory(uniformBuffer.getDeviceMemory(), offset, glm::value_ptr(modelMatrix), sizeof(modelMatrix));
+				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
+
+				uploadMemory(uniformBuffer.getDeviceMemory(), offset, glm::value_ptr(modelViewProjectionMatrix), sizeof(modelViewProjectionMatrix));
 				offsetMap[transform] = offset;
 				offset += uniformBufferSpacing;
 			}
