@@ -140,6 +140,27 @@ Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool 
 	return texture;
 }
 
+VkFormat findBestFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+{
+	for (VkFormat format : candidates) {
+		VkFormatProperties props;
+		vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+
+		switch (tiling) {
+		case VK_IMAGE_TILING_LINEAR:
+			if ((props.linearTilingFeatures & features) == features)
+				return format;
+			break;
+		case VK_IMAGE_TILING_OPTIMAL:
+			if ((props.optimalTilingFeatures & features) == features)
+				return format;
+			break;
+		}
+	}
+
+	throw std::runtime_error("no supported format!");
+}
+
 
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -197,7 +218,108 @@ int main(int argc, char *argv[])
 
 		auto swapChain = SwapChain(surface, width, height);
 
-		VkAttachmentDescription attachments[1];
+		std::vector<VkFormat> depthCandidates = {
+			VK_FORMAT_D32_SFLOAT,
+			VK_FORMAT_D32_SFLOAT_S8_UINT,
+			VK_FORMAT_D24_UNORM_S8_UINT,
+			VK_FORMAT_X8_D24_UNORM_PACK32,
+			VK_FORMAT_D16_UNORM,
+			VK_FORMAT_D16_UNORM_S8_UINT,
+		};
+
+		VkFormat depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
+		VkImageCreateInfo imageCreateInfo = {};
+		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageCreateInfo.flags = 0;
+		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+		imageCreateInfo.format = depthFormat;
+		imageCreateInfo.extent = { width, height, 1 };
+		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.arrayLayers = 1;
+		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+		imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		VkImage depthImage;
+		err = vkCreateImage(device, &imageCreateInfo, nullptr, &depthImage);
+		assert(err == VK_SUCCESS);
+
+		VkMemoryRequirements memoryRequirements;
+		vkGetImageMemoryRequirements(device, depthImage, &memoryRequirements);
+
+		auto memoryTypeIndex = getMemoryTypeIndex(memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		auto deviceMemory = allocateDeviceMemory(memoryRequirements.size, memoryTypeIndex);
+
+		err = vkBindImageMemory(device, depthImage, deviceMemory, 0);
+		assert(err == VK_SUCCESS);
+
+		VkImageViewCreateInfo imageViewCreateInfo = {};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.image = depthImage;
+		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		imageViewCreateInfo.format = depthFormat;
+		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		imageViewCreateInfo.subresourceRange.layerCount = 1;
+		imageViewCreateInfo.subresourceRange.levelCount = 1;
+
+		VkImageView depthImageView;
+		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &depthImageView);
+		assert(err == VK_SUCCESS);
+
+		auto commandBuffer = allocateCommandBuffers(setupCommandPool, 1)[0];
+
+		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
+		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		err = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+		assert(err == VK_SUCCESS);
+
+		VkImageMemoryBarrier imageBarrier = {};
+		imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+		imageBarrier.image = depthImage;
+		imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		imageBarrier.dstQueueFamilyIndex = graphicsQueueIndex;
+		imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		imageBarrier.srcQueueFamilyIndex = graphicsQueueIndex;
+		imageBarrier.srcAccessMask = 0;
+		imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		imageBarrier.subresourceRange.baseMipLevel = 0;
+		imageBarrier.subresourceRange.baseArrayLayer = 0;
+		imageBarrier.subresourceRange.levelCount = 1;
+		imageBarrier.subresourceRange.layerCount = 1;
+
+		vkCmdPipelineBarrier(commandBuffer,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			0,
+			0, nullptr,
+			0, nullptr,
+			1, &imageBarrier);
+
+		err = vkEndCommandBuffer(commandBuffer);
+		assert(err == VK_SUCCESS);
+
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+
+		// Submit draw command buffer
+		err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		assert(err == VK_SUCCESS);
+
+		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
 		attachments[0].format = swapChain.getSurfaceFormat().format;
 		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
@@ -208,14 +330,29 @@ int main(int argc, char *argv[])
 		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+		attachments[1].flags = 0;
+		attachments[1].format = depthFormat;
+		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
 		VkAttachmentReference colorReference = {};
 		colorReference.attachment = 0;
 		colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depthStencilReference = {};
+		depthStencilReference.attachment = 1;
+		depthStencilReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &colorReference;
+		subpass.pDepthStencilAttachment = &depthStencilReference;
 
 		VkRenderPassCreateInfo renderpassCreateInfo = {};
 		renderpassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -228,7 +365,7 @@ int main(int argc, char *argv[])
 		err = vkCreateRenderPass(device, &renderpassCreateInfo, nullptr, &renderPass);
 		assert(err == VK_SUCCESS);
 
-		VkImageView framebufferAttachments[1];
+		VkImageView framebufferAttachments[2];
 		VkFramebufferCreateInfo framebufferCreateInfo = {};
 		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferCreateInfo.renderPass = renderPass;
@@ -237,6 +374,8 @@ int main(int argc, char *argv[])
 		framebufferCreateInfo.width = width;
 		framebufferCreateInfo.height = height;
 		framebufferCreateInfo.layers = 1;
+
+		framebufferAttachments[1] = depthImageView;
 
 		auto imageViews = swapChain.getImageViews();
 		auto framebuffers = new VkFramebuffer[imageViews.size()];
@@ -434,8 +573,9 @@ int main(int argc, char *argv[])
 
 		VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
 		pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-		pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_FALSE;
-		pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_FALSE;
+		pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+		pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+		pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 
 		VkDescriptorSetLayoutBinding layoutBindings[2] = {};
 		layoutBindings[0].binding = 0;
@@ -599,12 +739,14 @@ int main(int argc, char *argv[])
 			err = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
 			assert(err == VK_SUCCESS);
 
-			VkClearValue clearValue = { { {
+			VkClearValue clearValues[2];
+			clearValues[0].color = {
 				0.5f,
 				0.5f,
 				0.5f,
 				1.0f
-			} } };
+			};
+			clearValues[1].depthStencil = { 1.0f, 0 };
 
 			VkRenderPassBeginInfo renderPassBeginInfo = {};
 			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -613,8 +755,8 @@ int main(int argc, char *argv[])
 			renderPassBeginInfo.renderArea.offset.y = 0;
 			renderPassBeginInfo.renderArea.extent.width = width;
 			renderPassBeginInfo.renderArea.extent.height = height;
-			renderPassBeginInfo.clearValueCount = 1;
-			renderPassBeginInfo.pClearValues = &clearValue;
+			renderPassBeginInfo.clearValueCount = ARRAY_SIZE(clearValues);
+			renderPassBeginInfo.pClearValues = clearValues;
 			renderPassBeginInfo.framebuffer = framebuffers[currentSwapImage];
 
 			vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
