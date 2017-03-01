@@ -14,6 +14,6 @@ layout (location = 0) out vec2 outTexCoord;
 
 void main()
 {
-	outTexCoord = 0.5f + 0.5f * inPos.xy;
+	outTexCoord = 0.5 + 0.5 * inPos.xy;
 	gl_Position = ubo.modelViewProjectionMatrix * vec4(inPos.xyz, 1.0);
 }
