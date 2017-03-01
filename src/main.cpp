@@ -258,15 +258,61 @@ int main(int argc, char *argv[])
 		Scene scene;
 
 		glm::vec3 vertexPositions[] = {
-			glm::vec3( 1.0f, 1.0f, 0.0f),
-			glm::vec3(-1.0f, 1.0f, 0.0f),
-			glm::vec3( 1.0f,-1.0f, 0.0f),
-			glm::vec3(-1.0f,-1.0f, 0.0f)
+			glm::vec3(-1.0f, 1.0f,-1.0f),
+			glm::vec3(-1.0f, 1.0f, 1.0f),
+			glm::vec3( 1.0f, 1.0f,-1.0f),
+			glm::vec3( 1.0f, 1.0f, 1.0f),
+
+			glm::vec3(-1.0f,-1.0f,-1.0f),
+			glm::vec3( 1.0f,-1.0f,-1.0f),
+			glm::vec3(-1.0f,-1.0f, 1.0f),
+			glm::vec3( 1.0f,-1.0f, 1.0f),
+
+			glm::vec3(-1.0f,-1.0f, 1.0f),
+			glm::vec3( 1.0f,-1.0f, 1.0f),
+			glm::vec3(-1.0f, 1.0f, 1.0f),
+			glm::vec3( 1.0f, 1.0f, 1.0f),
+
+			glm::vec3(-1.0f,-1.0f,-1.0f),
+			glm::vec3(-1.0f, 1.0f,-1.0f),
+			glm::vec3( 1.0f,-1.0f,-1.0f),
+			glm::vec3( 1.0f, 1.0f,-1.0f),
+
+			glm::vec3( 1.0f,-1.0f,-1.0f),
+			glm::vec3( 1.0f, 1.0f,-1.0f),
+			glm::vec3( 1.0f,-1.0f, 1.0f),
+			glm::vec3( 1.0f, 1.0f, 1.0f),
+
+			glm::vec3(-1.0f,-1.0f,-1.0f),
+			glm::vec3(-1.0f,-1.0f, 1.0f),
+			glm::vec3(-1.0f, 1.0f,-1.0f),
+			glm::vec3(-1.0f, 1.0f, 1.0f),
 		};
 
 		uint16_t vertexIndices[] = {
+			// front face
 			0, 1, 2,
-			2, 1, 3
+			2, 1, 3,
+
+			// back face
+			4, 5, 6,
+			6, 5, 7,
+
+			// top face
+			8, 9, 10,
+			10, 9, 11,
+
+			// bottom face
+			12, 13, 14,
+			14, 13, 15,
+
+			// left face
+			16, 17, 18,
+			18, 17, 19,
+
+			// right face
+			20, 21, 22,
+			22, 21, 23,
 		};
 
 		Vertex v = { };
@@ -593,7 +639,7 @@ int main(int argc, char *argv[])
 			t1->setLocalMatrix(glm::rotate(glm::mat4(1), th, glm::vec3(0, 0, 1)));
 			t2->setLocalMatrix(glm::translate(glm::mat4(1), glm::vec3(cos(th), 1, 1)));
 
-			auto viewPosition = glm::vec3(sin(th * 0.1f) * 10.0f, 0, abs(cos(th * 0.1f)) * 10.0f);
+			auto viewPosition = glm::vec3(sin(th * 0.1f) * 10.0f, 0, cos(th * 0.1f) * 10.0f);
 			auto viewMatrix = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 			auto fov = 60.0f;
 			auto projectionMatrix = glm::perspective(fov * float(M_PI / 180.0f), float(width) / height, 0.01f, 100.0f);
