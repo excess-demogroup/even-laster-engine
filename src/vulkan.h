@@ -8,6 +8,8 @@
 #endif
 
 #include <vulkan/vulkan.h>
+
+#include <functional>
 #include <vector>
 #include <cassert>
 
@@ -25,7 +27,7 @@ namespace vulkan
 	extern VkDebugReportCallbackEXT debugReportCallback;
 
 	void instanceInit(const char *appName, const std::vector<const char *> &enabledExtensions);
-	VkResult deviceInit(VkPhysicalDevice physicalDevice);
+	VkResult deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue);
 
 	extern struct instance_funcs {
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;
