@@ -331,6 +331,7 @@ int main(int argc, char *argv[])
 				break;
 			}
 		}
+		delete[] physicalDevices;
 
 		err = deviceInit(physicalDevice);
 		if (err != VK_SUCCESS)
