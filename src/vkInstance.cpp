@@ -10,7 +10,7 @@ VkInstance vulkan::instance;
 VkDevice vulkan::device;
 VkPhysicalDevice vulkan::physicalDevice;
 VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
-int vulkan::graphicsQueueIndex = -1;
+uint32_t vulkan::graphicsQueueIndex = UINT32_MAX;
 VkQueue vulkan::graphicsQueue;
 VkCommandPool vulkan::setupCommandPool;
 VkDebugReportCallbackEXT vulkan::debugReportCallback;
@@ -87,24 +87,32 @@ void vulkan::instanceInit(const char *appName, const std::vector<const char *> &
 #endif
 }
 
-VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice)
+static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags requiredFlags)
 {
-	vulkan::physicalDevice = physicalDevice;
-
 	uint32_t queueCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, nullptr);
 	assert(queueCount > 0);
 
 	VkQueueFamilyProperties *props = new VkQueueFamilyProperties[queueCount];
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, props);
-	graphicsQueueIndex = -1;
-	for (size_t i = 0; i < queueCount; i++) {
-		if (props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-			graphicsQueueIndex = (int)i;
-			break;
+
+	uint32_t queueIndex = 0;
+	for (uint32_t i = 0; i < queueCount; i++) {
+		if ((props[i].queueFlags & requiredFlags) == requiredFlags) {
+			delete[] props;
+			return i;
 		}
 	}
-	assert(graphicsQueueIndex >= 0);
+
+	assert(false);
+	delete[] props;
+	return 0;
+}
+
+VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice)
+{
+	vulkan::physicalDevice = physicalDevice;
+	graphicsQueueIndex = findQueue(physicalDevice, VK_QUEUE_GRAPHICS_BIT);
 
 	VkDeviceQueueCreateInfo queueCreateInfo = {};
 	float queuePriorities = 0.0f;
