@@ -255,6 +255,20 @@ VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipeli
 	return pipeline;
 }
 
+VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding> &layoutBindings)
+{
+	VkDescriptorSetLayoutCreateInfo desciptorSetLayoutCreateInfo = {};
+	desciptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	desciptorSetLayoutCreateInfo.bindingCount = layoutBindings.size();
+	desciptorSetLayoutCreateInfo.pBindings = layoutBindings.data();
+
+	VkDescriptorSetLayout descriptorSetLayout;
+	VkResult err = vkCreateDescriptorSetLayout(device, &desciptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
+	assert(err == VK_SUCCESS);
+
+	return descriptorSetLayout;
+}
+
 
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -634,24 +648,10 @@ int main(int argc, char *argv[])
 		err = vkCreateSampler(device, &samplerCreateInfo, nullptr, &textureSampler);
 		assert(err == VK_SUCCESS);
 
-		VkDescriptorSetLayoutBinding layoutBindings[2] = {};
-		layoutBindings[0].binding = 0;
-		layoutBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		layoutBindings[0].descriptorCount = 1;
-		layoutBindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		layoutBindings[1].binding = 1;
-		layoutBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		layoutBindings[1].descriptorCount = 1;
-		layoutBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-		VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo = { };
-		descSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		descSetLayoutCreateInfo.bindingCount = ARRAY_SIZE(layoutBindings);
-		descSetLayoutCreateInfo.pBindings = layoutBindings;
-
-		VkDescriptorSetLayout descriptorSetLayout;
-		err = vkCreateDescriptorSetLayout(device, &descSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
-		assert(err == VK_SUCCESS);
+		VkDescriptorSetLayout descriptorSetLayout = createDescriptorSetLayout({
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT },
+			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
+		});
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
