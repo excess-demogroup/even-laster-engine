@@ -686,16 +686,6 @@ int main(int argc, char *argv[])
 
 		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-		VkDescriptorBufferInfo descriptorBufferInfo = {};
-		descriptorBufferInfo.buffer = uniformBuffer.getBuffer();
-		descriptorBufferInfo.offset = 0;
-		descriptorBufferInfo.range = VK_WHOLE_SIZE;
-
-		VkDescriptorImageInfo descriptorImageInfo = {};
-		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		descriptorImageInfo.imageView = texture.getImageView();
-		descriptorImageInfo.sampler = textureSampler;
-
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 		descriptorSetAllocateInfo.descriptorPool = descriptorPool;
@@ -706,6 +696,11 @@ int main(int argc, char *argv[])
 		err = vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &descriptorSet);
 		assert(err == VK_SUCCESS);
 
+		VkDescriptorBufferInfo descriptorBufferInfo = {};
+		descriptorBufferInfo.buffer = uniformBuffer.getBuffer();
+		descriptorBufferInfo.offset = 0;
+		descriptorBufferInfo.range = VK_WHOLE_SIZE;
+
 		VkWriteDescriptorSet writeDescriptorSet = {};
 		writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		writeDescriptorSet.dstSet = descriptorSet;
@@ -714,6 +709,11 @@ int main(int argc, char *argv[])
 		writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
 		writeDescriptorSet.dstBinding = 0;
 		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+
+		VkDescriptorImageInfo descriptorImageInfo = {};
+		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptorImageInfo.imageView = texture.getImageView();
+		descriptorImageInfo.sampler = textureSampler;
 
 		writeDescriptorSet.descriptorCount = 1;
 		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
