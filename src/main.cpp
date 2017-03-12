@@ -288,6 +288,7 @@ int main(int argc, char *argv[])
 			throw std::runtime_error("no vulkan support!");
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 		win = glfwCreateWindow(width, height, appName, nullptr, nullptr);
 
 		glfwSetKeyCallback(win, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
