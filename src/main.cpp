@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 		win = glfwCreateWindow(width, height, appName, nullptr, nullptr);
 
 		glfwSetKeyCallback(win, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-			if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+			if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
 				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			});
 
