@@ -302,7 +302,8 @@ int main(int argc, char *argv[])
 		enabledExtensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
-		VkResult err = init(appName, enabledExtensions);
+		instanceInit(appName, enabledExtensions);
+		VkResult err = deviceInit();
 		if (err != VK_SUCCESS)
 			throw std::runtime_error("init() failed!");
 

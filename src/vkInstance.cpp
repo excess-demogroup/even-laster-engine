@@ -21,31 +21,6 @@ static const char *validationLayerNames[] = {
 };
 #endif
 
-void instanceInit(const char *appName, const std::vector<const char *> &enabledExtensions)
-{
-	VkApplicationInfo appInfo = {};
-	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = appName;
-	appInfo.pEngineName = "very lastest engine ever";
-	appInfo.apiVersion = VK_API_VERSION_1_0;
-
-	VkInstanceCreateInfo instanceCreateInfo = {};
-	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-	instanceCreateInfo.pNext = nullptr;
-	instanceCreateInfo.pApplicationInfo = &appInfo;
-
-	instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
-	instanceCreateInfo.enabledExtensionCount = enabledExtensions.size();
-
-#ifndef NDEBUG
-	instanceCreateInfo.ppEnabledLayerNames = validationLayerNames;
-	instanceCreateInfo.enabledLayerCount = ARRAY_SIZE(validationLayerNames);
-#endif
-
-	VkResult err = vkCreateInstance(&instanceCreateInfo, nullptr, &vulkan::instance);
-	assert(err == VK_SUCCESS);
-}
-
 static VkBool32 messageCallback(
 	VkDebugReportFlagsEXT flags,
 	VkDebugReportObjectTypeEXT objType,
@@ -72,12 +47,31 @@ static VkBool32 messageCallback(
 	return false;
 }
 
-VkResult vulkan::init(const char *appName, const std::vector<const char *> &enabledExtensions)
+void vulkan::instanceInit(const char *appName, const std::vector<const char *> &enabledExtensions)
 {
-	instanceInit(appName, enabledExtensions);
-	instanceFuncsInit(instance);
+	VkApplicationInfo appInfo = {};
+	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	appInfo.pApplicationName = appName;
+	appInfo.pEngineName = "very lastest engine ever";
+	appInfo.apiVersion = VK_API_VERSION_1_0;
 
-	VkResult err;
+	VkInstanceCreateInfo instanceCreateInfo = {};
+	instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	instanceCreateInfo.pNext = nullptr;
+	instanceCreateInfo.pApplicationInfo = &appInfo;
+
+	instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
+	instanceCreateInfo.enabledExtensionCount = enabledExtensions.size();
+
+#ifndef NDEBUG
+	instanceCreateInfo.ppEnabledLayerNames = validationLayerNames;
+	instanceCreateInfo.enabledLayerCount = ARRAY_SIZE(validationLayerNames);
+#endif
+
+	VkResult err = vkCreateInstance(&instanceCreateInfo, nullptr, &vulkan::instance);
+	assert(err == VK_SUCCESS);
+
+	instanceFuncsInit(vulkan::instance);
 
 #ifndef NDEBUG
 	VkDebugReportCallbackCreateInfoEXT debugReportCallbackCreateInfo = { };
@@ -91,10 +85,13 @@ VkResult vulkan::init(const char *appName, const std::vector<const char *> &enab
 	// SELF-TEST:
 	// instanceFuncs.vkDebugReportMessageEXT(instance, VK_DEBUG_REPORT_WARNING_BIT_EXT, VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT, nullptr, 0, 0, "self-test", "This is a dummy warning");
 #endif
+}
 
+VkResult vulkan::deviceInit()
+{
 	// Get number of available physical devices
 	uint32_t physDevCount = 0;
-	err = vkEnumeratePhysicalDevices(instance, &physDevCount, nullptr);
+	VkResult err = vkEnumeratePhysicalDevices(instance, &physDevCount, nullptr);
 	assert(err == VK_SUCCESS);
 	assert(physDevCount > 0);
 
