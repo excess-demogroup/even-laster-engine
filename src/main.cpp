@@ -789,14 +789,17 @@ int main(int argc, char *argv[])
 
 			auto offset = 0;
 			std::map<const Transform*, int> offsetMap;
-			for each (auto transform in scene.getTransforms()) {
+			auto transforms = scene.getTransforms();
+			auto ptr = uniformBuffer.map(0, uniformBufferSpacing * transforms.size());
+			for each (auto transform in transforms) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
 				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
-				uploadMemory(uniformBuffer.getDeviceMemory(), offset, glm::value_ptr(modelViewProjectionMatrix), sizeof(modelViewProjectionMatrix));
+				memcpy((uint8_t *)ptr + offset, glm::value_ptr(modelViewProjectionMatrix), sizeof(modelViewProjectionMatrix));
 				offsetMap[transform] = offset;
 				offset += uniformBufferSpacing;
 			}
+			uniformBuffer.unmap();
 
 			VkDeviceSize vertexBufferOffsets[1] = { 0 };
 			VkBuffer vertexBuffers[1] = { vertexBuffer.getBuffer() };
