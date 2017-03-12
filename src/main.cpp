@@ -42,17 +42,6 @@ VkPipelineShaderStageCreateInfo loadShader(const char * fileName, VkDevice devic
 	return shaderStage;
 }
 
-void uploadMemory(VkDeviceMemory deviceMemory, VkDeviceSize offset, void *data, VkDeviceSize size)
-{
-	void *mappedUniformMemory = nullptr;
-	VkResult err = vkMapMemory(device, deviceMemory, offset, size, 0, &mappedUniformMemory);
-	assert(err == VK_SUCCESS);
-
-	memcpy(mappedUniformMemory, data, (size_t)size);
-
-	vkUnmapMemory(device, deviceMemory);
-}
-
 std::vector<const char *> getRequiredInstanceExtensions()
 {
 	uint32_t requiredExtentionCount;
@@ -695,17 +684,17 @@ int main(int argc, char *argv[])
 		// Go make vertex buffer yo!
 #if 1
 		auto vertexStagingBuffer = new StagingBuffer(sizeof(vertexPositions));
-		uploadMemory(vertexStagingBuffer->getDeviceMemory(), 0, vertexPositions, sizeof(vertexPositions));
+		vertexStagingBuffer->uploadMemory(0, vertexPositions, sizeof(vertexPositions));
 
 		auto vertexBuffer = Buffer(sizeof(vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		vertexBuffer.uploadFromStagingBuffer(vertexStagingBuffer, 0, 0, sizeof(vertexPositions));
 #else
 		auto vertexBuffer = Buffer(sizeof(vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		uploadMemory(vertexBuffer.getDeviceMemory(), 0, vertexPositions, sizeof(vertexPositions));
+		vertexBuffer.uploadMemory(0, vertexPositions, sizeof(vertexPositions));
 #endif
 
 		auto indexBuffer = Buffer(sizeof(vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		uploadMemory(indexBuffer.getDeviceMemory(), 0, vertexIndices, sizeof(vertexIndices));
+		indexBuffer.uploadMemory(0, vertexIndices, sizeof(vertexIndices));
 
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();

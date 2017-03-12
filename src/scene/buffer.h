@@ -46,6 +46,13 @@ public:
 		vkUnmapMemory(vulkan::device, deviceMemory);
 	}
 
+	void uploadMemory(VkDeviceSize offset, void *data, VkDeviceSize size)
+	{
+		auto mappedUniformMemory = map(offset, size);
+		memcpy(mappedUniformMemory, data, (size_t)size);
+		unmap();
+	}
+
 	VkBuffer getBuffer() const
 	{
 		return buffer;
