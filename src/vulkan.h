@@ -25,7 +25,7 @@ namespace vulkan
 	extern VkDebugReportCallbackEXT debugReportCallback;
 
 	void instanceInit(const char *appName, const std::vector<const char *> &enabledExtensions);
-	VkResult deviceInit();
+	VkResult deviceInit(VkPhysicalDevice physicalDevice);
 
 	extern struct instance_funcs {
 		PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;

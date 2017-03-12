@@ -87,38 +87,9 @@ void vulkan::instanceInit(const char *appName, const std::vector<const char *> &
 #endif
 }
 
-VkResult vulkan::deviceInit()
+VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice)
 {
-	// Get number of available physical devices
-	uint32_t physDevCount = 0;
-	VkResult err = vkEnumeratePhysicalDevices(instance, &physDevCount, nullptr);
-	assert(err == VK_SUCCESS);
-	assert(physDevCount > 0);
-
-	// Enumerate devices
-	VkPhysicalDevice *physicalDevices = new VkPhysicalDevice[physDevCount];
-	err = vkEnumeratePhysicalDevices(instance, &physDevCount, physicalDevices);
-	assert(err == VK_SUCCESS);
-	for (uint32_t i = 0; i < physDevCount; ++i) {
-
-		VkPhysicalDeviceProperties deviceProps;
-		vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProps);
-
-		VkPhysicalDeviceFeatures deviceFeats;
-		vkGetPhysicalDeviceFeatures(physicalDevices[i], &deviceFeats);
-
-		uint32_t propCount;
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevices[i], &propCount, nullptr);
-		assert(propCount > 0);
-
-		VkQueueFamilyProperties *props = new VkQueueFamilyProperties[propCount];
-		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevices[i], &propCount, props);
-
-		OutputDebugString(deviceProps.deviceName);
-	}
-
-	// just pick the first one for now!
-	physicalDevice = physicalDevices[0];
+	vulkan::physicalDevice = physicalDevice;
 
 	uint32_t queueCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, nullptr);
@@ -160,7 +131,7 @@ VkResult vulkan::deviceInit()
 	deviceCreateInfo.enabledLayerCount = ARRAY_SIZE(validationLayerNames);
 #endif
 
-	err = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
+	VkResult err = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &device);
 	assert(err == VK_SUCCESS);
 
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);

@@ -303,7 +303,39 @@ int main(int argc, char *argv[])
 #endif
 
 		instanceInit(appName, enabledExtensions);
-		VkResult err = deviceInit();
+
+		// Get number of available physical devices
+		uint32_t physDevCount = 0;
+		VkResult err = vkEnumeratePhysicalDevices(instance, &physDevCount, nullptr);
+		assert(err == VK_SUCCESS);
+		assert(physDevCount > 0);
+
+		// Enumerate devices
+		VkPhysicalDevice *physicalDevices = new VkPhysicalDevice[physDevCount];
+		err = vkEnumeratePhysicalDevices(instance, &physDevCount, physicalDevices);
+		assert(err == VK_SUCCESS);
+		for (uint32_t i = 0; i < physDevCount; ++i) {
+
+			VkPhysicalDeviceProperties deviceProps;
+			vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProps);
+
+			VkPhysicalDeviceFeatures deviceFeats;
+			vkGetPhysicalDeviceFeatures(physicalDevices[i], &deviceFeats);
+
+			uint32_t propCount;
+			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevices[i], &propCount, nullptr);
+			assert(propCount > 0);
+
+			VkQueueFamilyProperties *props = new VkQueueFamilyProperties[propCount];
+			vkGetPhysicalDeviceQueueFamilyProperties(physicalDevices[i], &propCount, props);
+
+			OutputDebugString(deviceProps.deviceName);
+		}
+
+		// just pick the first one for now!
+		auto physicalDevice = physicalDevices[0];
+
+		err = deviceInit(physicalDevice);
 		if (err != VK_SUCCESS)
 			throw std::runtime_error("init() failed!");
 
