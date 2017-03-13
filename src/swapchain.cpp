@@ -2,6 +2,7 @@
 
 #include "vulkan.h"
 #include <assert.h>
+#include <algorithm>
 
 using namespace vulkan;
 
@@ -47,7 +48,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
 	swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchainCreateInfo.surface = surface;
-	swapchainCreateInfo.minImageCount = min(surfCaps.minImageCount + 1, surfCaps.maxImageCount);
+	swapchainCreateInfo.minImageCount = std::min(surfCaps.minImageCount + 1, surfCaps.maxImageCount);
 	swapchainCreateInfo.imageFormat = surfaceFormat.format;
 	swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
 	swapchainCreateInfo.imageExtent = { width, height };
