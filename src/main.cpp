@@ -821,7 +821,7 @@ int main(int argc, char *argv[])
 			std::map<const Transform*, int> offsetMap;
 			auto transforms = scene.getTransforms();
 			auto ptr = uniformBuffer.map(0, uniformBufferSpacing * transforms.size());
-			for each (auto transform in transforms) {
+			for (auto transform : transforms) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
 				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
@@ -837,7 +837,7 @@ int main(int argc, char *argv[])
 			vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getBuffer(), 0, VK_INDEX_TYPE_UINT16);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-			for each (auto object in scene.getObjects()) {
+			for (auto object : scene.getObjects()) {
 				assert(offsetMap.count(object->getTransform()) > 0);
 
 				auto offset = offsetMap[object->getTransform()];
