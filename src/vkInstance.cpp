@@ -163,9 +163,9 @@ VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(
 template <typename T>
 static T getDeviceProc(VkDevice device, const char *entrypoint)
 {
-	void *ret = vkGetDeviceProcAddr(device, entrypoint);
+	auto ret = reinterpret_cast<T>(vkGetDeviceProcAddr(device, entrypoint));
 	assert(ret != nullptr);
-	return (T)ret;
+	return ret;
 }
 
 struct vulkan::instance_funcs vulkan::instanceFuncs;
@@ -173,9 +173,9 @@ struct vulkan::instance_funcs vulkan::instanceFuncs;
 template <typename T>
 static T getInstanceProc(VkInstance instance, const char *entrypoint)
 {
-	void *ret = vkGetInstanceProcAddr(instance, entrypoint);
+	auto ret = reinterpret_cast<T>(vkGetInstanceProcAddr(instance, entrypoint));
 	assert(ret != nullptr);
-	return reinterpret_cast<T>(ret);
+	return ret;
 }
 
 void vulkan::instanceFuncsInit(VkInstance instance)
