@@ -202,7 +202,7 @@ VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipeli
 
 	VkRect2D scissor = {
 		{ 0, 0 },
-		{ width, height }
+		{ (uint32_t)width, (uint32_t)height }
 	};
 
 	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
@@ -376,7 +376,7 @@ int main(int argc, char *argv[])
 		imageCreateInfo.flags = 0;
 		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 		imageCreateInfo.format = depthFormat;
-		imageCreateInfo.extent = { width, height, 1 };
+		imageCreateInfo.extent = { (uint32_t)width, (uint32_t)height, 1 };
 		imageCreateInfo.mipLevels = 1;
 		imageCreateInfo.arrayLayers = 1;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -842,7 +842,7 @@ int main(int argc, char *argv[])
 
 				auto offset = offsetMap[object->getTransform()];
 				assert(offset <= uniformBufferSize - sizeof(float) * 4 * 4);
-				uint32_t dynamicOffsets[] = { offset };
+				uint32_t dynamicOffsets[] = { (uint32_t)offset };
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);
 				// vkCmdDraw(commandBuffer, ARRAY_SIZE(vertexPositions), 1, 0, 0);
 				vkCmdDrawIndexed(commandBuffer, ARRAY_SIZE(vertexIndices), 1, 0, 0, 0);

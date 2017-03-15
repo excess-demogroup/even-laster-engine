@@ -13,9 +13,9 @@ protected:
 		baseHeight(height),
 		baseDepth(depth)
 	{
-		assert(width > 0);
-		assert(height > 0);
-		assert(depth > 0);
+		assert(0 < width && width <= UINT32_MAX);
+		assert(0 < height && height <= UINT32_MAX);
+		assert(0 < depth && depth <= UINT32_MAX);
 		assert(mipLevels > 0);
 		assert(arrayLayers > 0);
 
@@ -24,7 +24,7 @@ protected:
 		imageCreateInfo.flags = 0;
 		imageCreateInfo.imageType = imageType;
 		imageCreateInfo.format = format;
-		imageCreateInfo.extent = { width, height, depth };
+		imageCreateInfo.extent = { (uint32_t)width, (uint32_t)height, (uint32_t)depth };
 		imageCreateInfo.mipLevels = mipLevels;
 		imageCreateInfo.arrayLayers = arrayLayers;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
