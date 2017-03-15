@@ -42,14 +42,26 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 		surfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 	} else {
 		// find sRGB color format
-		surfaceFormat = surfaceFormats[0];
-		for (auto format : surfaceFormats) {
-			if (format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR &&
-			    format.format == VK_FORMAT_B8G8R8A8_SRGB) {
-				surfaceFormat = format;
-				break;
+		auto result = std::find_if(surfaceFormats.begin(), surfaceFormats.end(), [](const VkSurfaceFormatKHR &format) {
+			if (format.colorSpace != VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				return false;
+
+			switch (format.format) {
+			case VK_FORMAT_R8G8B8_SRGB:
+			case VK_FORMAT_B8G8R8_SRGB:
+			case VK_FORMAT_R8G8B8A8_SRGB:
+			case VK_FORMAT_B8G8R8A8_SRGB:
+			case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
+				return true;
 			}
-		}
+
+			return false;
+		});
+
+		if (result == surfaceFormats.end())
+			throw std::runtime_error("Unable to find an sRGB surface format");
+
+		surfaceFormat = *result;
 		assert(surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 	}
 
