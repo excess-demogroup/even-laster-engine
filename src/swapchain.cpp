@@ -29,7 +29,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 
 	// find sRGB color format
 	surfaceFormat = surfaceFormats[0];
-	for (size_t i = 1; i < surfaceFormatCount; ++i) {
+	for (size_t i = 0; i < surfaceFormatCount; ++i) {
 		if (surfaceFormats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
 			surfaceFormat = surfaceFormats[i];
 			break;
