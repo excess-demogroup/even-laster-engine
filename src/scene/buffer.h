@@ -3,6 +3,8 @@
 
 #include "../vulkan.h"
 
+#include <cstring>
+
 class StagingBuffer;
 
 class Buffer {

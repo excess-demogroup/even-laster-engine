@@ -2,6 +2,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <cstring>
 
 #include "vulkan.h"
 
