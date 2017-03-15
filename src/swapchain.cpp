@@ -36,15 +36,21 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(surface);
 
-	// find sRGB color format
-	surfaceFormat = surfaceFormats[0];
-	for (size_t i = 0; i < surfaceFormatCount; ++i) {
-		if (surfaceFormats[i].colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) {
-			surfaceFormat = surfaceFormats[i];
-			break;
+
+	if (surfaceFormats.size() == 1 && surfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
+		surfaceFormat.format = VK_FORMAT_B8G8R8A8_SRGB;
+		surfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+	} else {
+		// find sRGB color format
+		surfaceFormat = surfaceFormats[0];
+		for (auto format : surfaceFormats) {
+			if (format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+				surfaceFormat = format;
+				break;
+			}
 		}
+		assert(surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 	}
-	assert(surfaceFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR);
 
 	uint32_t presentModeCount = 0;
 	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
