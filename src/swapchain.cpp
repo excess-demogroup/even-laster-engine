@@ -6,6 +6,22 @@
 
 using namespace vulkan;
 
+static std::vector<VkSurfaceFormatKHR> getSurfaceFormats(VkSurfaceKHR surface)
+{
+	uint32_t surfaceFormatCount = 0;
+	VkResult err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr);
+	assert(err == VK_SUCCESS);
+	assert(surfaceFormatCount > 0);
+
+	std::vector<VkSurfaceFormatKHR> surfaceFormats;
+	surfaceFormats.resize(surfaceFormatCount);
+	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, surfaceFormats.data());
+	assert(err == VK_SUCCESS);
+
+	return surfaceFormats;
+}
+
+
 SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	swapChain(VK_NULL_HANDLE)
 {
@@ -18,14 +34,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfCaps);
 	assert(err == VK_SUCCESS);
 
-	uint32_t surfaceFormatCount = 0;
-	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr);
-	assert(err == VK_SUCCESS);
-	assert(surfaceFormatCount > 0);
-	std::vector<VkSurfaceFormatKHR> surfaceFormats;
-	surfaceFormats.resize(surfaceFormatCount);
-	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, surfaceFormats.data());
-	assert(err == VK_SUCCESS);
+	std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(surface);
 
 	// find sRGB color format
 	surfaceFormat = surfaceFormats[0];
