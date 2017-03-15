@@ -21,6 +21,20 @@ static std::vector<VkSurfaceFormatKHR> getSurfaceFormats(VkSurfaceKHR surface)
 	return surfaceFormats;
 }
 
+static std::vector<VkPresentModeKHR> getPresentModes(VkSurfaceKHR surface)
+{
+	uint32_t presentModeCount = 0;
+	VkResult err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+	assert(err == VK_SUCCESS);
+	assert(presentModeCount > 0);
+
+	std::vector<VkPresentModeKHR> presentModes;
+	presentModes.resize(presentModeCount);
+	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
+	assert(err == VK_SUCCESS);
+
+	return presentModes;
+}
 
 SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	swapChain(VK_NULL_HANDLE)
@@ -30,12 +44,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	assert(err == VK_SUCCESS);
 	assert(surfaceSupported == VK_TRUE);
 
-	VkSurfaceCapabilitiesKHR surfCaps;
-	err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfCaps);
-	assert(err == VK_SUCCESS);
-
 	std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(surface);
-
 
 	if (surfaceFormats.size() == 1 && surfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
 		surfaceFormat.format = VK_FORMAT_B8G8R8A8_SRGB;
@@ -65,20 +74,16 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 		assert(surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
 	}
 
-	uint32_t presentModeCount = 0;
-	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
-	assert(err == VK_SUCCESS);
-	assert(presentModeCount > 0);
-	auto presentModes = new VkPresentModeKHR[presentModeCount];
-	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes);
+	VkSurfaceCapabilitiesKHR surfaceCapabilities;
+	err = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
 	assert(err == VK_SUCCESS);
 
 	VkSwapchainCreateInfoKHR swapchainCreateInfo = {};
 	swapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	swapchainCreateInfo.surface = surface;
-	swapchainCreateInfo.minImageCount = surfCaps.minImageCount + 1;
-	if (surfCaps.maxImageCount != 0)
-		swapchainCreateInfo.minImageCount = std::min(swapchainCreateInfo.minImageCount, surfCaps.maxImageCount);
+	swapchainCreateInfo.minImageCount = surfaceCapabilities.minImageCount + 1;
+	if (surfaceCapabilities.maxImageCount != 0)
+		swapchainCreateInfo.minImageCount = std::min(swapchainCreateInfo.minImageCount, surfaceCapabilities.maxImageCount);
 	swapchainCreateInfo.imageFormat = surfaceFormat.format;
 	swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
 	swapchainCreateInfo.imageExtent = { (uint32_t)width, (uint32_t)height };
@@ -89,10 +94,11 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	swapchainCreateInfo.queueFamilyIndexCount = 0;
 	swapchainCreateInfo.pQueueFamilyIndices = nullptr;
 
+	auto presentModes = getPresentModes(surface);
 	swapchainCreateInfo.presentMode = presentModes[0];
-	for (uint32_t i = 0; i < presentModeCount; ++i)
-		if (presentModes[i] == VK_PRESENT_MODE_MAILBOX_KHR)
-			swapchainCreateInfo.presentMode = presentModes[i];
+	for (auto presentMode : presentModes)
+		if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+			swapchainCreateInfo.presentMode = presentMode;
 
 	swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 	swapchainCreateInfo.clipped = true;
