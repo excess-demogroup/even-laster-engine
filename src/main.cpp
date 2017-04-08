@@ -180,7 +180,6 @@ VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipeli
 	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
 	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-	pipelineRasterizationStateCreateInfo.depthClampEnable = VK_TRUE;
 	pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
 
 	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1] = { { 0 } };
@@ -640,8 +639,10 @@ int main(int argc, char *argv[])
 		samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
 		samplerCreateInfo.minLod = 0.0f;
 		samplerCreateInfo.maxLod = (float)mipLevels;
-		samplerCreateInfo.maxAnisotropy = 8;
-		samplerCreateInfo.anisotropyEnable = VK_TRUE;
+		if (vulkan::enabledFeatures.samplerAnisotropy) {
+			samplerCreateInfo.maxAnisotropy = 8;
+			samplerCreateInfo.anisotropyEnable = VK_TRUE;
+		}
 		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
 
 		VkSampler textureSampler;

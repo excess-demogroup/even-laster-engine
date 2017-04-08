@@ -10,6 +10,7 @@ using namespace vulkan;
 VkInstance vulkan::instance;
 VkDevice vulkan::device;
 VkPhysicalDevice vulkan::physicalDevice;
+VkPhysicalDeviceFeatures vulkan::enabledFeatures = { 0 };
 VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
 uint32_t vulkan::graphicsQueueIndex = UINT32_MAX;
 VkQueue vulkan::graphicsQueue;
@@ -117,6 +118,13 @@ static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags required
 VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
 {
 	vulkan::physicalDevice = physicalDevice;
+
+	VkPhysicalDeviceFeatures physicalDeviceFeatures;
+	vkGetPhysicalDeviceFeatures(physicalDevice, &physicalDeviceFeatures);
+
+	enabledFeatures.samplerAnisotropy = physicalDeviceFeatures.samplerAnisotropy;
+
+
 	graphicsQueueIndex = findQueue(physicalDevice, VK_QUEUE_GRAPHICS_BIT, usableQueue);
 
 	VkDeviceQueueCreateInfo queueCreateInfo = {};
@@ -131,7 +139,7 @@ VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(
 	deviceCreateInfo.pNext = nullptr;
 	deviceCreateInfo.queueCreateInfoCount = 1;
 	deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
-	deviceCreateInfo.pEnabledFeatures = nullptr;
+	deviceCreateInfo.pEnabledFeatures = &enabledFeatures;
 
 	const char *enabledExtensions[] = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
