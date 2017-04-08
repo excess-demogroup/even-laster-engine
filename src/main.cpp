@@ -144,6 +144,8 @@ VkFormat findBestFormat(const std::vector<VkFormat>& candidates, VkImageTiling t
 			if ((props.optimalTilingFeatures & features) == features)
 				return format;
 			break;
+		default:
+			unreachable("unexpected tiling mode");
 		}
 	}
 

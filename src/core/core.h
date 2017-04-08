@@ -8,4 +8,14 @@
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(*a))
 
+#ifdef _MSC_VER
+#define unreachable(str) \
+do { \
+	assert(!str); \
+	__assume(0); \
+} while (0);
+#else
+#define unreachable(str) assert(!str)
+#endif
+
 #endif // CORE_H
