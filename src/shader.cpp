@@ -1,7 +1,7 @@
 #include "shader.h"
 #include "core/memorymappedfile.h"
 
-static VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
+static VkShaderModule loadShaderModule(const char *path, VkDevice device)
 {
 	MemoryMappedFile shaderCode(path);
 	assert(shaderCode.getSize() > 0);
@@ -23,7 +23,7 @@ VkPipelineShaderStageCreateInfo loadShader(const char *fileName, VkDevice device
 	VkPipelineShaderStageCreateInfo shaderStage = {};
 	shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shaderStage.stage = stage;
-	shaderStage.module = loadShaderModule(fileName, device, stage);
+	shaderStage.module = loadShaderModule(fileName, device);
 	shaderStage.pName = name;
 	return shaderStage;
 }
