@@ -11,6 +11,7 @@ VkInstance vulkan::instance;
 VkDevice vulkan::device;
 VkPhysicalDevice vulkan::physicalDevice;
 VkPhysicalDeviceFeatures vulkan::enabledFeatures = { 0 };
+VkPhysicalDeviceProperties vulkan::deviceProperties;
 VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
 uint32_t vulkan::graphicsQueueIndex = UINT32_MAX;
 VkQueue vulkan::graphicsQueue;
@@ -124,6 +125,7 @@ VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(
 
 	enabledFeatures.samplerAnisotropy = physicalDeviceFeatures.samplerAnisotropy;
 
+	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
 	graphicsQueueIndex = findQueue(physicalDevice, VK_QUEUE_GRAPHICS_BIT, usableQueue);
 

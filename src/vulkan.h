@@ -21,6 +21,7 @@ namespace vulkan
 	extern VkDevice device;
 	extern VkPhysicalDevice physicalDevice;
 	extern VkPhysicalDeviceFeatures enabledFeatures;
+	extern VkPhysicalDeviceProperties deviceProperties;
 	extern VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
 	extern VkQueue graphicsQueue;
 	extern uint32_t graphicsQueueIndex;

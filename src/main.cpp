@@ -613,10 +613,7 @@ int main(int argc, char *argv[])
 		err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
 		assert(err == VK_SUCCESS);
 
-		VkPhysicalDeviceProperties physicalDeviceProperties;
-		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
-
-		auto uniformBufferSpacing = uint32_t(alignSize(sizeof(float) * 4 * 4, physicalDeviceProperties.limits.minUniformBufferOffsetAlignment));
+		auto uniformBufferSpacing = uint32_t(alignSize(sizeof(float) * 4 * 4, deviceProperties.limits.minUniformBufferOffsetAlignment));
 		auto uniformBufferSize = VkDeviceSize(uniformBufferSpacing * scene.getTransforms().size());
 
 		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
