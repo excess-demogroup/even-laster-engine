@@ -16,7 +16,7 @@
 
 using namespace vulkan;
 
-std::vector<const char *> getRequiredInstanceExtensions()
+static std::vector<const char *> getRequiredInstanceExtensions()
 {
 	uint32_t requiredExtentionCount;
 	auto tmp = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
@@ -25,12 +25,13 @@ std::vector<const char *> getRequiredInstanceExtensions()
 
 #include "scene/scene.h"
 
-VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
+static VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
 {
+
 	return ((value + alignment - 1) / alignment) * alignment;
 }
 
-Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool useStaging = true)
+static Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool useStaging = true)
 {
 	Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels, 1, useStaging);
 
@@ -81,7 +82,7 @@ Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool 
 	return texture;
 }
 
-VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipelineLayout, VkRenderPass renderPass)
+static VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipelineLayout, VkRenderPass renderPass)
 {
 	VkVertexInputBindingDescription vertexInputBindingDesc[1];
 	vertexInputBindingDesc[0].binding = 0;
@@ -187,7 +188,7 @@ VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipeli
 	return pipeline;
 }
 
-VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding> &layoutBindings)
+static VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding> &layoutBindings)
 {
 	VkDescriptorSetLayoutCreateInfo desciptorSetLayoutCreateInfo = {};
 	desciptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

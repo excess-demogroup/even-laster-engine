@@ -1,7 +1,7 @@
 #include "shader.h"
 #include "core/memorymappedfile.h"
 
-VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
+static VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
 {
     MemoryMappedFile shaderCode(path);
     assert(shaderCode.getSize() > 0);
