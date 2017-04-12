@@ -82,7 +82,7 @@ static Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels
 	return texture;
 }
 
-static VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout layout, VkRenderPass renderPass)
+static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass)
 {
 	VkVertexInputBindingDescription vertexInputBindingDesc[1];
 	vertexInputBindingDesc[0].binding = 0;
@@ -127,23 +127,12 @@ static VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout
 	pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	pipelineMultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-	VkViewport viewport = {
-		0, 0,
-		float(width), float(height),
-		0.0f, 1.0f
-	};
-
-	VkRect2D scissor = {
-		{ 0, 0 },
-		{ width, height }
-	};
-
 	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
 	pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	pipelineViewportStateCreateInfo.viewportCount = 1;
-	pipelineViewportStateCreateInfo.pViewports = &viewport;
+	pipelineViewportStateCreateInfo.pViewports = nullptr;
 	pipelineViewportStateCreateInfo.scissorCount = 1;
-	pipelineViewportStateCreateInfo.pScissors = &scissor;
+	pipelineViewportStateCreateInfo.pScissors = nullptr;
 
 	VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
 	pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -602,7 +591,7 @@ int main(int argc, char *argv[])
 		VkPipelineLayout pipelineLayout;
 		vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 
-		auto pipeline = createGraphicsPipeline(width, height, pipelineLayout, renderPass);
+		auto pipeline = createGraphicsPipeline(pipelineLayout, renderPass);
 
 		auto descriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
