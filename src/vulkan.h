@@ -13,6 +13,8 @@
 #include <vector>
 #include <cassert>
 
+#include "core/core.h"
+
 namespace vulkan
 {
 	extern VkInstance instance;
@@ -78,6 +80,51 @@ namespace vulkan
 		assert(err == VK_SUCCESS);
 
 		return commandBuffers;
+	}
+
+	static VkFormat findBestFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+	{
+		for (VkFormat format : candidates) {
+			VkFormatProperties props;
+			vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
+
+			switch (tiling) {
+			case VK_IMAGE_TILING_LINEAR:
+				if ((props.linearTilingFeatures & features) == features)
+					return format;
+				break;
+			case VK_IMAGE_TILING_OPTIMAL:
+				if ((props.optimalTilingFeatures & features) == features)
+					return format;
+				break;
+			default:
+				unreachable("unexpected tiling mode");
+			}
+		}
+
+		throw std::runtime_error("no supported format!");
+	}
+
+	static VkFence createFence(VkFenceCreateFlags flags)
+	{
+		VkFenceCreateInfo fenceCreateInfo = {};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceCreateInfo.flags = flags;
+
+		VkFence ret;
+		VkResult err = vkCreateFence(device, &fenceCreateInfo, nullptr, &ret);
+		assert(err == VK_SUCCESS);
+		return ret;
+	}
+
+	static VkSemaphore createSemaphore()
+	{
+		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
+		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		VkSemaphore ret;
+		VkResult err = vkCreateSemaphore(device, &semaphoreCreateInfo, nullptr, &ret);
+		assert(err == VK_SUCCESS);
+		return ret;
 	}
 
 	void instanceFuncsInit(VkInstance instance);
