@@ -127,12 +127,14 @@ VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipeli
 	pipelineMultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	VkViewport viewport = {
-		0, 0, float(width), float(height), 0.0f, 1.0f
+		0, 0,
+		float(width), float(height),
+		0.0f, 1.0f
 	};
 
 	VkRect2D scissor = {
 		{ 0, 0 },
-		{ uint32_t(width), uint32_t(height) }
+		{ width, height }
 	};
 
 	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
@@ -724,10 +726,10 @@ int main(int argc, char *argv[])
 			vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkViewport viewport = {};
-			viewport.height = (float)height;
-			viewport.width = (float)width;
-			viewport.minDepth = (float)0.0f;
-			viewport.maxDepth = (float)1.0f;
+			viewport.height = float(height);
+			viewport.width = float(width);
+			viewport.minDepth = 0.0f;
+			viewport.maxDepth = 1.0f;
 			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
 			VkRect2D scissor = {};
