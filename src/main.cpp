@@ -598,20 +598,10 @@ int main(int argc, char *argv[])
 
 		auto pipeline = createGraphicsPipeline(width, height, pipelineLayout, renderPass);
 
-		VkDescriptorPoolSize descriptorPoolSizes[] = {
+		auto descriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-		};
-
-		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
-		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolCreateInfo.poolSizeCount = ARRAY_SIZE(descriptorPoolSizes);
-		descriptorPoolCreateInfo.pPoolSizes = descriptorPoolSizes;
-		descriptorPoolCreateInfo.maxSets = 1;
-
-		VkDescriptorPool descriptorPool;
-		err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
-		assert(err == VK_SUCCESS);
+		}, 1);
 
 		auto uniformBufferSpacing = uint32_t(alignSize(sizeof(float) * 4 * 4, deviceProperties.limits.minUniformBufferOffsetAlignment));
 		auto uniformBufferSize = VkDeviceSize(uniformBufferSpacing * scene.getTransforms().size());
