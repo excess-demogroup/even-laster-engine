@@ -1,7 +1,7 @@
 #include "shader.h"
 #include "core/memorymappedfile.h"
 
-static VkShaderModule loadShaderModule(const char *path, VkDevice device)
+VkShaderModule loadShaderModule(const char *path)
 {
 	MemoryMappedFile shaderCode(path);
 	assert(shaderCode.getSize() > 0);
@@ -12,18 +12,8 @@ static VkShaderModule loadShaderModule(const char *path, VkDevice device)
 	moduleCreateInfo.pCode = static_cast<const uint32_t *>(shaderCode.getData());
 
 	VkShaderModule shaderModule;
-	VkResult err = vkCreateShaderModule(device, &moduleCreateInfo, nullptr, &shaderModule);
+	VkResult err = vkCreateShaderModule(vulkan::device, &moduleCreateInfo, nullptr, &shaderModule);
 	assert(!err);
 
 	return shaderModule;
-}
-
-VkPipelineShaderStageCreateInfo loadShader(const char *fileName, VkDevice device, VkShaderStageFlagBits stage, const char *name)
-{
-	VkPipelineShaderStageCreateInfo shaderStage = {};
-	shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStage.stage = stage;
-	shaderStage.module = loadShaderModule(fileName, device);
-	shaderStage.pName = name;
-	return shaderStage;
 }

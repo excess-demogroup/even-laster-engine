@@ -161,10 +161,23 @@ static VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
 	pipelineDynamicStateCreateInfo.dynamicStateCount = ARRAY_SIZE(dynamicStateEnables);
 
-	VkPipelineShaderStageCreateInfo shaderStages[] = {
-		loadShader("shaders/triangle.vert.spv", device, VK_SHADER_STAGE_VERTEX_BIT),
-		loadShader("shaders/triangle.frag.spv", device, VK_SHADER_STAGE_FRAGMENT_BIT)
-	};
+	VkPipelineShaderStageCreateInfo shaderStages[] = { {
+		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_SHADER_STAGE_VERTEX_BIT,
+		loadShaderModule("shaders/triangle.vert.spv"),
+		"main",
+		NULL
+	}, {
+		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_SHADER_STAGE_FRAGMENT_BIT,
+		loadShaderModule("shaders/triangle.frag.spv"),
+		"main",
+		NULL
+	} };
 
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

@@ -3,6 +3,6 @@
 
 #include "vulkan.h"
 
-VkPipelineShaderStageCreateInfo loadShader(const char *fileName, VkDevice device, VkShaderStageFlagBits stage, const char *name = "main");
+VkShaderModule loadShaderModule(const char *path);
 
 #endif /* SHADER_H */
