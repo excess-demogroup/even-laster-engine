@@ -149,6 +149,21 @@ namespace vulkan
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
+	static VkDescriptorSet allocateDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
+	{
+		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
+		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		descriptorSetAllocateInfo.descriptorPool = descriptorPool;
+		descriptorSetAllocateInfo.descriptorSetCount = 1;
+		descriptorSetAllocateInfo.pSetLayouts = &descriptorSetLayout;
+
+		VkDescriptorSet descriptorSet;
+		auto err = vkAllocateDescriptorSets(device, &descriptorSetAllocateInfo, &descriptorSet);
+		assert(err == VK_SUCCESS);
+
+		return descriptorSet;
+	}
+
 
 	void instanceFuncsInit(VkInstance instance);
 };
