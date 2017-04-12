@@ -19,7 +19,7 @@ using namespace vulkan;
 std::vector<const char *> getRequiredInstanceExtensions()
 {
 	uint32_t requiredExtentionCount;
-	const char **tmp = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
+	auto tmp = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
 	return std::vector<const char *>(tmp, tmp + requiredExtentionCount);
 }
 
@@ -179,7 +179,7 @@ VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipeli
 	pipelineCreateInfo.pStages = shaderStages;
 
 	VkPipeline pipeline;
-	VkResult err = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	auto err = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
 	assert(err == VK_SUCCESS);
 
 	return pipeline;
@@ -193,7 +193,7 @@ VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescriptorSe
 	desciptorSetLayoutCreateInfo.pBindings = layoutBindings.data();
 
 	VkDescriptorSetLayout descriptorSetLayout;
-	VkResult err = vkCreateDescriptorSetLayout(device, &desciptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
+	auto err = vkCreateDescriptorSetLayout(device, &desciptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
 	assert(err == VK_SUCCESS);
 
 	return descriptorSetLayout;
@@ -250,12 +250,12 @@ int main(int argc, char *argv[])
 
 		// Get number of available physical devices
 		uint32_t physicalDeviceCount = 0;
-		VkResult err = vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
+		auto err = vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
 		assert(err == VK_SUCCESS);
 		assert(physicalDeviceCount > 0);
 
 		// Enumerate devices
-		VkPhysicalDevice *physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
+		auto physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
 		err = vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices);
 		assert(err == VK_SUCCESS);
 		assert(physicalDeviceCount > 0);
@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
 			VK_FORMAT_D16_UNORM_S8_UINT,
 		};
 
-		VkFormat depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		auto depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
 		VkImageCreateInfo imageCreateInfo = {};
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -552,10 +552,10 @@ int main(int argc, char *argv[])
 		auto baseWidth = 64, baseHeight = 64;
 #if 1
 		auto mipLevels = 2;
-		Texture2D texture = generateXorTexture(baseWidth, baseHeight, mipLevels, true);
+		auto texture = generateXorTexture(baseWidth, baseHeight, mipLevels, true);
 #else
 		auto mipLevels = 1;
-		Texture2D texture = generateXorTexture(baseWidth, baseHeight, mipLevels, false);
+		auto texture = generateXorTexture(baseWidth, baseHeight, mipLevels, false);
 #endif
 
 		VkSamplerCreateInfo samplerCreateInfo = {};
@@ -580,7 +580,7 @@ int main(int argc, char *argv[])
 		err = vkCreateSampler(device, &samplerCreateInfo, nullptr, &textureSampler);
 		assert(err == VK_SUCCESS);
 
-		VkDescriptorSetLayout descriptorSetLayout = createDescriptorSetLayout({
+		auto descriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT },
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
 		});
@@ -593,7 +593,7 @@ int main(int argc, char *argv[])
 		VkPipelineLayout pipelineLayout;
 		vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 
-		VkPipeline pipeline = createGraphicsPipeline(width, height, pipelineLayout, renderPass);
+		auto pipeline = createGraphicsPipeline(width, height, pipelineLayout, renderPass);
 
 		VkDescriptorPoolSize descriptorPoolSizes[] = {
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
@@ -613,8 +613,8 @@ int main(int argc, char *argv[])
 		VkPhysicalDeviceProperties physicalDeviceProperties;
 		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
-		uint32_t uniformBufferSpacing = (uint32_t)alignSize(sizeof(float) * 4 * 4, physicalDeviceProperties.limits.minUniformBufferOffsetAlignment);
-		VkDeviceSize uniformBufferSize = uniformBufferSpacing * scene.getTransforms().size();
+		auto uniformBufferSpacing = uint32_t(alignSize(sizeof(float) * 4 * 4, physicalDeviceProperties.limits.minUniformBufferOffsetAlignment));
+		auto uniformBufferSize = VkDeviceSize(uniformBufferSpacing * scene.getTransforms().size());
 
 		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
@@ -681,9 +681,9 @@ int main(int argc, char *argv[])
 		err = vkQueueWaitIdle(graphicsQueue);
 		assert(err == VK_SUCCESS);
 
-		double startTime = glfwGetTime();
+		auto startTime = glfwGetTime();
 		while (!glfwWindowShouldClose(win)) {
-			double time = glfwGetTime() - startTime;
+			auto time = glfwGetTime() - startTime;
 
 			auto currentSwapImage = swapChain.aquireNextImage(backBufferSemaphore);
 
@@ -693,7 +693,7 @@ int main(int argc, char *argv[])
 			err = vkResetFences(device, 1, &commandBufferFences[currentSwapImage]);
 			assert(err == VK_SUCCESS);
 
-			VkCommandBuffer commandBuffer = commandBuffers[currentSwapImage];
+			auto commandBuffer = commandBuffers[currentSwapImage];
 			VkCommandBufferBeginInfo commandBufferBeginInfo = {};
 			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 			commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -737,7 +737,7 @@ int main(int argc, char *argv[])
 			scissor.offset.y = 0;
 			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-			float th = (float)time;
+			auto th = float(time);
 
 			// animate, yo
 			t1->setLocalMatrix(glm::rotate(glm::mat4(1), th, glm::vec3(0, 0, 1)));
