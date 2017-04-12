@@ -82,7 +82,7 @@ static Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels
 	return texture;
 }
 
-static VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipelineLayout, VkRenderPass renderPass)
+static VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout layout, VkRenderPass renderPass)
 {
 	VkVertexInputBindingDescription vertexInputBindingDesc[1];
 	vertexInputBindingDesc[0].binding = 0;
@@ -181,7 +181,7 @@ static VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout
 
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineCreateInfo.layout = pipelineLayout;
+	pipelineCreateInfo.layout = layout;
 	pipelineCreateInfo.renderPass = renderPass;
 	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
 	pipelineCreateInfo.pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo;
