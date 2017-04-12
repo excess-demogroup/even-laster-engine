@@ -749,7 +749,10 @@ int main(int argc, char *argv[])
 			auto viewPosition = glm::vec3(sin(th * 0.1f) * 10.0f, 0, cos(th * 0.1f) * 10.0f);
 			auto viewMatrix = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 			auto fov = 60.0f;
-			auto projectionMatrix = glm::perspective(fov * float(M_PI / 180.0f), float(width) / height, 0.01f, 100.0f);
+			auto aspect = float(width) / height;
+			auto znear = 0.01f;
+			auto zfar = 100.0f;
+			auto projectionMatrix = glm::perspective(fov * float(M_PI / 180.0f), aspect, znear, zfar);
 			auto viewProjectionMatrix = projectionMatrix * viewMatrix;
 
 			auto offset = 0;
