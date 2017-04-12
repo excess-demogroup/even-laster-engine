@@ -524,7 +524,7 @@ int main(int argc, char *argv[])
 			22, 21, 23,
 		};
 
-		Vertex v = { };
+		Vertex v = {};
 		v.position = glm::vec3(0, 0, 0);
 		std::vector<Vertex> vertices;
 		for (auto i = 0; i < ARRAY_SIZE(vertexPositions); ++i) {
@@ -583,7 +583,7 @@ int main(int argc, char *argv[])
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
 		});
 
-		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = { };
+		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
 		pipelineLayoutCreateInfo.setLayoutCount = 1;

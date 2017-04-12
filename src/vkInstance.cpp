@@ -81,7 +81,7 @@ void vulkan::instanceInit(const char *appName, const std::vector<const char *> &
 	instanceFuncsInit(vulkan::instance);
 
 #ifndef NDEBUG
-	VkDebugReportCallbackCreateInfoEXT debugReportCallbackCreateInfo = { };
+	VkDebugReportCallbackCreateInfoEXT debugReportCallbackCreateInfo = {};
 	debugReportCallbackCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
 	debugReportCallbackCreateInfo.pfnCallback = (PFN_vkDebugReportCallbackEXT)messageCallback;
 	debugReportCallbackCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
