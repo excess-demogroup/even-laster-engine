@@ -218,12 +218,12 @@ int main(int argc, char *argv[])
 {
 #endif
 
-	const char *appName = "some excess demo";
+	auto appName = "some excess demo";
 	auto width = 1280, height = 720;
 #ifdef NDEBUG
-	bool fullscreen = true;
+	auto fullscreen = true;
 #else
-	bool fullscreen = false;
+	auto fullscreen = false;
 #endif
 	GLFWwindow *win = nullptr;
 
