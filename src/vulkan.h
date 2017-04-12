@@ -165,6 +165,20 @@ namespace vulkan
 		return descriptorPool;
 	}
 
+	static VkCommandPool createCommandPool(uint32_t queueFamilyIndex)
+	{
+		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
+		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		commandPoolCreateInfo.queueFamilyIndex = queueFamilyIndex;
+		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+		VkCommandPool commandPool;
+		auto err = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool);
+		assert(err == VK_SUCCESS);
+
+		return commandPool;
+	}
+
 	static VkDescriptorSet allocateDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
 	{
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};

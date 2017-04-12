@@ -460,14 +460,7 @@ int main(int argc, char *argv[])
 			assert(err == VK_SUCCESS);
 		}
 
-		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
-		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-		commandPoolCreateInfo.queueFamilyIndex = graphicsQueueIndex;
-		commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-		VkCommandPool commandPool;
-		err = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &commandPool);
-		assert(err == VK_SUCCESS);
+		VkCommandPool commandPool = createCommandPool(graphicsQueueIndex);
 
 		Scene scene;
 

@@ -160,13 +160,7 @@ VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
 	vkGetDeviceQueue(device, graphicsQueueIndex, 0, &graphicsQueue);
 
-	VkCommandPoolCreateInfo commandPoolCreateInfo = {};
-	commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	commandPoolCreateInfo.queueFamilyIndex = graphicsQueueIndex;
-	commandPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-
-	err = vkCreateCommandPool(device, &commandPoolCreateInfo, nullptr, &setupCommandPool);
-	assert(err == VK_SUCCESS);
+	setupCommandPool = createCommandPool(graphicsQueueIndex);
 
 	return err;
 }
