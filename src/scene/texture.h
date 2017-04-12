@@ -36,8 +36,6 @@ protected:
 		imageCreateInfo.tiling = useStaging ? VK_IMAGE_TILING_OPTIMAL : VK_IMAGE_TILING_LINEAR;
 		imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
 		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		// imageCreateInfo.queueFamilyIndexCount - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
-		// imageCreateInfo.pQueueFamilyIndices - only needed if imageCreateInfo.sharingMode == VK_SHARING_MODE_CONCURRENT
 		imageCreateInfo.initialLayout = useStaging ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PREINITIALIZED;
 
 		if (useStaging)
