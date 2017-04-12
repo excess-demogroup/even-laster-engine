@@ -38,7 +38,7 @@ Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool 
 		for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
 
 			auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
-				mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
+			    mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
 
 			auto pitch = mipWidth * 4;
 			auto size = pitch * mipHeight;
