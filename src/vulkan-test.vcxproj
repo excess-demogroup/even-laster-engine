@@ -162,11 +162,13 @@
     <ClInclude Include="scene\buffer.h" />
     <ClInclude Include="scene\scene.h" />
     <ClInclude Include="scene\texture.h" />
+    <ClInclude Include="shader.h" />
     <ClInclude Include="swapchain.h" />
     <ClInclude Include="vulkan.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scene\buffer.cpp" />
+    <ClCompile Include="shader.cpp" />
     <ClCompile Include="swapchain.cpp" />
     <ClCompile Include="vkInstance.cpp" />
     <ClCompile Include="main.cpp" />

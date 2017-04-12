@@ -7,6 +7,7 @@
     <ClCompile Include="scene\buffer.cpp">
       <Filter>scene</Filter>
     </ClCompile>
+    <ClCompile Include="shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="swapchain.h" />
@@ -26,6 +27,7 @@
     <ClInclude Include="scene\buffer.h">
       <Filter>scene</Filter>
     </ClInclude>
+    <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\*.vert">

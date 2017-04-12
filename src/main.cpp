@@ -6,41 +6,15 @@
 
 #include "vulkan.h"
 #include "core/core.h"
-#include "core/memorymappedfile.h"
 #include "swapchain.h"
+#include "shader.h"
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace vulkan;
-
-VkShaderModule loadShaderModule(const char *path, VkDevice device, VkShaderStageFlagBits stage)
-{
-	MemoryMappedFile shaderCode(path);
-	assert(shaderCode.getSize() > 0);
-
-	VkShaderModuleCreateInfo moduleCreateInfo = {};
-	moduleCreateInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	moduleCreateInfo.codeSize = shaderCode.getSize();
-	moduleCreateInfo.pCode = (uint32_t *)shaderCode.getData();
-
-	VkShaderModule shaderModule;
-	VkResult err = vkCreateShaderModule(device, &moduleCreateInfo, nullptr, &shaderModule);
-	assert(!err);
-
-	return shaderModule;
-}
-
-VkPipelineShaderStageCreateInfo loadShader(const char * fileName, VkDevice device, VkShaderStageFlagBits stage, const char *name = "main")
-{
-	VkPipelineShaderStageCreateInfo shaderStage = {};
-	shaderStage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shaderStage.stage = stage;
-	shaderStage.module = loadShaderModule(fileName, device, stage);
-	shaderStage.pName = name;
-	return shaderStage;
-}
 
 std::vector<const char *> getRequiredInstanceExtensions()
 {
