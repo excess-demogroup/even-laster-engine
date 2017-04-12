@@ -127,6 +127,29 @@ namespace vulkan
 		return ret;
 	}
 
+	static void setViewport(VkCommandBuffer commandBuffer, float x, float y, float width, float height)
+	{
+		VkViewport viewport = {};
+		viewport.x = x;
+		viewport.y = y;
+		viewport.height = height;
+		viewport.width = width;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	}
+
+	static void setScissor(VkCommandBuffer commandBuffer, int x, int y, int width, int height)
+	{
+		VkRect2D scissor = {};
+		scissor.offset.x = x;
+		scissor.offset.y = y;
+		scissor.extent.width = width;
+		scissor.extent.height = height;
+		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+	}
+
+
 	void instanceFuncsInit(VkInstance instance);
 };
 

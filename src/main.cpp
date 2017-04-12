@@ -726,19 +726,8 @@ int main(int argc, char *argv[])
 
 			vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = {};
-			viewport.height = float(height);
-			viewport.width = float(width);
-			viewport.minDepth = 0.0f;
-			viewport.maxDepth = 1.0f;
-			vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-			VkRect2D scissor = {};
-			scissor.extent.width = width;
-			scissor.extent.height = height;
-			scissor.offset.x = 0;
-			scissor.offset.y = 0;
-			vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+			setViewport(commandBuffer, 0, 0, float(width), float(height));
+			setScissor(commandBuffer, 0, 0, width, height);
 
 			auto th = float(time);
 
