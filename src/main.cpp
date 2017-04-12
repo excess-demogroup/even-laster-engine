@@ -282,11 +282,9 @@ int main(int argc, char *argv[])
 		}
 		delete[] physicalDevices;
 
-		err = deviceInit(physicalDevice, [](VkInstance instance, VkPhysicalDevice physicalDevice, uint32_t queueIndex) {
+		deviceInit(physicalDevice, [](VkInstance instance, VkPhysicalDevice physicalDevice, uint32_t queueIndex) {
 			return glfwGetPhysicalDevicePresentationSupport(instance, physicalDevice, queueIndex) == GLFW_TRUE;
 		});
-		if (err != VK_SUCCESS)
-			throw std::runtime_error("init() failed!");
 
 		VkSurfaceKHR surface;
 		err = glfwCreateWindowSurface(instance, win, nullptr, &surface);

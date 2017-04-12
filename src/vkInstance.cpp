@@ -111,12 +111,11 @@ static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags required
 		}
 	}
 
-	assert(false);
 	delete[] props;
-	return 0;
+	throw std::runtime_error("failed to find queue!");
 }
 
-VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
+void vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
 {
 	vulkan::physicalDevice = physicalDevice;
 
@@ -161,8 +160,6 @@ VkResult vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(
 	vkGetDeviceQueue(device, graphicsQueueIndex, 0, &graphicsQueue);
 
 	setupCommandPool = createCommandPool(graphicsQueueIndex);
-
-	return err;
 }
 
 template <typename T>
