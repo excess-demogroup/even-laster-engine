@@ -47,7 +47,7 @@ Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool 
 			void *ptr = stagingBuffer->map(0, size);
 
 			for (auto y = 0; y < mipHeight; ++y) {
-				auto *row = (uint8_t *)ptr + pitch * y;
+				auto *row = static_cast<uint8_t *>(ptr) + pitch * y;
 				for (auto x = 0; x < mipWidth; ++x) {
 					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
 					row[x * 4 + 0] = 0x80 + (tmp >> 1);
@@ -67,7 +67,7 @@ Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool 
 		void *ptr = texture.map(layout.offset, layout.size);
 
 		for (auto y = 0; y < baseHeight; ++y) {
-			auto *row = (uint8_t *)ptr + layout.rowPitch * y;
+			auto *row = static_cast<uint8_t *>(ptr) + layout.rowPitch * y;
 			for (auto x = 0; x < baseWidth; ++x) {
 				uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
 				row[x * 4 + 0] = 0x80 + (tmp >> 1);
@@ -127,12 +127,12 @@ VkPipeline createGraphicsPipeline(int width, int height, VkPipelineLayout pipeli
 	pipelineMultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	VkViewport viewport = {
-		0, 0, (float)1, (float)height, 0.0f, 1.0f
+		0, 0, float(width), float(height), 0.0f, 1.0f
 	};
 
 	VkRect2D scissor = {
 		{ 0, 0 },
-		{ (uint32_t)width, (uint32_t)height }
+		{ uint32_t(width), uint32_t(height) }
 	};
 
 	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
@@ -569,7 +569,7 @@ int main(int argc, char *argv[])
 		samplerCreateInfo.mipLodBias = 0.0f;
 		samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
 		samplerCreateInfo.minLod = 0.0f;
-		samplerCreateInfo.maxLod = (float)mipLevels;
+		samplerCreateInfo.maxLod = float(mipLevels);
 		if (vulkan::enabledFeatures.samplerAnisotropy) {
 			samplerCreateInfo.maxAnisotropy = 8;
 			samplerCreateInfo.anisotropyEnable = VK_TRUE;
@@ -757,7 +757,7 @@ int main(int argc, char *argv[])
 				auto modelMatrix = transform->getAbsoluteMatrix();
 				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
 
-				memcpy((uint8_t *)ptr + offset, glm::value_ptr(modelViewProjectionMatrix), sizeof(modelViewProjectionMatrix));
+				memcpy(static_cast<uint8_t *>(ptr) + offset, glm::value_ptr(modelViewProjectionMatrix), sizeof(modelViewProjectionMatrix));
 				offsetMap[transform] = offset;
 				offset += uniformBufferSpacing;
 			}
