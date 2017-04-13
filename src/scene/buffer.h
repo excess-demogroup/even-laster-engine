@@ -37,11 +37,6 @@ public:
 		return buffer;
 	}
 
-	VkDeviceMemory getDeviceMemory() const
-	{
-		return deviceMemory;
-	}
-
 	void uploadFromStagingBuffer(StagingBuffer *stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 
 private:
