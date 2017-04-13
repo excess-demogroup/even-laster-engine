@@ -203,6 +203,50 @@ static VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescr
 	return descriptorSetLayout;
 }
 
+static void imageBarrier(VkImage image, const VkImageSubresourceRange &subresourceRange, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags dstAccessMask = 0, VkAccessFlags srcAccessMask = 0)
+{
+	auto commandBuffer = allocateCommandBuffers(setupCommandPool, 1)[0];
+
+	VkCommandBufferBeginInfo commandBufferBeginInfo = {};
+	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	auto err = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
+	assert(err == VK_SUCCESS);
+
+	VkImageMemoryBarrier imageBarrier = {};
+	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+	imageBarrier.image = image;
+	imageBarrier.oldLayout = oldLayout;
+	imageBarrier.newLayout = newLayout;
+
+	imageBarrier.dstQueueFamilyIndex = graphicsQueueIndex;
+	imageBarrier.dstAccessMask = dstAccessMask;
+
+	imageBarrier.srcQueueFamilyIndex = graphicsQueueIndex;
+	imageBarrier.srcAccessMask = srcAccessMask;
+	imageBarrier.subresourceRange = subresourceRange;
+
+	vkCmdPipelineBarrier(commandBuffer,
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &imageBarrier);
+
+	err = vkEndCommandBuffer(commandBuffer);
+	assert(err == VK_SUCCESS);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	assert(err == VK_SUCCESS);
+}
 
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -343,52 +387,14 @@ int main(int argc, char *argv[])
 		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &depthImageView);
 		assert(err == VK_SUCCESS);
 
-		auto commandBuffer = allocateCommandBuffers(setupCommandPool, 1)[0];
+		VkImageSubresourceRange subresourceRange;
+		subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		subresourceRange.baseMipLevel = 0;
+		subresourceRange.baseArrayLayer = 0;
+		subresourceRange.levelCount = 1;
+		subresourceRange.layerCount = 1;
 
-		VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-		commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		err = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
-		assert(err == VK_SUCCESS);
-
-		VkImageMemoryBarrier imageBarrier = {};
-		imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-
-		imageBarrier.image = depthImage;
-		imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		imageBarrier.dstQueueFamilyIndex = graphicsQueueIndex;
-		imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-
-		imageBarrier.srcQueueFamilyIndex = graphicsQueueIndex;
-		imageBarrier.srcAccessMask = 0;
-		imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		imageBarrier.subresourceRange.baseMipLevel = 0;
-		imageBarrier.subresourceRange.baseArrayLayer = 0;
-		imageBarrier.subresourceRange.levelCount = 1;
-		imageBarrier.subresourceRange.layerCount = 1;
-
-		vkCmdPipelineBarrier(commandBuffer,
-			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			0,
-			0, nullptr,
-			0, nullptr,
-			1, &imageBarrier);
-
-		err = vkEndCommandBuffer(commandBuffer);
-		assert(err == VK_SUCCESS);
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		// Submit draw command buffer
-		err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		assert(err == VK_SUCCESS);
+		imageBarrier(depthImage, subresourceRange, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
