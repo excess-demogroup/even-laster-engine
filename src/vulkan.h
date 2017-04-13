@@ -156,7 +156,7 @@ namespace vulkan
 		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
 		descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
-		descriptorPoolCreateInfo.maxSets = 1;
+		descriptorPoolCreateInfo.maxSets = maxSets;
 
 		VkDescriptorPool descriptorPool;
 		auto err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
