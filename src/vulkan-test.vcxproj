@@ -168,6 +168,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="scene\buffer.cpp" />
+    <ClCompile Include="scene\texture.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="swapchain.cpp" />
     <ClCompile Include="vkInstance.cpp" />

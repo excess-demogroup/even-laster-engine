@@ -8,6 +8,9 @@
       <Filter>scene</Filter>
     </ClCompile>
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="scene\texture.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="swapchain.h" />
