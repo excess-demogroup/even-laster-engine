@@ -9,31 +9,8 @@ class StagingBuffer;
 
 class Buffer {
 public:
-	Buffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags)
-	{
-		VkBufferCreateInfo bufferCreateInfo = {};
-		bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferCreateInfo.size = size;
-		bufferCreateInfo.usage = usageFlags;
-
-		VkResult err = vkCreateBuffer(vulkan::device, &bufferCreateInfo, nullptr, &buffer);
-		assert(err == VK_SUCCESS);
-
-		VkMemoryRequirements memoryRequirements;
-		vkGetBufferMemoryRequirements(vulkan::device, buffer, &memoryRequirements);
-
-		auto memoryTypeIndex = vulkan::getMemoryTypeIndex(memoryRequirements, memoryPropertyFlags);
-		deviceMemory = vulkan::allocateDeviceMemory(memoryRequirements.size, memoryTypeIndex);
-
-		err = vkBindBufferMemory(vulkan::device, buffer, deviceMemory, 0);
-		assert(err == VK_SUCCESS);
-	}
-
-	~Buffer()
-	{
-		vkDestroyBuffer(vulkan::device, buffer, nullptr);
-		vkFreeMemory(vulkan::device, deviceMemory, nullptr);
-	}
+	Buffer(VkDeviceSize size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags);
+	~Buffer();
 
 	void *map(VkDeviceSize offset, VkDeviceSize size)
 	{
