@@ -120,25 +120,14 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 
 	imageViews.resize(imageCount);
 	for (uint32_t i = 0; i < imageCount; i++) {
-		VkImageViewCreateInfo imageView = {};
-		imageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageView.format = surfaceFormat.format;
-		imageView.components = {
-			VK_COMPONENT_SWIZZLE_R,
-			VK_COMPONENT_SWIZZLE_G,
-			VK_COMPONENT_SWIZZLE_B,
-			VK_COMPONENT_SWIZZLE_A
-		};
-		imageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageView.subresourceRange.baseMipLevel = 0;
-		imageView.subresourceRange.levelCount = 1;
-		imageView.subresourceRange.baseArrayLayer = 0;
-		imageView.subresourceRange.layerCount = 1;
-		imageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageView.image = images[i];
+		VkImageSubresourceRange subresourceRange;
+		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subresourceRange.baseMipLevel = 0;
+		subresourceRange.baseArrayLayer = 0;
+		subresourceRange.levelCount = 1;
+		subresourceRange.layerCount = 1;
 
-		err = vkCreateImageView(device, &imageView, nullptr, &imageViews[i]);
-		assert(err == VK_SUCCESS);
+		imageViews[i] = createImageView(images[i], VK_IMAGE_VIEW_TYPE_2D, surfaceFormat.format, subresourceRange);
 	}
 }
 

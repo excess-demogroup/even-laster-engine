@@ -53,20 +53,14 @@ protected:
 		err = vkBindImageMemory(device, image, deviceMemory, 0);
 		assert(err == VK_SUCCESS);
 
-		VkImageViewCreateInfo imageViewCreateInfo = {};
-		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageViewCreateInfo.image = image;
-		imageViewCreateInfo.viewType = imageViewType;
-		imageViewCreateInfo.format = format;
-		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-		imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-		imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-		imageViewCreateInfo.subresourceRange.layerCount = arrayLayers;
-		imageViewCreateInfo.subresourceRange.levelCount = mipLevels;
+		VkImageSubresourceRange subresourceRange;
+		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		subresourceRange.baseMipLevel = 0;
+		subresourceRange.baseArrayLayer = 0;
+		subresourceRange.levelCount = mipLevels;
+		subresourceRange.layerCount = arrayLayers;
 
-		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
-		assert(err == VK_SUCCESS);
+		imageView = createImageView(image, imageViewType, format, subresourceRange);
 	}
 
 public:

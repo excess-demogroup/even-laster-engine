@@ -378,17 +378,7 @@ int main(int argc, char *argv[])
 		subresourceRange.levelCount = 1;
 		subresourceRange.layerCount = 1;
 
-		VkImageViewCreateInfo imageViewCreateInfo = {};
-		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		imageViewCreateInfo.image = depthImage;
-		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		imageViewCreateInfo.format = depthFormat;
-		imageViewCreateInfo.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
-		imageViewCreateInfo.subresourceRange = subresourceRange;
-
-		VkImageView depthImageView;
-		err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &depthImageView);
-		assert(err == VK_SUCCESS);
+		auto depthImageView = createImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, depthFormat, subresourceRange);
 
 		imageBarrier(depthImage, subresourceRange, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
 

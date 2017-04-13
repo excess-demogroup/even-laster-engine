@@ -194,6 +194,30 @@ namespace vulkan
 		return descriptorSet;
 	}
 
+#define IDENTITY_SWIZZLE    \
+{                           \
+	VK_COMPONENT_SWIZZLE_R, \
+	VK_COMPONENT_SWIZZLE_G, \
+	VK_COMPONENT_SWIZZLE_B, \
+	VK_COMPONENT_SWIZZLE_A  \
+}
+
+	static VkImageView createImageView(VkImage image, VkImageViewType viewType, VkFormat format, const VkImageSubresourceRange &subresourceRange, VkComponentMapping components = IDENTITY_SWIZZLE)
+	{
+		VkImageViewCreateInfo imageViewCreateInfo = {};
+		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		imageViewCreateInfo.image = image;
+		imageViewCreateInfo.viewType = viewType;
+		imageViewCreateInfo.format = format;
+		imageViewCreateInfo.components = components;
+		imageViewCreateInfo.subresourceRange = subresourceRange;
+
+		VkImageView imageView;
+		auto err = vkCreateImageView(device, &imageViewCreateInfo, nullptr, &imageView);
+		assert(err == VK_SUCCESS);
+
+		return imageView;
+	}
 
 	void instanceFuncsInit(VkInstance instance);
 };
