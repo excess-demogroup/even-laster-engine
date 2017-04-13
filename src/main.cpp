@@ -61,8 +61,7 @@ static Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels
 			texture.uploadFromStagingBuffer(stagingBuffer, mipLevel);
 			// TODO: delete staging buffer
 		}
-	}
-	else {
+	} else {
 		assert(mipLevels == 1);
 		auto layout = texture.getSubresourceLayout(0, 0);
 		void *ptr = texture.map(layout.offset, layout.size);
