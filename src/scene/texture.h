@@ -81,4 +81,12 @@ public:
 	}
 };
 
+class TextureCube : public TextureBase {
+public:
+	TextureCube(VkFormat format, int size, int mipLevels = 1) :
+		TextureBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_CUBE, size, size, 1, mipLevels, 6, true)
+	{
+	}
+};
+
 #endif // TEXTURE_H
