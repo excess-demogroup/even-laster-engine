@@ -315,9 +315,6 @@ int main(int argc, char *argv[])
 			VkPhysicalDeviceProperties deviceProps;
 			vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProps);
 
-			VkPhysicalDeviceFeatures deviceFeats;
-			vkGetPhysicalDeviceFeatures(physicalDevices[i], &deviceFeats);
-
 			if (deviceProps.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
 				auto physicalDevice = physicalDevices[i];
 				break;
