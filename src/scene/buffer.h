@@ -15,7 +15,7 @@ public:
 	void *map(VkDeviceSize offset, VkDeviceSize size)
 	{
 		void *ret;
-		VkResult err = vkMapMemory(vulkan::device, deviceMemory, 0, size, 0, &ret);
+		VkResult err = vkMapMemory(vulkan::device, deviceMemory, offset, size, 0, &ret);
 		assert(err == VK_SUCCESS);
 		return ret;
 	}
