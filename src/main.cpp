@@ -375,9 +375,9 @@ int main(int argc, char *argv[])
 		subresourceRange.levelCount = 1;
 		subresourceRange.layerCount = 1;
 
-		auto depthImageView = createImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, depthFormat, subresourceRange);
-
 		imageBarrier(depthImage, subresourceRange, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+
+		auto depthImageView = createImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, depthFormat, subresourceRange);
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
