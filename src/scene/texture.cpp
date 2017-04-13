@@ -3,9 +3,6 @@
 using namespace vulkan;
 
 TextureBase::TextureBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int mipLevels, int arrayLayers, bool useStaging) :
-	format(format),
-	imageType(imageType),
-	imageViewType(imageViewType),
 	baseWidth(width),
 	baseHeight(height),
 	baseDepth(depth)

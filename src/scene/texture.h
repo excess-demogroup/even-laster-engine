@@ -49,9 +49,6 @@ public:
 	}
 
 protected:
-	VkFormat format;
-	VkImageType imageType;
-	VkImageViewType imageViewType;
 	int baseWidth, baseHeight, baseDepth;
 
 	VkImage image;
