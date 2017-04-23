@@ -371,8 +371,6 @@ int main(int argc, char *argv[])
 			assert(err == VK_SUCCESS);
 		}
 
-		VkCommandPool commandPool = createCommandPool(graphicsQueueIndex);
-
 		Scene scene;
 
 		glm::vec3 vertexPositions[] = {
@@ -558,6 +556,7 @@ int main(int argc, char *argv[])
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();
 
+		VkCommandPool commandPool = createCommandPool(graphicsQueueIndex);
 		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
 
 		auto commandBufferFences = new VkFence[imageViews.size()];
