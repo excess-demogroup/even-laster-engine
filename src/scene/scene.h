@@ -53,6 +53,10 @@ public:
 	{
 	}
 
+	virtual ~Transform()
+	{
+	}
+
 	void setParent(Transform *parent)
 	{
 		if (this->parent != nullptr) {
