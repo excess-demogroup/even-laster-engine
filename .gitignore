@@ -1,8 +1,8 @@
-*.spv
 Debug/
 Release/
 /ipch/
 /packages/
-*.sdf
 *.opensdf
+*.sdf
+*.spv
 *.suo
