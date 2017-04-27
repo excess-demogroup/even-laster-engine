@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
 		samplerCreateInfo.minLod = 0.0f;
 		samplerCreateInfo.maxLod = float(mipLevels);
 		if (vulkan::enabledFeatures.samplerAnisotropy) {
-			samplerCreateInfo.maxAnisotropy = 8;
+			samplerCreateInfo.maxAnisotropy = std::min(8.0f, vulkan::deviceProperties.limits.maxSamplerAnisotropy);
 			samplerCreateInfo.anisotropyEnable = VK_TRUE;
 		}
 		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
