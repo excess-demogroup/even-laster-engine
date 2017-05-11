@@ -3,17 +3,21 @@
 #include "vulkan.h"
 #include <assert.h>
 #include <algorithm>
+#include <stdexcept>
 
 using namespace vulkan;
 
-static std::vector<VkSurfaceFormatKHR> getSurfaceFormats(VkSurfaceKHR surface)
+using std::vector;
+using std::runtime_error;
+
+static vector<VkSurfaceFormatKHR> getSurfaceFormats(VkSurfaceKHR surface)
 {
 	uint32_t surfaceFormatCount = 0;
 	VkResult err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, nullptr);
 	assert(err == VK_SUCCESS);
 	assert(surfaceFormatCount > 0);
 
-	std::vector<VkSurfaceFormatKHR> surfaceFormats;
+	vector<VkSurfaceFormatKHR> surfaceFormats;
 	surfaceFormats.resize(surfaceFormatCount);
 	err = vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &surfaceFormatCount, surfaceFormats.data());
 	assert(err == VK_SUCCESS);
@@ -21,14 +25,14 @@ static std::vector<VkSurfaceFormatKHR> getSurfaceFormats(VkSurfaceKHR surface)
 	return surfaceFormats;
 }
 
-static std::vector<VkPresentModeKHR> getPresentModes(VkSurfaceKHR surface)
+static vector<VkPresentModeKHR> getPresentModes(VkSurfaceKHR surface)
 {
 	uint32_t presentModeCount = 0;
 	VkResult err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
 	assert(err == VK_SUCCESS);
 	assert(presentModeCount > 0);
 
-	std::vector<VkPresentModeKHR> presentModes;
+	vector<VkPresentModeKHR> presentModes;
 	presentModes.resize(presentModeCount);
 	err = vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
 	assert(err == VK_SUCCESS);
@@ -44,7 +48,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	assert(err == VK_SUCCESS);
 	assert(surfaceSupported == VK_TRUE);
 
-	std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(surface);
+	vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(surface);
 
 	if (surfaceFormats.size() == 1 && surfaceFormats[0].format == VK_FORMAT_UNDEFINED) {
 		surfaceFormat.format = VK_FORMAT_B8G8R8A8_SRGB;
@@ -68,7 +72,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 		});
 
 		if (result == surfaceFormats.end())
-			throw std::runtime_error("Unable to find an sRGB surface format");
+			throw runtime_error("Unable to find an sRGB surface format");
 
 		surfaceFormat = *result;
 		assert(surfaceFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);

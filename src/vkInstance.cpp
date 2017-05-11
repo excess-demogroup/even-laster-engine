@@ -7,6 +7,11 @@
 #include "vulkan.h"
 
 using namespace vulkan;
+
+using std::vector;
+using std::function;
+using std::runtime_error;
+
 VkInstance vulkan::instance;
 VkDevice vulkan::device;
 VkPhysicalDevice vulkan::physicalDevice;
@@ -50,7 +55,7 @@ static VkBool32 messageCallback(
 	return false;
 }
 
-void vulkan::instanceInit(const char *appName, const std::vector<const char *> &enabledExtensions)
+void vulkan::instanceInit(const char *appName, const vector<const char *> &enabledExtensions)
 {
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -74,7 +79,7 @@ void vulkan::instanceInit(const char *appName, const std::vector<const char *> &
 	VkResult err = vkCreateInstance(&instanceCreateInfo, nullptr, &vulkan::instance);
 
 	if (err == VK_ERROR_INCOMPATIBLE_DRIVER)
-		throw std::runtime_error("Your GPU is from Hønefoss!");
+		throw runtime_error("Your GPU is from Hønefoss!");
 
 	assert(err == VK_SUCCESS);
 
@@ -94,7 +99,7 @@ void vulkan::instanceInit(const char *appName, const std::vector<const char *> &
 #endif
 }
 
-static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags requiredFlags, std::function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
+static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags requiredFlags, function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
 {
 	uint32_t queueCount;
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, nullptr);
@@ -112,10 +117,10 @@ static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags required
 	}
 
 	delete[] props;
-	throw std::runtime_error("failed to find queue!");
+	throw runtime_error("failed to find queue!");
 }
 
-void vulkan::deviceInit(VkPhysicalDevice physicalDevice, std::function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
+void vulkan::deviceInit(VkPhysicalDevice physicalDevice, function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
 {
 	vulkan::physicalDevice = physicalDevice;
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <stdexcept>
 
 #include "vulkan.h"
 #include "core/core.h"
@@ -16,11 +17,16 @@
 
 using namespace vulkan;
 
-static std::vector<const char *> getRequiredInstanceExtensions()
+using std::vector;
+using std::map;
+using std::exception;
+using std::runtime_error;
+
+static vector<const char *> getRequiredInstanceExtensions()
 {
 	uint32_t requiredExtentionCount;
 	auto tmp = glfwGetRequiredInstanceExtensions(&requiredExtentionCount);
-	return std::vector<const char *>(tmp, tmp + requiredExtentionCount);
+	return vector<const char *>(tmp, tmp + requiredExtentionCount);
 }
 
 #include "scene/scene.h"
@@ -189,7 +195,7 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 	return pipeline;
 }
 
-static VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding> &layoutBindings)
+static VkDescriptorSetLayout createDescriptorSetLayout(const vector<VkDescriptorSetLayoutBinding> &layoutBindings)
 {
 	VkDescriptorSetLayoutCreateInfo desciptorSetLayoutCreateInfo = {};
 	desciptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -274,10 +280,10 @@ int main(int argc, char *argv[])
 
 	try {
 		if (!glfwInit())
-			throw std::runtime_error("glfwInit failed!");
+			throw runtime_error("glfwInit failed!");
 
 		if (!glfwVulkanSupported())
-			throw std::runtime_error("no vulkan support!");
+			throw runtime_error("no vulkan support!");
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -329,11 +335,11 @@ int main(int argc, char *argv[])
 		VkSurfaceKHR surface;
 		err = glfwCreateWindowSurface(instance, win, nullptr, &surface);
 		if (err)
-			throw std::runtime_error("glfwCreateWindowSurface failed!");
+			throw runtime_error("glfwCreateWindowSurface failed!");
 
 		auto swapChain = SwapChain(surface, width, height);
 
-		std::vector<VkFormat> depthCandidates = {
+		vector<VkFormat> depthCandidates = {
 			VK_FORMAT_D32_SFLOAT,
 			VK_FORMAT_X8_D24_UNORM_PACK32,
 			VK_FORMAT_D16_UNORM,
@@ -509,14 +515,14 @@ int main(int argc, char *argv[])
 
 		Vertex v = {};
 		v.position = glm::vec3(0, 0, 0);
-		std::vector<Vertex> vertices;
+		vector<Vertex> vertices;
 		for (auto i = 0; i < ARRAY_SIZE(vertexPositions); ++i) {
 			glm::vec3 pos = vertexPositions[i];
 			v.position = pos;
 			v.uv[0] = 0.5f + 0.5f * glm::vec2(pos.x, pos.y);
 			vertices.push_back(v);
 		}
-		std::vector<uint32_t> indices;
+		vector<uint32_t> indices;
 		indices.push_back(0);
 		indices.push_back(1);
 		indices.push_back(2);
@@ -702,7 +708,7 @@ int main(int argc, char *argv[])
 			auto viewProjectionMatrix = projectionMatrix * viewMatrix;
 
 			auto offset = 0;
-			std::map<const Transform*, int> offsetMap;
+			map<const Transform*, int> offsetMap;
 			auto transforms = scene.getTransforms();
 			auto ptr = uniformBuffer.map(0, uniformBufferSpacing * transforms.size());
 			for (auto transform : transforms) {
@@ -761,7 +767,7 @@ int main(int argc, char *argv[])
 		err = vkQueueWaitIdle(graphicsQueue);
 		assert(err == VK_SUCCESS);
 
-	} catch (const std::exception &e) {
+	} catch (const exception &e) {
 		if (win != nullptr)
 			glfwDestroyWindow(win);
 
