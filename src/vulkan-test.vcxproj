@@ -160,6 +160,7 @@
     <ClInclude Include="core\core.h" />
     <ClInclude Include="core\memorymappedfile.h" />
     <ClInclude Include="scene\buffer.h" />
+    <ClInclude Include="scene\rendertarget.h" />
     <ClInclude Include="scene\scene.h" />
     <ClInclude Include="scene\texture.h" />
     <ClInclude Include="shader.h" />

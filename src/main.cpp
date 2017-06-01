@@ -30,6 +30,7 @@ static vector<const char *> getRequiredInstanceExtensions()
 }
 
 #include "scene/scene.h"
+#include "scene/rendertarget.h"
 
 static VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
 {
@@ -302,41 +303,7 @@ int main(int argc, char *argv[])
 
 		auto depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
-		VkImageCreateInfo imageCreateInfo = {};
-		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageCreateInfo.flags = 0;
-		imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-		imageCreateInfo.format = depthFormat;
-		imageCreateInfo.extent = { (uint32_t)width, (uint32_t)height, 1 };
-		imageCreateInfo.mipLevels = 1;
-		imageCreateInfo.arrayLayers = 1;
-		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-		imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-		imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-		VkImage depthImage;
-		err = vkCreateImage(device, &imageCreateInfo, nullptr, &depthImage);
-		assert(err == VK_SUCCESS);
-
-		VkMemoryRequirements memoryRequirements;
-		vkGetImageMemoryRequirements(device, depthImage, &memoryRequirements);
-
-		auto memoryTypeIndex = getMemoryTypeIndex(memoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		auto deviceMemory = allocateDeviceMemory(memoryRequirements.size, memoryTypeIndex);
-
-		err = vkBindImageMemory(device, depthImage, deviceMemory, 0);
-		assert(err == VK_SUCCESS);
-
-		VkImageSubresourceRange subresourceRange;
-		subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		subresourceRange.baseMipLevel = 0;
-		subresourceRange.baseArrayLayer = 0;
-		subresourceRange.levelCount = 1;
-		subresourceRange.layerCount = 1;
-
-		auto depthImageView = createImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, depthFormat, subresourceRange);
+		DepthRenderTarget depthRenderTarget(depthFormat, width, height);
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
@@ -394,7 +361,7 @@ int main(int argc, char *argv[])
 		framebufferCreateInfo.height = height;
 		framebufferCreateInfo.layers = 1;
 
-		framebufferAttachments[1] = depthImageView;
+		framebufferAttachments[1] = depthRenderTarget.getImageView();
 
 		auto imageViews = swapChain.getImageViews();
 		auto framebuffers = new VkFramebuffer[imageViews.size()];

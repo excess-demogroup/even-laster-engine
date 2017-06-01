@@ -31,6 +31,9 @@
       <Filter>scene</Filter>
     </ClInclude>
     <ClInclude Include="shader.h" />
+    <ClInclude Include="scene\rendertarget.h">
+      <Filter>scene</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="shaders\*.vert">
