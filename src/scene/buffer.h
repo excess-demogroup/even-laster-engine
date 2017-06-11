@@ -51,4 +51,4 @@ public:
 	}
 };
 
-#endif // 1BUFFER_H
+#endif // BUFFER_H
