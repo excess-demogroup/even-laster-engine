@@ -72,31 +72,17 @@ void TextureBase::uploadFromStagingBuffer(StagingBuffer *stagingBuffer, int mipL
 	VkResult err = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
 	assert(err == VK_SUCCESS);
 
-	VkImageMemoryBarrier imageBarrier = {};
-	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	VkImageSubresourceRange subresourceRange = {
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		uint32_t(mipLevel), 1,
+		uint32_t(arrayLayer), 1
+	};
 
-	imageBarrier.image = image;
-	imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-	imageBarrier.dstQueueFamilyIndex = graphicsQueueIndex;
-	imageBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-
-	imageBarrier.srcQueueFamilyIndex = graphicsQueueIndex;
-	imageBarrier.srcAccessMask = 0;
-	imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageBarrier.subresourceRange.baseMipLevel = mipLevel;
-	imageBarrier.subresourceRange.baseArrayLayer = arrayLayer;
-	imageBarrier.subresourceRange.levelCount = 1;
-	imageBarrier.subresourceRange.layerCount = 1;
-
-	vkCmdPipelineBarrier(commandBuffer,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		VK_PIPELINE_STAGE_TRANSFER_BIT,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &imageBarrier);
+	imageBarrier(commandBuffer,
+		image, subresourceRange,
+		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		0, VK_ACCESS_TRANSFER_WRITE_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 	VkBufferImageCopy copyRegion = {};
 	copyRegion.bufferOffset = 0;

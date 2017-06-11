@@ -148,19 +148,13 @@ namespace vulkan
 	}
 
 	inline void imageBarrier(VkCommandBuffer commandBuffer, VkImage image,
-		VkImageAspectFlags imageAspectFlags,
+		const VkImageSubresourceRange &subresourceRange,
 		VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
 		VkAccessFlags srcAccess, VkAccessFlags dstAccess,
 		VkImageLayout oldLayout, VkImageLayout newLayout,
 		uint32_t oldQueueFamily = VK_QUEUE_FAMILY_IGNORED,
 		uint32_t newQueueFamily = VK_QUEUE_FAMILY_IGNORED)
 	{
-		VkImageSubresourceRange range = {
-			imageAspectFlags,
-			0, VK_REMAINING_MIP_LEVELS,
-			0, VK_REMAINING_ARRAY_LAYERS
-		};
-
 		VkImageMemoryBarrier imageBarrier = {
 			VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
 			nullptr,
@@ -171,7 +165,7 @@ namespace vulkan
 			oldQueueFamily,
 			newQueueFamily,
 			image,
-			range
+			subresourceRange
 		};
 
 		vkCmdPipelineBarrier(
@@ -179,7 +173,29 @@ namespace vulkan
 			0, nullptr,
 			0, nullptr,
 			1, &imageBarrier
-			);
+		);
+	}
+
+	inline void imageBarrier(VkCommandBuffer commandBuffer, VkImage image,
+		VkImageAspectFlags imageAspectFlags,
+		VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
+		VkAccessFlags srcAccess, VkAccessFlags dstAccess,
+		VkImageLayout oldLayout, VkImageLayout newLayout,
+		uint32_t oldQueueFamily = VK_QUEUE_FAMILY_IGNORED,
+		uint32_t newQueueFamily = VK_QUEUE_FAMILY_IGNORED)
+	{
+		VkImageSubresourceRange subresourceRange = {
+			imageAspectFlags,
+			0, VK_REMAINING_MIP_LEVELS,
+			0, VK_REMAINING_ARRAY_LAYERS
+		};
+
+		imageBarrier(commandBuffer,
+			image, subresourceRange,
+			srcStage, dstStage,
+			srcAccess, dstAccess,
+			oldLayout, newLayout,
+			oldQueueFamily, newQueueFamily);
 	}
 
 	inline VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize> &poolSizes, int maxSets)
