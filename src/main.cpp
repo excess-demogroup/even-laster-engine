@@ -209,51 +209,6 @@ static VkDescriptorSetLayout createDescriptorSetLayout(const vector<VkDescriptor
 	return descriptorSetLayout;
 }
 
-static void imageBarrier(VkImage image, const VkImageSubresourceRange &subresourceRange, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags dstAccessMask = 0, VkAccessFlags srcAccessMask = 0)
-{
-	auto commandBuffer = allocateCommandBuffers(setupCommandPool, 1)[0];
-
-	VkCommandBufferBeginInfo commandBufferBeginInfo = {};
-	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	auto err = vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo);
-	assert(err == VK_SUCCESS);
-
-	VkImageMemoryBarrier imageBarrier = {};
-	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-
-	imageBarrier.image = image;
-	imageBarrier.oldLayout = oldLayout;
-	imageBarrier.newLayout = newLayout;
-
-	imageBarrier.dstQueueFamilyIndex = graphicsQueueIndex;
-	imageBarrier.dstAccessMask = dstAccessMask;
-
-	imageBarrier.srcQueueFamilyIndex = graphicsQueueIndex;
-	imageBarrier.srcAccessMask = srcAccessMask;
-	imageBarrier.subresourceRange = subresourceRange;
-
-	vkCmdPipelineBarrier(commandBuffer,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &imageBarrier);
-
-	err = vkEndCommandBuffer(commandBuffer);
-	assert(err == VK_SUCCESS);
-
-	VkSubmitInfo submitInfo = {};
-	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffer;
-
-	err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	assert(err == VK_SUCCESS);
-}
-
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -381,8 +336,6 @@ int main(int argc, char *argv[])
 		subresourceRange.levelCount = 1;
 		subresourceRange.layerCount = 1;
 
-		imageBarrier(depthImage, subresourceRange, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
-
 		auto depthImageView = createImageView(depthImage, VK_IMAGE_VIEW_TYPE_2D, depthFormat, subresourceRange);
 
 		VkAttachmentDescription attachments[2];
@@ -403,7 +356,7 @@ int main(int argc, char *argv[])
 		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentReference colorReference = {};
