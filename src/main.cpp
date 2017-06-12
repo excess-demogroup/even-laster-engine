@@ -307,32 +307,32 @@ int main(int argc, char *argv[])
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
-		attachments[0].format = swapChain.getSurfaceFormat().format;
+		attachments[0].format = depthFormat;
 		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		attachments[1].flags = 0;
-		attachments[1].format = depthFormat;
+		attachments[1].format = swapChain.getSurfaceFormat().format;
 		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkAttachmentReference colorReference = {};
-		colorReference.attachment = 0;
-		colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[1].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 		VkAttachmentReference depthStencilReference = {};
-		depthStencilReference.attachment = 1;
+		depthStencilReference.attachment = 0;
 		depthStencilReference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference colorReference = {};
+		colorReference.attachment = 1;
+		colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -361,12 +361,12 @@ int main(int argc, char *argv[])
 		framebufferCreateInfo.height = height;
 		framebufferCreateInfo.layers = 1;
 
-		framebufferAttachments[1] = depthRenderTarget.getImageView();
+		framebufferAttachments[0] = depthRenderTarget.getImageView();
 
 		auto imageViews = swapChain.getImageViews();
 		auto framebuffers = new VkFramebuffer[imageViews.size()];
 		for (auto i = 0u; i < imageViews.size(); i++) {
-			framebufferAttachments[0] = imageViews[i];
+			framebufferAttachments[1] = imageViews[i];
 			VkResult err = vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]);
 			assert(err == VK_SUCCESS);
 		}
@@ -588,13 +588,13 @@ int main(int argc, char *argv[])
 			assert(err == VK_SUCCESS);
 
 			VkClearValue clearValues[2];
-			clearValues[0].color = {
+			clearValues[0].depthStencil = { 1.0f, 0 };
+			clearValues[1].color = {
 				0.5f,
 				0.5f,
 				0.5f,
 				1.0f
 			};
-			clearValues[1].depthStencil = { 1.0f, 0 };
 
 			VkRenderPassBeginInfo renderPassBeginInfo = {};
 			renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
