@@ -517,26 +517,27 @@ int main(int argc, char *argv[])
 		descriptorBufferInfo.offset = 0;
 		descriptorBufferInfo.range = VK_WHOLE_SIZE;
 
-		VkWriteDescriptorSet writeDescriptorSet = {};
-		writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeDescriptorSet.dstSet = descriptorSet;
-		writeDescriptorSet.descriptorCount = 1;
-		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		writeDescriptorSet.pBufferInfo = &descriptorBufferInfo;
-		writeDescriptorSet.dstBinding = 0;
-		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+		VkWriteDescriptorSet writeDescriptorSets[2] = {};
+		writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSets[0].dstSet = descriptorSet;
+		writeDescriptorSets[0].descriptorCount = 1;
+		writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
+		writeDescriptorSets[0].dstBinding = 0;
 
 		VkDescriptorImageInfo descriptorImageInfo = {};
 		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		descriptorImageInfo.imageView = texture.getImageView();
 		descriptorImageInfo.sampler = textureSampler;
 
-		writeDescriptorSet.descriptorCount = 1;
-		writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		writeDescriptorSet.pBufferInfo = nullptr;
-		writeDescriptorSet.pImageInfo = &descriptorImageInfo;
-		writeDescriptorSet.dstBinding = 1;
-		vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writeDescriptorSets[1].dstSet = descriptorSet;
+		writeDescriptorSets[1].descriptorCount = 1;
+		writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writeDescriptorSets[1].pBufferInfo = nullptr;
+		writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
+		writeDescriptorSets[1].dstBinding = 1;
+		vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 
 		// Go make vertex buffer yo!
 #if 1
