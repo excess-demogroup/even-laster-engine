@@ -210,6 +210,67 @@ static VkDescriptorSetLayout createDescriptorSetLayout(const vector<VkDescriptor
 	return descriptorSetLayout;
 }
 
+namespace CubeData
+{
+	glm::vec3 vertexPositions[] = {
+		glm::vec3(-1.0f, 1.0f, -1.0f),
+		glm::vec3(-1.0f, 1.0f, 1.0f),
+		glm::vec3(1.0f, 1.0f, -1.0f),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+
+		glm::vec3(-1.0f, -1.0f, -1.0f),
+		glm::vec3(1.0f, -1.0f, -1.0f),
+		glm::vec3(-1.0f, -1.0f, 1.0f),
+		glm::vec3(1.0f, -1.0f, 1.0f),
+
+		glm::vec3(-1.0f, -1.0f, 1.0f),
+		glm::vec3(1.0f, -1.0f, 1.0f),
+		glm::vec3(-1.0f, 1.0f, 1.0f),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+
+		glm::vec3(-1.0f, -1.0f, -1.0f),
+		glm::vec3(-1.0f, 1.0f, -1.0f),
+		glm::vec3(1.0f, -1.0f, -1.0f),
+		glm::vec3(1.0f, 1.0f, -1.0f),
+
+		glm::vec3(1.0f, -1.0f, -1.0f),
+		glm::vec3(1.0f, 1.0f, -1.0f),
+		glm::vec3(1.0f, -1.0f, 1.0f),
+		glm::vec3(1.0f, 1.0f, 1.0f),
+
+		glm::vec3(-1.0f, -1.0f, -1.0f),
+		glm::vec3(-1.0f, -1.0f, 1.0f),
+		glm::vec3(-1.0f, 1.0f, -1.0f),
+		glm::vec3(-1.0f, 1.0f, 1.0f),
+	};
+
+	uint16_t vertexIndices[] = {
+		// front face
+		0, 1, 2,
+		2, 1, 3,
+
+		// back face
+		4, 5, 6,
+		6, 5, 7,
+
+		// top face
+		8, 9, 10,
+		10, 9, 11,
+
+		// bottom face
+		12, 13, 14,
+		14, 13, 15,
+
+		// left face
+		16, 17, 18,
+		18, 17, 19,
+
+		// right face
+		20, 21, 22,
+		22, 21, 23,
+	};
+}
+
 #ifdef WIN32
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -373,69 +434,11 @@ int main(int argc, char *argv[])
 
 		Scene scene;
 
-		glm::vec3 vertexPositions[] = {
-			glm::vec3(-1.0f, 1.0f,-1.0f),
-			glm::vec3(-1.0f, 1.0f, 1.0f),
-			glm::vec3( 1.0f, 1.0f,-1.0f),
-			glm::vec3( 1.0f, 1.0f, 1.0f),
-
-			glm::vec3(-1.0f,-1.0f,-1.0f),
-			glm::vec3( 1.0f,-1.0f,-1.0f),
-			glm::vec3(-1.0f,-1.0f, 1.0f),
-			glm::vec3( 1.0f,-1.0f, 1.0f),
-
-			glm::vec3(-1.0f,-1.0f, 1.0f),
-			glm::vec3( 1.0f,-1.0f, 1.0f),
-			glm::vec3(-1.0f, 1.0f, 1.0f),
-			glm::vec3( 1.0f, 1.0f, 1.0f),
-
-			glm::vec3(-1.0f,-1.0f,-1.0f),
-			glm::vec3(-1.0f, 1.0f,-1.0f),
-			glm::vec3( 1.0f,-1.0f,-1.0f),
-			glm::vec3( 1.0f, 1.0f,-1.0f),
-
-			glm::vec3( 1.0f,-1.0f,-1.0f),
-			glm::vec3( 1.0f, 1.0f,-1.0f),
-			glm::vec3( 1.0f,-1.0f, 1.0f),
-			glm::vec3( 1.0f, 1.0f, 1.0f),
-
-			glm::vec3(-1.0f,-1.0f,-1.0f),
-			glm::vec3(-1.0f,-1.0f, 1.0f),
-			glm::vec3(-1.0f, 1.0f,-1.0f),
-			glm::vec3(-1.0f, 1.0f, 1.0f),
-		};
-
-		uint16_t vertexIndices[] = {
-			// front face
-			0, 1, 2,
-			2, 1, 3,
-
-			// back face
-			4, 5, 6,
-			6, 5, 7,
-
-			// top face
-			8, 9, 10,
-			10, 9, 11,
-
-			// bottom face
-			12, 13, 14,
-			14, 13, 15,
-
-			// left face
-			16, 17, 18,
-			18, 17, 19,
-
-			// right face
-			20, 21, 22,
-			22, 21, 23,
-		};
-
 		Vertex v = {};
 		v.position = glm::vec3(0, 0, 0);
 		vector<Vertex> vertices;
-		for (auto i = 0; i < ARRAY_SIZE(vertexPositions); ++i) {
-			glm::vec3 pos = vertexPositions[i];
+		for (auto i = 0; i < ARRAY_SIZE(CubeData::vertexPositions); ++i) {
+			glm::vec3 pos = CubeData::vertexPositions[i];
 			v.position = pos;
 			v.uv[0] = 0.5f + 0.5f * glm::vec2(pos.x, pos.y);
 			vertices.push_back(v);
@@ -541,18 +544,18 @@ int main(int argc, char *argv[])
 
 		// Go make vertex buffer yo!
 #if 1
-		auto vertexStagingBuffer = new StagingBuffer(sizeof(vertexPositions));
-		vertexStagingBuffer->uploadMemory(0, vertexPositions, sizeof(vertexPositions));
+		auto vertexStagingBuffer = new StagingBuffer(sizeof(CubeData::vertexPositions));
+		vertexStagingBuffer->uploadMemory(0, CubeData::vertexPositions, sizeof(CubeData::vertexPositions));
 
-		auto vertexBuffer = Buffer(sizeof(vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		vertexBuffer.uploadFromStagingBuffer(vertexStagingBuffer, 0, 0, sizeof(vertexPositions));
+		auto vertexBuffer = Buffer(sizeof(CubeData::vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		vertexBuffer.uploadFromStagingBuffer(vertexStagingBuffer, 0, 0, sizeof(CubeData::vertexPositions));
 #else
-		auto vertexBuffer = Buffer(sizeof(vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		vertexBuffer.uploadMemory(0, vertexPositions, sizeof(vertexPositions));
+		auto vertexBuffer = Buffer(sizeof(CubeData::vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		vertexBuffer.uploadMemory(0, CubeData::vertexPositions, sizeof(CubeData::vertexPositions));
 #endif
 
-		auto indexBuffer = Buffer(sizeof(vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		indexBuffer.uploadMemory(0, vertexIndices, sizeof(vertexIndices));
+		auto indexBuffer = Buffer(sizeof(CubeData::vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		indexBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
 
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();
@@ -655,7 +658,7 @@ int main(int argc, char *argv[])
 				uint32_t dynamicOffsets[] = { (uint32_t)offset };
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);
 				// vkCmdDraw(commandBuffer, ARRAY_SIZE(vertexPositions), 1, 0, 0);
-				vkCmdDrawIndexed(commandBuffer, ARRAY_SIZE(vertexIndices), 1, 0, 0, 0);
+				vkCmdDrawIndexed(commandBuffer, ARRAY_SIZE(CubeData::vertexIndices), 1, 0, 0, 0);
 			}
 
 			vkCmdEndRenderPass(commandBuffer);
