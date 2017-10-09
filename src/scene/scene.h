@@ -29,7 +29,7 @@ class Material {
 	Texture2D *albedoMap;
 	glm::vec4 albedoColor;
 
-	// TODO: these should be baked (shinyness)
+	// TODO: these should be baked (shininess)
 	Texture2D *normalMap;
 	Texture2D *specularMap;
 };
