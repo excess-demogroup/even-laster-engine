@@ -288,11 +288,6 @@ int main(int argc, char *argv[])
 
 	auto appName = "some excess demo";
 	auto width = 1280, height = 720;
-#ifdef NDEBUG
-	auto fullscreen = true;
-#else
-	auto fullscreen = false;
-#endif
 	GLFWwindow *win = nullptr;
 
 	try {
