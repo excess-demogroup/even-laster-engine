@@ -447,8 +447,8 @@ int main(int argc, char *argv[])
 		auto model = new Model(&mesh, &material);
 		auto t1 = scene.createMatrixTransform();
 		auto t2 = scene.createMatrixTransform(t1);
-		auto obj1 = scene.createObject(model, t1);
-		auto obj2 = scene.createObject(model, t2);
+		scene.createObject(model, t1);
+		scene.createObject(model, t2);
 
 		// OK, let's prepare for rendering!
 
