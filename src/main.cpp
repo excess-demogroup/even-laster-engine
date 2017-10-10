@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 		Vertex v = {};
 		v.position = glm::vec3(0, 0, 0);
 		vector<Vertex> vertices;
-		for (auto i = 0; i < ARRAY_SIZE(CubeData::vertexPositions); ++i) {
+		for (auto i = 0u; i < ARRAY_SIZE(CubeData::vertexPositions); ++i) {
 			glm::vec3 pos = CubeData::vertexPositions[i];
 			v.position = pos;
 			v.uv[0] = 0.5f + 0.5f * glm::vec2(pos.x, pos.y);
@@ -625,8 +625,8 @@ int main(int argc, char *argv[])
 			auto projectionMatrix = glm::perspective(fov * float(M_PI / 180.0f), aspect, znear, zfar);
 			auto viewProjectionMatrix = projectionMatrix * viewMatrix;
 
-			auto offset = 0;
-			map<const Transform*, int> offsetMap;
+			auto offset = 0u;
+			map<const Transform*, unsigned int> offsetMap;
 			auto transforms = scene.getTransforms();
 			auto ptr = uniformBuffer.map(0, uniformBufferSpacing * transforms.size());
 			for (auto transform : transforms) {
