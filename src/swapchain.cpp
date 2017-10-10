@@ -66,9 +66,10 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 			case VK_FORMAT_B8G8R8A8_SRGB:
 			case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
 				return true;
-			}
 
-			return false;
+			default:
+				return false;
+			}
 		});
 
 		if (result == surfaceFormats.end())
