@@ -39,7 +39,7 @@ namespace vulkan
 		PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT;
 	} instanceFuncs;
 
-	static uint32_t getMemoryTypeIndex(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
+	inline uint32_t getMemoryTypeIndex(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
 	{
 		for (auto i = 0u; i < VK_MAX_MEMORY_TYPES; i++) {
 			if (((memoryRequirements.memoryTypeBits >> i) & 1) == 1) {
@@ -54,7 +54,7 @@ namespace vulkan
 		throw std::runtime_error("invalid memory type!");
 	}
 
-	static VkDeviceMemory allocateDeviceMemory(VkDeviceSize size, uint32_t memoryTypeIndex)
+	inline VkDeviceMemory allocateDeviceMemory(VkDeviceSize size, uint32_t memoryTypeIndex)
 	{
 		VkMemoryAllocateInfo memoryAllocateInfo = {};
 		memoryAllocateInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -68,7 +68,7 @@ namespace vulkan
 		return deviceMemory;
 	}
 
-	static VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
+	inline VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
 	{
 		VkCommandBufferAllocateInfo commandAllocInfo = {};
 		commandAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -83,7 +83,7 @@ namespace vulkan
 		return commandBuffers;
 	}
 
-	static VkFormat findBestFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+	inline VkFormat findBestFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
 		for (VkFormat format : candidates) {
 			VkFormatProperties props;
@@ -106,7 +106,7 @@ namespace vulkan
 		throw std::runtime_error("no supported format!");
 	}
 
-	static VkFence createFence(VkFenceCreateFlags flags)
+	inline VkFence createFence(VkFenceCreateFlags flags)
 	{
 		VkFenceCreateInfo fenceCreateInfo = {};
 		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -118,7 +118,7 @@ namespace vulkan
 		return ret;
 	}
 
-	static VkSemaphore createSemaphore()
+	inline VkSemaphore createSemaphore()
 	{
 		VkSemaphoreCreateInfo semaphoreCreateInfo = {};
 		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -128,7 +128,7 @@ namespace vulkan
 		return ret;
 	}
 
-	static void setViewport(VkCommandBuffer commandBuffer, float x, float y, float width, float height)
+	inline void setViewport(VkCommandBuffer commandBuffer, float x, float y, float width, float height)
 	{
 		VkViewport viewport = {};
 		viewport.x = x;
@@ -140,7 +140,7 @@ namespace vulkan
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 	}
 
-	static void setScissor(VkCommandBuffer commandBuffer, int x, int y, int width, int height)
+	inline void setScissor(VkCommandBuffer commandBuffer, int x, int y, int width, int height)
 	{
 		VkRect2D scissor = {};
 		scissor.offset.x = x;
@@ -150,7 +150,7 @@ namespace vulkan
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
-	static VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize> &poolSizes, int maxSets)
+	inline VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize> &poolSizes, int maxSets)
 	{
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
 		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -165,7 +165,7 @@ namespace vulkan
 		return descriptorPool;
 	}
 
-	static VkCommandPool createCommandPool(uint32_t queueFamilyIndex)
+	inline VkCommandPool createCommandPool(uint32_t queueFamilyIndex)
 	{
 		VkCommandPoolCreateInfo commandPoolCreateInfo = {};
 		commandPoolCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -179,7 +179,7 @@ namespace vulkan
 		return commandPool;
 	}
 
-	static VkDescriptorSet allocateDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
+	inline VkDescriptorSet allocateDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSetLayout descriptorSetLayout)
 	{
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = {};
 		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -202,7 +202,7 @@ namespace vulkan
 	VK_COMPONENT_SWIZZLE_A  \
 }
 
-	static VkImageView createImageView(VkImage image, VkImageViewType viewType, VkFormat format, const VkImageSubresourceRange &subresourceRange, VkComponentMapping components = IDENTITY_SWIZZLE)
+	inline VkImageView createImageView(VkImage image, VkImageViewType viewType, VkFormat format, const VkImageSubresourceRange &subresourceRange, VkComponentMapping components = IDENTITY_SWIZZLE)
 	{
 		VkImageViewCreateInfo imageViewCreateInfo = {};
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
