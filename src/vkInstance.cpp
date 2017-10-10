@@ -108,7 +108,6 @@ static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags required
 	VkQueueFamilyProperties *props = new VkQueueFamilyProperties[queueCount];
 	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, props);
 
-	uint32_t queueIndex = 0;
 	for (uint32_t i = 0; i < queueCount; i++) {
 		if ((props[i].queueFlags & requiredFlags) == requiredFlags && usableQueue(instance, physicalDevice, i)) {
 			delete[] props;
