@@ -16,6 +16,7 @@
 #include "swapchain.h"
 #include "shader.h"
 #include "scene/import-texture.h"
+#include "scene/sceneimporter.h"
 
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <GLFW/glfw3.h>
@@ -366,24 +367,10 @@ int main(int argc, char *argv[])
 		auto images = swapChain.getImages();
 
 		Scene scene;
+		auto hackScene = SceneImporter::import("assets/teapots.DAE");
+		auto model = const_cast<Model*>(hackScene->getObjects().front()->getModel());
+		Mesh &mesh = *const_cast<Mesh*>(model->getMesh());
 
-		BlobBuilder vertexBuffer;
-		for (auto i = 0u; i < ARRAY_SIZE(CubeData::vertexPositions); ++i) {
-			auto pos = CubeData::vertexPositions[i];
-			vertexBuffer.append(pos.x);
-			vertexBuffer.append(pos.y);
-			vertexBuffer.append(pos.z);
-		}
-		auto vertexData = vertexBuffer.getBytes();
-
-		BlobBuilder indexBuffer;
-		for (auto i = 0; i < ARRAY_SIZE(CubeData::vertexIndices); ++i)
-			indexBuffer.append((uint32_t)CubeData::vertexIndices[i]);
-		auto indexData = indexBuffer.getBytes();
-
-		auto mesh = Mesh(vertexData, VERTEX_FORMAT_POSITION, indexData, INDEX_TYPE_UINT32);
-		auto material = Material();
-		auto model = new Model(&mesh, &material);
 		auto t1 = scene.createMatrixTransform();
 		auto t2 = scene.createMatrixTransform(t1);
 		scene.createObject(model, t1);
