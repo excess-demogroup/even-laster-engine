@@ -170,6 +170,7 @@
   <ItemGroup>
     <ClCompile Include="src\scene\buffer.cpp" />
     <ClCompile Include="src\scene\import-texture.cpp" />
+    <ClCompile Include="src\scene\scene.cpp" />
     <ClCompile Include="src\scene\texture.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\swapchain.cpp" />

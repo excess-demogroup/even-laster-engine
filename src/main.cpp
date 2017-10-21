@@ -12,6 +12,7 @@
 
 #include "vulkan.h"
 #include "core/core.h"
+#include "core/blobbuilder.h"
 #include "swapchain.h"
 #include "shader.h"
 #include "scene/import-texture.h"
@@ -364,20 +365,21 @@ int main(int argc, char *argv[])
 
 		Scene scene;
 
-		Vertex v = {};
-		v.position = glm::vec3(0, 0, 0);
-		vector<Vertex> vertices;
+		BlobBuilder vertexBuffer;
 		for (auto i = 0u; i < ARRAY_SIZE(CubeData::vertexPositions); ++i) {
-			glm::vec3 pos = CubeData::vertexPositions[i];
-			v.position = pos;
-			v.uv[0] = 0.5f + 0.5f * glm::vec2(pos.x, pos.y);
-			vertices.push_back(v);
+			auto pos = CubeData::vertexPositions[i];
+			vertexBuffer.append(pos.x);
+			vertexBuffer.append(pos.y);
+			vertexBuffer.append(pos.z);
 		}
-		vector<uint32_t> indices;
-		indices.push_back(0);
-		indices.push_back(1);
-		indices.push_back(2);
-		auto mesh = Mesh(vertices, indices);
+		auto vertexData = vertexBuffer.getBytes();
+
+		BlobBuilder indexBuffer;
+		for (auto i = 0; i < ARRAY_SIZE(CubeData::vertexIndices); ++i)
+			indexBuffer.append((uint32_t)CubeData::vertexIndices[i]);
+		auto indexData = indexBuffer.getBytes();
+
+		auto mesh = Mesh(vertexData, VERTEX_FORMAT_POSITION, indexData, INDEX_TYPE_UINT32);
 		auto material = Material();
 		auto model = new Model(&mesh, &material);
 		auto t1 = scene.createMatrixTransform();
@@ -397,21 +399,17 @@ int main(int argc, char *argv[])
 
 		VkVertexInputBindingDescription vertexInputBindingDesc[1];
 		vertexInputBindingDesc[0].binding = 0;
-		vertexInputBindingDesc[0].stride = sizeof(float) * 3;
+		vertexInputBindingDesc[0].stride = mesh.getVertexStride();
 		vertexInputBindingDesc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-		VkVertexInputAttributeDescription vertexInputAttributeDescription[1];
-		vertexInputAttributeDescription[0].binding = 0;
-		vertexInputAttributeDescription[0].location = 0;
-		vertexInputAttributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertexInputAttributeDescription[0].offset = 0;
+		auto vertexInputAttributeDescriptions = vertexFormatToInputAttributeDescriptions(mesh.getVertexFormat());
 
 		VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
 		pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 		pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = ARRAY_SIZE(vertexInputBindingDesc);
 		pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDesc;
-		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = ARRAY_SIZE(vertexInputAttributeDescription);
-		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescription;
+		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexInputAttributeDescriptions.size();
+		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
 
 		auto pipeline = createGraphicsPipeline(pipelineLayout, renderPass, pipelineVertexInputStateCreateInfo);
 
@@ -454,19 +452,7 @@ int main(int argc, char *argv[])
 		vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 
 		// Go make vertex buffer yo!
-#if 1
-		auto vertexStagingBuffer = new StagingBuffer(sizeof(CubeData::vertexPositions));
-		vertexStagingBuffer->uploadMemory(0, CubeData::vertexPositions, sizeof(CubeData::vertexPositions));
-
-		auto vertexBuffer = Buffer(sizeof(CubeData::vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		vertexBuffer.uploadFromStagingBuffer(vertexStagingBuffer, 0, 0, sizeof(CubeData::vertexPositions));
-#else
-		auto vertexBuffer = Buffer(sizeof(CubeData::vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		vertexBuffer.uploadMemory(0, CubeData::vertexPositions, sizeof(CubeData::vertexPositions));
-#endif
-
-		auto indexBuffer = Buffer(sizeof(CubeData::vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		indexBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
+		auto indexedBatch = meshToIndexedBatch(mesh);
 
 		VkDescriptorSetLayoutBinding computeDescriptorSetLayoutBindings[] = {
 			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
@@ -603,10 +589,7 @@ int main(int argc, char *argv[])
 			}
 			uniformBuffer.unmap();
 
-			VkDeviceSize vertexBufferOffsets[1] = { 0 };
-			VkBuffer vertexBuffers[1] = { vertexBuffer.getBuffer() };
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, vertexBufferOffsets);
-			vkCmdBindIndexBuffer(commandBuffer, indexBuffer.getBuffer(), 0, VK_INDEX_TYPE_UINT16);
+			indexedBatch.bind(commandBuffer);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 			for (auto object : scene.getObjects()) {
@@ -617,7 +600,7 @@ int main(int argc, char *argv[])
 				uint32_t dynamicOffsets[] = { (uint32_t)offset };
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);
 				// vkCmdDraw(commandBuffer, ARRAY_SIZE(vertexPositions), 1, 0, 0);
-				vkCmdDrawIndexed(commandBuffer, ARRAY_SIZE(CubeData::vertexIndices), 1, 0, 0, 0);
+				indexedBatch.draw(commandBuffer);
 			}
 
 			vkCmdEndRenderPass(commandBuffer);
