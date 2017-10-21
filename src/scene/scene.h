@@ -3,6 +3,10 @@
 
 #include "texture.h"
 
+#include <glm/glm.hpp>
+
+#include <list>
+
 struct Vertex {
 	glm::vec3 position;
 	glm::vec3 normal, tangent, binormal;
