@@ -22,6 +22,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 using namespace vulkan;
 
@@ -29,6 +30,7 @@ using std::vector;
 using std::map;
 using std::exception;
 using std::runtime_error;
+using std::string;
 
 static vector<const char *> getRequiredInstanceExtensions()
 {
