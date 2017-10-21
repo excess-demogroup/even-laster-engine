@@ -93,26 +93,8 @@ static Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels
 	return texture;
 }
 
-static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass)
+static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const VkPipelineVertexInputStateCreateInfo &pipelineVertexInputStateCreateInfo)
 {
-	VkVertexInputBindingDescription vertexInputBindingDesc[1];
-	vertexInputBindingDesc[0].binding = 0;
-	vertexInputBindingDesc[0].stride = sizeof(float) * 3;
-	vertexInputBindingDesc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-	VkVertexInputAttributeDescription vertexInputAttributeDescription[1];
-	vertexInputAttributeDescription[0].binding = 0;
-	vertexInputAttributeDescription[0].location = 0;
-	vertexInputAttributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-	vertexInputAttributeDescription[0].offset = 0;
-
-	VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
-	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = ARRAY_SIZE(vertexInputBindingDesc);
-	pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDesc;
-	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = ARRAY_SIZE(vertexInputAttributeDescription);
-	pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescription;
-
 	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
 	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
@@ -481,7 +463,25 @@ int main(int argc, char *argv[])
 		VkPipelineLayout pipelineLayout;
 		vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
 
-		auto pipeline = createGraphicsPipeline(pipelineLayout, renderPass);
+		VkVertexInputBindingDescription vertexInputBindingDesc[1];
+		vertexInputBindingDesc[0].binding = 0;
+		vertexInputBindingDesc[0].stride = sizeof(float) * 3;
+		vertexInputBindingDesc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		VkVertexInputAttributeDescription vertexInputAttributeDescription[1];
+		vertexInputAttributeDescription[0].binding = 0;
+		vertexInputAttributeDescription[0].location = 0;
+		vertexInputAttributeDescription[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputAttributeDescription[0].offset = 0;
+
+		VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
+		pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = ARRAY_SIZE(vertexInputBindingDesc);
+		pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDesc;
+		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = ARRAY_SIZE(vertexInputAttributeDescription);
+		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescription;
+
+		auto pipeline = createGraphicsPipeline(pipelineLayout, renderPass, pipelineVertexInputStateCreateInfo);
 
 		auto descriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
