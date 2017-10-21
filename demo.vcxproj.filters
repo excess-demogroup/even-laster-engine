@@ -19,6 +19,7 @@
     <ClInclude Include="src\scene\rendertarget.h" />
     <ClInclude Include="src\scene\scene.h" />
     <ClInclude Include="src\scene\texture.h" />
+    <ClInclude Include="src\core\blobbuilder.h" />
     <ClInclude Include="src\vulkan.h" />
   </ItemGroup>
   <ItemGroup>
