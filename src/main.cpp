@@ -692,7 +692,7 @@ int main(int argc, char *argv[])
 #ifdef WIN32
 		MessageBox(nullptr, e.what(), nullptr, MB_OK);
 #else
-		fprintf(stderr, "FATAIL ERROR: %s\n", e.what());
+		fprintf(stderr, "FATAL ERROR: %s\n", e.what());
 #endif
 	}
 
