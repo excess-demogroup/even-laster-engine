@@ -682,7 +682,7 @@ int main(int argc, char *argv[])
 			glfwPollEvents();
 		}
 
-		err = vkQueueWaitIdle(graphicsQueue);
+		err = vkDeviceWaitIdle(device);
 		assert(err == VK_SUCCESS);
 
 	} catch (const exception &e) {
