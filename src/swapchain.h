@@ -7,6 +7,11 @@ class SwapChain
 public:
 	SwapChain(VkSurfaceKHR surface, int width, int height);
 
+	const std::vector<VkImage> &getImages() const
+	{
+		return images;
+	}
+
 	const std::vector<VkImageView> &getImageViews() const
 	{
 		return imageViews;
