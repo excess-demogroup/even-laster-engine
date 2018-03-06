@@ -5,14 +5,66 @@
 
 layout (local_size_x = 16, local_size_y = 16) in;
 layout (rgba8, binding = 0) uniform writeonly image2D outputImage;
-layout (binding = 1) uniform sampler2D samplerColor;
+layout (binding = 1) uniform sampler2DArray samplerColor;
+
+layout(push_constant) uniform fragmentPushConstants {
+	layout(offset = 0) int arrayBufferFrame;
+	layout(offset = 4) int validFrames;
+} u_pushConstants;
+
+vec3 spectrum_offset(float t)
+{
+	// Thanks to mentor! https://twitter.com/Stubbesaurus/status/818847844790575104
+	float t0 = 3.0 * t - 1.5;
+	return clamp( vec3( -t0, 1.0-abs(t0), t0), 0.0, 1.0);
+}
+
+float nrand( vec2 n )
+{
+	return fract(sin(dot(n.xy, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+vec3 sampleSpectrum(float timeA, float timeB)
+{
+	const int num_iter = 7;
+	const float stepsiz = 1.0 / (float(num_iter)-1.0);
+
+	float rnd = nrand(gl_GlobalInvocationID.xy + u_pushConstants.arrayBufferFrame * 0.1);
+	float t = rnd * stepsiz;
+
+	int slices = textureSize(samplerColor, 0).z;
+
+	vec3 sumcol = vec3(0.0);
+	vec3 sumw = vec3(0.0);
+	for (int i = 0; i < num_iter; ++i)
+	{
+		vec3 w = spectrum_offset(t);
+		sumw += w;
+
+		float time = mix(timeA, timeB, t);
+		int slice = int(time);
+
+		vec3 a = texelFetch(samplerColor, ivec3(ivec2(gl_GlobalInvocationID.xy), (slice + 0) % slices), 0).xyz;
+		vec3 b = texelFetch(samplerColor, ivec3(ivec2(gl_GlobalInvocationID.xy), (slice + 1) % slices), 0).xyz;
+		vec3 color = mix(a, b, fract(time));
+
+		sumcol += w * color;
+		t += stepsiz;
+	}
+	return sumcol.rgb /= sumw;
+}
 
 void main()
 {
-	vec3 color = texelFetch(samplerColor, ivec2(gl_GlobalInvocationID.xy), 0).xyz;
+	vec2 pos = (gl_GlobalInvocationID.xy + 0.5) / imageSize(outputImage);
+
+	float time = u_pushConstants.arrayBufferFrame;
+	float delay = 0.5 + 0.25 * cos(pos.x * 5.0) + 0.25 * cos(pos.y * 5.0);
+	delay *= textureSize(samplerColor, 0).z;
+	delay = clamp(delay, 0, u_pushConstants.validFrames - 1);
+	vec3 color = sampleSpectrum(time - delay, time - delay * 0.8);
 
 	// vignette
-	vec2 pos = (gl_GlobalInvocationID.xy + 0.5) / imageSize(outputImage);
 	color *= 1.0 - distance(pos, vec2(0.5));
 
 	imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), vec4(color, 1));
