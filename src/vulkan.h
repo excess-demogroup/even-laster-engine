@@ -147,6 +147,41 @@ namespace vulkan
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
+	inline void imageBarrier(VkCommandBuffer commandBuffer, VkImage image,
+		VkImageAspectFlags imageAspectFlags,
+		VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage,
+		VkAccessFlags srcAccess, VkAccessFlags dstAccess,
+		VkImageLayout oldLayout, VkImageLayout newLayout,
+		uint32_t oldQueueFamily = VK_QUEUE_FAMILY_IGNORED,
+		uint32_t newQueueFamily = VK_QUEUE_FAMILY_IGNORED)
+	{
+		VkImageSubresourceRange range = {
+			imageAspectFlags,
+			0, VK_REMAINING_MIP_LEVELS,
+			0, VK_REMAINING_ARRAY_LAYERS
+		};
+
+		VkImageMemoryBarrier imageBarrier = {
+			VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			nullptr,
+			srcAccess,
+			dstAccess,
+			oldLayout,
+			newLayout,
+			oldQueueFamily,
+			newQueueFamily,
+			image,
+			range
+		};
+
+		vkCmdPipelineBarrier(
+			commandBuffer, srcStage, dstStage, 0,
+			0, nullptr,
+			0, nullptr,
+			1, &imageBarrier
+			);
+	}
+
 	inline VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize> &poolSizes, int maxSets)
 	{
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
