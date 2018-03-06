@@ -178,6 +178,22 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 	return pipeline;
 }
 
+static VkPipeline createComputePipeline(VkPipelineLayout layout, VkShaderModule shaderModule, const char *name = "main")
+{
+	VkComputePipelineCreateInfo computePipelineCreateInfo = {};
+	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computePipelineCreateInfo.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	computePipelineCreateInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+	computePipelineCreateInfo.stage.module = shaderModule;
+	computePipelineCreateInfo.stage.pName = name;
+	computePipelineCreateInfo.layout = layout;
+
+	VkPipeline computePipeline;
+	auto err = vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &computePipeline);
+	assert(err == VK_SUCCESS);
+	return computePipeline;
+}
+
 static VkDescriptorSetLayout createDescriptorSetLayout(const vector<VkDescriptorSetLayoutBinding> &layoutBindings)
 {
 	VkDescriptorSetLayoutCreateInfo desciptorSetLayoutCreateInfo = {};
@@ -333,7 +349,7 @@ int main(int argc, char *argv[])
 		if (err)
 			throw runtime_error("glfwCreateWindowSurface failed!");
 
-		auto swapChain = SwapChain(surface, width, height);
+		auto swapChain = SwapChain(surface, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 
 		vector<VkFormat> depthCandidates = {
 			VK_FORMAT_D32_SFLOAT,
@@ -342,8 +358,16 @@ int main(int argc, char *argv[])
 		};
 
 		auto depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-
 		DepthRenderTarget depthRenderTarget(depthFormat, width, height);
+
+		vector<VkFormat> renderTargetCandidates = {
+			VK_FORMAT_R16G16B16A16_SFLOAT
+		};
+		auto renderTargetFormat = findBestFormat(renderTargetCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
+		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_IMAGE_ASPECT_COLOR_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+		auto computeTargetFormat = findBestFormat(renderTargetCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
+		ColorRenderTarget computeRenderTarget(computeTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
@@ -357,14 +381,14 @@ int main(int argc, char *argv[])
 		attachments[0].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		attachments[1].flags = 0;
-		attachments[1].format = swapChain.getSurfaceFormat().format;
+		attachments[1].format = renderTargetFormat;
 		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
 		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[1].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachments[1].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference depthStencilReference = {};
 		depthStencilReference.attachment = 0;
@@ -402,14 +426,14 @@ int main(int argc, char *argv[])
 		framebufferCreateInfo.layers = 1;
 
 		framebufferAttachments[0] = depthRenderTarget.getImageView();
+		framebufferAttachments[1] = colorRenderTarget.getImageView();
+
+		VkFramebuffer framebuffer;
+		err = vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffer);
+		assert(err == VK_SUCCESS);
 
 		auto imageViews = swapChain.getImageViews();
-		auto framebuffers = new VkFramebuffer[imageViews.size()];
-		for (auto i = 0u; i < imageViews.size(); i++) {
-			framebufferAttachments[1] = imageViews[i];
-			VkResult err = vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffers[i]);
-			assert(err == VK_SUCCESS);
-		}
+		auto images = swapChain.getImages();
 
 		Scene scene;
 
@@ -534,6 +558,47 @@ int main(int argc, char *argv[])
 		auto indexBuffer = Buffer(sizeof(CubeData::vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		indexBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
 
+		VkDescriptorSetLayoutBinding computeDescriptorSetLayoutBindings[] = {
+			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+		};
+
+		VkDescriptorSetLayoutCreateInfo computeDescSetLayoutCreateInfo = {};
+		computeDescSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		computeDescSetLayoutCreateInfo.bindingCount = ARRAY_SIZE(computeDescriptorSetLayoutBindings);
+		computeDescSetLayoutCreateInfo.pBindings = computeDescriptorSetLayoutBindings;
+
+		VkDescriptorSetLayout computeDescriptorSetLayout;
+		err = vkCreateDescriptorSetLayout(device, &computeDescSetLayoutCreateInfo, nullptr, &computeDescriptorSetLayout);
+		assert(err == VK_SUCCESS);
+
+		VkPipelineLayoutCreateInfo computePipelineLayoutCreateInfo = {};
+		computePipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		computePipelineLayoutCreateInfo.pSetLayouts = &computeDescriptorSetLayout;
+		computePipelineLayoutCreateInfo.setLayoutCount = 1;
+
+		VkPipelineLayout computePipelineLayout;
+		vkCreatePipelineLayout(device, &computePipelineLayoutCreateInfo, nullptr, &computePipelineLayout);
+
+		VkPipeline computePipeline = createComputePipeline(computePipelineLayout, loadShaderModule("shaders/postprocess.comp.spv"));
+
+		auto computeDescriptorPool = createDescriptorPool({
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, imageViews.size() },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageViews.size() },
+		}, imageViews.size());
+
+		auto computeDescriptorSetLayouts = vector<VkDescriptorSetLayout>(imageViews.size(), computeDescriptorSetLayout);
+		VkDescriptorSetAllocateInfo computeDescriptorSetAllocateInfo = {};
+		computeDescriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		computeDescriptorSetAllocateInfo.descriptorPool = computeDescriptorPool;
+		computeDescriptorSetAllocateInfo.descriptorSetCount = computeDescriptorSetLayouts.size();
+		computeDescriptorSetAllocateInfo.pSetLayouts = computeDescriptorSetLayouts.data();
+
+		auto computeDescriptorSets = new VkDescriptorSet[imageViews.size()];
+
+		err = vkAllocateDescriptorSets(device, &computeDescriptorSetAllocateInfo, computeDescriptorSets);
+		assert(err == VK_SUCCESS);
+
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();
 
@@ -585,7 +650,7 @@ int main(int argc, char *argv[])
 			renderPassBeginInfo.renderArea.extent.height = height;
 			renderPassBeginInfo.clearValueCount = ARRAY_SIZE(clearValues);
 			renderPassBeginInfo.pClearValues = clearValues;
-			renderPassBeginInfo.framebuffer = framebuffers[currentSwapImage];
+			renderPassBeginInfo.framebuffer = framebuffer;
 
 			vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -640,10 +705,98 @@ int main(int argc, char *argv[])
 
 			vkCmdEndRenderPass(commandBuffer);
 
+			VkDescriptorImageInfo computeDescriptorImageInfo = {};
+			computeDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			computeDescriptorImageInfo.imageView = computeRenderTarget.getImageView();
+
+			{
+				VkWriteDescriptorSet writeDescriptorSets[2] = {};
+				writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSets[0].dstSet = computeDescriptorSets[currentSwapImage];
+				writeDescriptorSets[0].dstBinding = 0;
+				writeDescriptorSets[0].descriptorCount = 1;
+				writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+				writeDescriptorSets[0].pImageInfo = &computeDescriptorImageInfo;
+
+				VkDescriptorImageInfo descriptorImageInfo = {};
+				descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				descriptorImageInfo.imageView = colorRenderTarget.getImageView();
+				descriptorImageInfo.sampler = textureSampler;
+
+				writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSets[1].dstSet = computeDescriptorSets[currentSwapImage];
+				writeDescriptorSets[1].dstBinding = 1;
+				writeDescriptorSets[1].descriptorCount = 1;
+				writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
+
+				vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
+			}
+
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentSwapImage], 0, nullptr);
+
+			imageBarrier(
+				commandBuffer,
+				computeRenderTarget.getImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+				0, VK_ACCESS_SHADER_WRITE_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+			vkCmdDispatch(commandBuffer, width / 16, height / 16, 1);
+
+			imageBarrier(
+				commandBuffer,
+				computeRenderTarget.getImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
+				VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+			imageBarrier(
+				commandBuffer,
+				images[currentSwapImage],
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0, VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+			VkImageBlit imageBlit = { };
+			imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			imageBlit.srcSubresource.layerCount = 1;
+			imageBlit.srcSubresource.mipLevel = 0;
+			imageBlit.srcOffsets[1].x = width;
+			imageBlit.srcOffsets[1].y = height;
+			imageBlit.srcOffsets[1].z = 1;
+			imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			imageBlit.dstSubresource.layerCount = 1;
+			imageBlit.dstSubresource.mipLevel = 0;
+			imageBlit.dstOffsets[1].x = width;
+			imageBlit.dstOffsets[1].y = height;
+			imageBlit.dstOffsets[1].z = 1;
+
+			vkCmdBlitImage(commandBuffer,
+				computeRenderTarget.getImage(),
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				images[currentSwapImage],
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1, &imageBlit,
+				VK_FILTER_NEAREST);
+
+			imageBarrier(
+				commandBuffer,
+				images[currentSwapImage],
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+				VK_ACCESS_TRANSFER_WRITE_BIT, 0,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
 			err = vkEndCommandBuffer(commandBuffer);
 			assert(err == VK_SUCCESS);
 
-			VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			VkPipelineStageFlags waitDstStageMask = VK_PIPELINE_BIND_POINT_COMPUTE;
 
 			VkSubmitInfo submitInfo = {};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
