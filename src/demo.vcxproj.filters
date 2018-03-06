@@ -48,6 +48,9 @@
     <CustomBuild Include="shaders\*.frag">
       <Filter>shaders</Filter>
     </CustomBuild>
+    <CustomBuild Include="shaders\*.comp">
+      <Filter>shaders</Filter>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

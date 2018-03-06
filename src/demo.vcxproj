@@ -188,6 +188,12 @@
       <Outputs>$(ProjectDir)%(Identity).spv</Outputs>
       <LinkObjects>false</LinkObjects>
     </CustomBuild>
+    <CustomBuild Include="shaders\*.comp">
+      <FileType>Document</FileType>
+      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)%(Identity).spv</Command>
+      <Outputs>$(ProjectDir)%(Identity).spv</Outputs>
+      <LinkObjects>false</LinkObjects>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
