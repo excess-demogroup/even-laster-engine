@@ -14,6 +14,7 @@
 #include "core/core.h"
 #include "swapchain.h"
 #include "shader.h"
+#include "scene/import-texture.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -436,6 +437,8 @@ int main(int argc, char *argv[])
 
 		auto baseWidth = 64, baseHeight = 64;
 #if 1
+		auto texture = importTexture("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
+#elif 0
 		auto mipLevels = 2;
 		auto texture = generateXorTexture(baseWidth, baseHeight, mipLevels, true);
 #else

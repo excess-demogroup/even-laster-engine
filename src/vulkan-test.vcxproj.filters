@@ -11,6 +11,9 @@
     <ClCompile Include="scene\texture.cpp">
       <Filter>scene</Filter>
     </ClCompile>
+    <ClCompile Include="scene\import-texture.cpp">
+      <Filter>scene</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="swapchain.h" />
@@ -32,6 +35,9 @@
     </ClInclude>
     <ClInclude Include="shader.h" />
     <ClInclude Include="scene\rendertarget.h">
+      <Filter>scene</Filter>
+    </ClInclude>
+    <ClInclude Include="scene\import-texture.h">
       <Filter>scene</Filter>
     </ClInclude>
   </ItemGroup>
