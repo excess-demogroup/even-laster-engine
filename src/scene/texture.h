@@ -16,6 +16,10 @@ public:
 		return std::max(size >> mipLevel, 1);
 	}
 
+	int getWidth(int level = 0) { return mipSize(baseWidth, level); }
+	int getHeight(int level = 0) { return mipSize(baseHeight, level); }
+	int getDepth(int level = 0) { return mipSize(baseDepth, level); }
+
 	int getMipLevels() const { return mipLevels; }
 	int getArrayLayers() const { return arrayLayers; }
 
