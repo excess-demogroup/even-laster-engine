@@ -508,7 +508,7 @@ int main(int argc, char *argv[])
 		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
 		writeDescriptorSets[0].dstBinding = 0;
 
-		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), true);
+		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), true, true);
 
 		VkDescriptorImageInfo descriptorImageInfo = {};
 		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
