@@ -5,7 +5,9 @@
 
 class RenderTargetBase {
 protected:
-	RenderTargetBase(VkFormat format, int width, int height, VkImageUsageFlags usage, VkImageAspectFlags aspect)
+	RenderTargetBase(VkFormat format, int width, int height, VkImageUsageFlags usage, VkImageAspectFlags aspect) :
+		width(width),
+		height(height)
 	{
 		VkImageCreateInfo imageCreateInfo = {};
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -45,12 +47,14 @@ protected:
 
 public:
 
-	VkImageView getImageView()
-	{
-		return imageView;
-	}
+	int getWidth() { return width; }
+	int getHeight() { return height; }
+
+	VkImage getImage() { return image; }
+	VkImageView getImageView() { return imageView; }
 
 private:
+	int width, height;
 	VkImage image;
 	VkImageView imageView;
 };
