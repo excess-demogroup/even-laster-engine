@@ -16,6 +16,9 @@ public:
 		return std::max(size >> mipLevel, 1);
 	}
 
+	int getMipLevels() const { return mipLevels; }
+	int getArrayLayers() const { return arrayLayers; }
+
 	void uploadFromStagingBuffer(StagingBuffer *stagingBuffer, int mipLevel = 0, int arrayLayer = 0);
 
 	VkImageView getImageView()
@@ -50,6 +53,7 @@ public:
 
 protected:
 	int baseWidth, baseHeight, baseDepth;
+	int mipLevels, arrayLayers;
 
 	VkImage image;
 	VkImageView imageView;

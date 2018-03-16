@@ -5,7 +5,9 @@ using namespace vulkan;
 TextureBase::TextureBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int mipLevels, int arrayLayers, bool useStaging) :
 	baseWidth(width),
 	baseHeight(height),
-	baseDepth(depth)
+	baseDepth(depth),
+	mipLevels(mipLevels),
+	arrayLayers(mipLevels)
 {
 	assert(0 < width && (uint32_t)width <= UINT32_MAX);
 	assert(0 < height && (uint32_t)height <= UINT32_MAX);
