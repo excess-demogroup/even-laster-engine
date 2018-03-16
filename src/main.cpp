@@ -1,3 +1,8 @@
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <algorithm>
@@ -272,6 +277,7 @@ namespace CubeData
 }
 
 #ifdef WIN32
+
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPTSTR lpCmdLine,
