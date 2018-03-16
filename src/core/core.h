@@ -1,7 +1,7 @@
 #ifndef CORE_H
 #define CORE_H
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #define _CRT_SECURE_NO_WARNINGS
 #define snprintf _snprintf
 #endif
