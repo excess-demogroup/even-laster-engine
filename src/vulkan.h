@@ -9,6 +9,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <algorithm>
 #include <functional>
 #include <vector>
 #include <cassert>
@@ -217,6 +218,34 @@ namespace vulkan
 		assert(err == VK_SUCCESS);
 
 		return imageView;
+	}
+
+	inline VkSampler createSampler(float maxLod, bool wantAnisotropy)
+	{
+		VkSamplerCreateInfo samplerCreateInfo = {};
+		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerCreateInfo.magFilter = VK_FILTER_LINEAR;
+		samplerCreateInfo.minFilter = VK_FILTER_LINEAR;
+		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+		samplerCreateInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerCreateInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerCreateInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerCreateInfo.mipLodBias = 0.0f;
+		samplerCreateInfo.compareOp = VK_COMPARE_OP_NEVER;
+		samplerCreateInfo.minLod = 0.0f;
+		samplerCreateInfo.maxLod = maxLod;
+		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+
+		if (wantAnisotropy && vulkan::enabledFeatures.samplerAnisotropy) {
+			samplerCreateInfo.maxAnisotropy = std::min(8.0f, vulkan::deviceProperties.limits.maxSamplerAnisotropy);
+			samplerCreateInfo.anisotropyEnable = VK_TRUE;
+		}
+
+		VkSampler textureSampler;
+		VkResult err = vkCreateSampler(device, &samplerCreateInfo, nullptr, &textureSampler);
+		assert(err == VK_SUCCESS);
+
+		return textureSampler;
 	}
 
 	void instanceFuncsInit(VkInstance instance);
