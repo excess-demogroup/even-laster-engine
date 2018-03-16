@@ -495,10 +495,7 @@ int main(int argc, char *argv[])
 
 		auto descriptorSet = allocateDescriptorSet(descriptorPool, descriptorSetLayout);
 
-		VkDescriptorBufferInfo descriptorBufferInfo = {};
-		descriptorBufferInfo.buffer = uniformBuffer.getBuffer();
-		descriptorBufferInfo.offset = 0;
-		descriptorBufferInfo.range = VK_WHOLE_SIZE;
+		VkDescriptorBufferInfo descriptorBufferInfo = uniformBuffer.getDescriptorBufferInfo();
 
 		VkWriteDescriptorSet writeDescriptorSets[2] = {};
 		writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

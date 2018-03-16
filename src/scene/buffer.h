@@ -37,6 +37,15 @@ public:
 		return buffer;
 	}
 
+	VkDescriptorBufferInfo getDescriptorBufferInfo(VkDeviceSize offset = 0, VkDeviceSize range = VK_WHOLE_SIZE)
+	{
+		VkDescriptorBufferInfo descriptorBufferInfo;
+		descriptorBufferInfo.buffer = buffer;
+		descriptorBufferInfo.offset = offset;
+		descriptorBufferInfo.range = range;
+		return descriptorBufferInfo;
+	}
+
 	void uploadFromStagingBuffer(StagingBuffer *stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 
 private:
