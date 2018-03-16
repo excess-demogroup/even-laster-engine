@@ -42,6 +42,15 @@ public:
 		return ret;
 	}
 
+	VkDescriptorImageInfo getDescriptorImageInfo(VkSampler textureSampler)
+	{
+		VkDescriptorImageInfo descriptorImageInfo;
+		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; // TODO: make *sure* of this!
+		descriptorImageInfo.imageView = imageView;
+		descriptorImageInfo.sampler = textureSampler;
+		return descriptorImageInfo;
+	}
+
 	void *map(VkDeviceSize offset, VkDeviceSize size)
 	{
 		void *ret;

@@ -510,11 +510,7 @@ int main(int argc, char *argv[])
 
 		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), true, true);
 
-		VkDescriptorImageInfo descriptorImageInfo = {};
-		descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		descriptorImageInfo.imageView = texture.getImageView();
-		descriptorImageInfo.sampler = textureSampler;
-
+		VkDescriptorImageInfo descriptorImageInfo = texture.getDescriptorImageInfo(textureSampler);
 		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		writeDescriptorSets[1].dstSet = descriptorSet;
 		writeDescriptorSets[1].descriptorCount = 1;
