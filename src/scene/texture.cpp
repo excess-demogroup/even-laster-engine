@@ -7,7 +7,7 @@ TextureBase::TextureBase(VkFormat format, VkImageType imageType, VkImageViewType
 	baseHeight(height),
 	baseDepth(depth),
 	mipLevels(mipLevels),
-	arrayLayers(mipLevels)
+	arrayLayers(arrayLayers)
 {
 	assert(0 < width && (uint32_t)width <= UINT32_MAX);
 	assert(0 < height && (uint32_t)height <= UINT32_MAX);
