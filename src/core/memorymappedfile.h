@@ -1,3 +1,6 @@
+#ifndef MEMORYMAPPEDFILE_H
+#define MEMORYMAPPEDFILE_H
+
 class MemoryMappedFile
 {
 public:
@@ -37,3 +40,5 @@ private:
 	void *data;
 	size_t size;
 };
+
+#endif // MEMORYMAPPEDFILE_H
