@@ -371,17 +371,15 @@ int main(int argc, char *argv[])
 		auto model = const_cast<Model*>(hackScene->getObjects().front()->getModel());
 		Mesh &mesh = *const_cast<Mesh*>(model->getMesh());
 
-		auto t1 = scene.createMatrixTransform();
-		auto t2 = scene.createMatrixTransform(t1);
-		scene.createObject(model, t1);
-		scene.createObject(model, t2);
+		auto transform = scene.createMatrixTransform();
+		scene.createObject(model, transform);
 
 		// OK, let's prepare for rendering!
 
 		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
 
 		auto descriptorSetLayout = createDescriptorSetLayout({
-			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT },
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT },
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
 		});
 		auto pipelineLayout = createPipelineLayout({ descriptorSetLayout }, {});
@@ -409,6 +407,7 @@ int main(int argc, char *argv[])
 
 		struct {
 			glm::mat4 modelViewProjectionMatrix;
+			glm::vec4 viewPosition;
 		} perObjectUniforms;
 		auto uniformSize = sizeof(perObjectUniforms);
 		auto uniformBufferSpacing = uint32_t(alignSize(uniformSize, deviceProperties.limits.minUniformBufferOffsetAlignment));
@@ -428,7 +427,7 @@ int main(int argc, char *argv[])
 		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
 		writeDescriptorSets[0].dstBinding = 0;
 
-		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), true, true);
+		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), false, false);
 
 		VkDescriptorImageInfo descriptorImageInfo = texture.getDescriptorImageInfo(textureSampler);
 		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -553,11 +552,7 @@ int main(int argc, char *argv[])
 
 			auto th = float(time);
 
-			// animate, yo
-			t1->setLocalMatrix(glm::rotate(glm::mat4(1), th, glm::vec3(0, 0, 1)));
-			t2->setLocalMatrix(glm::translate(glm::mat4(1), glm::vec3(cos(th), 1, 1)));
-
-			auto viewPosition = glm::vec3(sin(th * 0.1f) * 10.0f, 0, cos(th * 0.1f) * 10.0f);
+			auto viewPosition = glm::vec3(sin(th) * 3.0f, cos(th) * 0.5f, cos(th) * 3.0f);
 			auto viewMatrix = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 			auto fov = 60.0f;
 			auto aspect = float(width) / height;
@@ -573,7 +568,11 @@ int main(int argc, char *argv[])
 			for (auto transform : transforms) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
 				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
+
 				perObjectUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
+				// HACK: no non-per-object ubo yet
+				perObjectUniforms.viewPosition = glm::vec4(viewPosition, 0);
+
 				memcpy(static_cast<uint8_t *>(ptr) + offset, &perObjectUniforms, sizeof(perObjectUniforms));
 				offsetMap[transform] = offset;
 				offset += uniformBufferSpacing;

@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
-  <asset><contributor><author></author><authoring_tool>FBX COLLADA exporter</authoring_tool><comments></comments></contributor><created>2018-03-26T16:55:18Z</created><keywords></keywords><modified>2018-03-26T16:55:18Z</modified><revision></revision><subject></subject><title></title><unit meter="0.025400" name="centimeter"></unit><up_axis>Y_UP</up_axis></asset>
+  <asset><contributor><author></author><authoring_tool>FBX COLLADA exporter</authoring_tool><comments></comments></contributor><created>2018-03-26T17:16:57Z</created><keywords></keywords><modified>2018-03-26T17:16:57Z</modified><revision></revision><subject></subject><title></title><unit meter="0.025400" name="centimeter"></unit><up_axis>Y_UP</up_axis></asset>
   <library_geometries>
     <geometry id="Box02-lib" name="Box02Mesh">
       <mesh>
         <source id="Box02-POSITION">
           <float_array id="Box02-POSITION-array" count="72">
--4.250000 -5.000000 -4.250000
-4.250000 -4.250000 -5.000000
--5.000000 4.250000 -4.250000
-4.250000 4.250000 -5.000000
--4.250000 -5.000000 4.250000
-5.000000 -4.250000 4.250000
--5.000000 4.250000 4.250000
-4.250000 5.000000 4.250000
--5.000000 -4.250000 -4.250000
--4.250000 -4.250000 -5.000000
-5.000000 -4.250000 -4.250000
-4.250000 -5.000000 -4.250000
--4.250000 5.000000 -4.250000
--4.250000 4.250000 -5.000000
-4.250000 5.000000 -4.250000
-5.000000 4.250000 -4.250000
--4.250000 -4.250000 5.000000
--5.000000 -4.250000 4.250000
-4.250000 -4.250000 5.000000
-4.250000 -5.000000 4.250000
--4.250000 4.250000 5.000000
--4.250000 5.000000 4.250000
-4.250000 4.250000 5.000000
-5.000000 4.250000 4.250000
+-1.322635 -1.556041 -1.322635
+1.322635 -1.322635 -1.556041
+-1.556041 1.322635 -1.322635
+1.322635 1.322635 -1.556041
+-1.322635 -1.556041 1.322635
+1.556041 -1.322635 1.322635
+-1.556041 1.322635 1.322635
+1.322635 1.556041 1.322635
+-1.556041 -1.322635 -1.322635
+-1.322635 -1.322635 -1.556041
+1.556041 -1.322635 -1.322635
+1.322635 -1.556041 -1.322635
+-1.322635 1.556041 -1.322635
+-1.322635 1.322635 -1.556041
+1.322635 1.556041 -1.322635
+1.556041 1.322635 -1.322635
+-1.322635 -1.322635 1.556041
+-1.556041 -1.322635 1.322635
+1.322635 -1.322635 1.556041
+1.322635 -1.556041 1.322635
+-1.322635 1.322635 1.556041
+-1.322635 1.556041 1.322635
+1.322635 1.322635 1.556041
+1.556041 1.322635 1.322635
 </float_array>
           <technique_common>
             <accessor source="#Box02-POSITION-array" count="24" stride="3">
