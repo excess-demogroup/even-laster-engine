@@ -36,6 +36,11 @@ namespace vulkan
 		PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT;
 	} instanceFuncs;
 
+	static VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
+	{
+		return ((value + alignment - 1) / alignment) * alignment;
+	}
+
 	inline uint32_t getMemoryTypeIndex(const VkMemoryRequirements &memoryRequirements, VkMemoryPropertyFlags propertyFlags)
 	{
 		for (auto i = 0u; i < VK_MAX_MEMORY_TYPES; i++) {

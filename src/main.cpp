@@ -37,12 +37,6 @@ static vector<const char *> getRequiredInstanceExtensions()
 #include "scene/scene.h"
 #include "scene/rendertarget.h"
 
-static VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
-{
-
-	return ((value + alignment - 1) / alignment) * alignment;
-}
-
 static Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool useStaging = true)
 {
 	Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels, 1, useStaging);
