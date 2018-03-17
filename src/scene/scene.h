@@ -44,6 +44,8 @@ public:
 		mesh(mesh),
 		material(material)
 	{
+		assert(mesh != nullptr);
+		assert(material != nullptr);
 	}
 
 	const Mesh *getMesh() const { return mesh; }
