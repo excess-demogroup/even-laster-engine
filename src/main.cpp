@@ -482,7 +482,11 @@ int main(int argc, char *argv[])
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		}, 1);
 
-		auto uniformBufferSpacing = uint32_t(alignSize(sizeof(float) * 4 * 4, deviceProperties.limits.minUniformBufferOffsetAlignment));
+		struct {
+			glm::mat4 modelViewProjectionMatrix;
+		} perObjectUniforms;
+		auto uniformSize = sizeof(perObjectUniforms);
+		auto uniformBufferSpacing = uint32_t(alignSize(uniformSize, deviceProperties.limits.minUniformBufferOffsetAlignment));
 		auto uniformBufferSize = VkDeviceSize(uniformBufferSpacing * scene.getTransforms().size());
 
 		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
@@ -606,8 +610,8 @@ int main(int argc, char *argv[])
 			for (auto transform : transforms) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
 				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
-
-				memcpy(static_cast<uint8_t *>(ptr) + offset, glm::value_ptr(modelViewProjectionMatrix), sizeof(modelViewProjectionMatrix));
+				perObjectUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
+				memcpy(static_cast<uint8_t *>(ptr) + offset, &perObjectUniforms, sizeof(perObjectUniforms));
 				offsetMap[transform] = offset;
 				offset += uniformBufferSpacing;
 			}
@@ -623,7 +627,7 @@ int main(int argc, char *argv[])
 				assert(offsetMap.count(object->getTransform()) > 0);
 
 				auto offset = offsetMap[object->getTransform()];
-				assert(offset <= uniformBufferSize - sizeof(float) * 4 * 4);
+				assert(offset <= uniformBufferSize - uniformSize);
 				uint32_t dynamicOffsets[] = { (uint32_t)offset };
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);
 				// vkCmdDraw(commandBuffer, ARRAY_SIZE(vertexPositions), 1, 0, 0);
