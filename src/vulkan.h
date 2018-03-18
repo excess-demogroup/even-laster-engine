@@ -87,7 +87,7 @@ namespace vulkan
 
 	inline VkFormat findBestFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
-		for (VkFormat format : candidates) {
+		for (auto format : candidates) {
 			VkFormatProperties props;
 			vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
 
