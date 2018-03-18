@@ -5,7 +5,7 @@
 class SwapChain
 {
 public:
-	SwapChain(VkSurfaceKHR surface, int width, int height);
+	SwapChain(VkSurfaceKHR surface, int width, int height, VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
 	const std::vector<VkImage> &getImages() const
 	{

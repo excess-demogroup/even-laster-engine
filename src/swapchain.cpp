@@ -40,7 +40,7 @@ static vector<VkPresentModeKHR> getPresentModes(VkSurfaceKHR surface)
 	return presentModes;
 }
 
-SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
+SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height, VkImageUsageFlags imageUsage) :
 	swapChain(VK_NULL_HANDLE)
 {
 	VkBool32 surfaceSupported = VK_FALSE;
@@ -55,7 +55,18 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 		surfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
 	} else {
 		// find sRGB color format
-		auto result = std::find_if(surfaceFormats.begin(), surfaceFormats.end(), [](const VkSurfaceFormatKHR &format) {
+		auto result = std::find_if(surfaceFormats.begin(), surfaceFormats.end(), [&](const VkSurfaceFormatKHR &format) {
+			VkFormatProperties formatProperties;
+			vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &formatProperties);
+
+			if ((imageUsage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) != 0 &&
+				(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) == 0)
+				return false;
+
+			if ((imageUsage & VK_IMAGE_USAGE_STORAGE_BIT) != 0 &&
+				(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) == 0)
+				return false;
+
 			if (format.colorSpace != VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
 				return false;
 
@@ -94,7 +105,8 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height) :
 	swapchainCreateInfo.imageFormat = surfaceFormat.format;
 	swapchainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
 	swapchainCreateInfo.imageExtent = { (uint32_t)width, (uint32_t)height };
-	swapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	swapchainCreateInfo.imageUsage = imageUsage;
+
 	swapchainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
 	swapchainCreateInfo.imageArrayLayers = 1;
 	swapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
