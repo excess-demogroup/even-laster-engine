@@ -1,8 +1,10 @@
 Debug/
 Release/
+/.vs/
 /ipch/
 /packages/
 *.opensdf
 *.sdf
 *.spv
 *.suo
+*.vcxproj.user
