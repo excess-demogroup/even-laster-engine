@@ -66,6 +66,15 @@ private:
 	VkImageView imageView;
 };
 
+class ColorRenderTarget : public RenderTargetBase
+{
+public:
+	ColorRenderTarget(VkFormat format, int width, int height, VkImageUsageFlags usage = 0) :
+		RenderTargetBase(format, width, height, 1, 1, usage | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_ASPECT_COLOR_BIT)
+	{
+	}
+};
+
 class DepthRenderTarget : public RenderTargetBase
 {
 public:
