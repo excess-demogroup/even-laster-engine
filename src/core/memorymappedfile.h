@@ -14,7 +14,10 @@ public:
 		WIN32_FILE_ATTRIBUTE_DATA attr;
 		if (!GetFileAttributesEx(path, GetFileExInfoStandard, &attr))
 			throw std::runtime_error("failed to get file attributes");
-		size = attr.nFileSizeLow; // TODO: care about nFileSizeHigh?
+		size = attr.nFileSizeLow;
+
+		if (attr.nFileSizeHigh != 0)
+			throw std::runtime_error("too large file");
 
 		hfile = CreateFile(path, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (INVALID_HANDLE_VALUE == hfile)
