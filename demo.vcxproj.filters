@@ -1,54 +1,54 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="swapchain.cpp" />
-    <ClCompile Include="vkInstance.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="scene\buffer.cpp">
+    <ClCompile Include="src\swapchain.cpp" />
+    <ClCompile Include="src\vkInstance.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\scene\buffer.cpp">
       <Filter>scene</Filter>
     </ClCompile>
-    <ClCompile Include="shader.cpp" />
-    <ClCompile Include="scene\texture.cpp">
+    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\scene\texture.cpp">
       <Filter>scene</Filter>
     </ClCompile>
-    <ClCompile Include="scene\import-texture.cpp">
+    <ClCompile Include="src\scene\import-texture.cpp">
       <Filter>scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="swapchain.h" />
-    <ClInclude Include="vulkan.h" />
-    <ClInclude Include="core\memorymappedfile.h">
+    <ClInclude Include="src\swapchain.h" />
+    <ClInclude Include="src\vulkan.h" />
+    <ClInclude Include="src\core\memorymappedfile.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="core\core.h">
+    <ClInclude Include="src\core\core.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="scene\scene.h">
+    <ClInclude Include="src\scene\scene.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="scene\texture.h">
+    <ClInclude Include="src\scene\texture.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="scene\buffer.h">
+    <ClInclude Include="src\scene\buffer.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="shader.h" />
-    <ClInclude Include="scene\rendertarget.h">
+    <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\scene\rendertarget.h">
       <Filter>scene</Filter>
     </ClInclude>
-    <ClInclude Include="scene\import-texture.h">
+    <ClInclude Include="src\scene\import-texture.h">
       <Filter>scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\*.vert">
+    <CustomBuild Include="src\shaders\*.vert">
       <Filter>shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\*.frag">
+    <CustomBuild Include="src\shaders\*.frag">
       <Filter>shaders</Filter>
     </CustomBuild>
-    <CustomBuild Include="shaders\*.comp">
+    <CustomBuild Include="src\shaders\*.comp">
       <Filter>shaders</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -56,13 +56,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="shaders">
+    <Filter Include="src\shaders">
       <UniqueIdentifier>{cf1e72d2-8f58-4898-8ceb-2c8fe81609c0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="core">
+    <Filter Include="src\core">
       <UniqueIdentifier>{944ab1d8-1e30-4a89-bc4a-c2e6cdf312fb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="scene">
+    <Filter Include="src\scene">
       <UniqueIdentifier>{1a13c17b-8f55-4db1-a2ee-c3c63567849c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

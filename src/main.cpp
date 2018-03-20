@@ -143,7 +143,7 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 		nullptr,
 		0,
 		VK_SHADER_STAGE_VERTEX_BIT,
-		loadShaderModule("shaders/triangle.vert.spv"),
+		loadShaderModule("data/shaders/triangle.vert.spv"),
 		"main",
 		NULL
 	}, {
@@ -151,7 +151,7 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 		nullptr,
 		0,
 		VK_SHADER_STAGE_FRAGMENT_BIT,
-		loadShaderModule("shaders/triangle.frag.spv"),
+		loadShaderModule("data/shaders/triangle.frag.spv"),
 		"main",
 		NULL
 	} };
@@ -580,7 +580,7 @@ int main(int argc, char *argv[])
 		VkPipelineLayout computePipelineLayout;
 		vkCreatePipelineLayout(device, &computePipelineLayoutCreateInfo, nullptr, &computePipelineLayout);
 
-		VkPipeline computePipeline = createComputePipeline(computePipelineLayout, loadShaderModule("shaders/postprocess.comp.spv"));
+		VkPipeline computePipeline = createComputePipeline(computePipelineLayout, loadShaderModule("data/shaders/postprocess.comp.spv"));
 
 		auto computeDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, imageViews.size() },

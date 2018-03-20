@@ -155,43 +155,43 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="core\core.h" />
-    <ClInclude Include="core\memorymappedfile.h" />
-    <ClInclude Include="scene\buffer.h" />
-    <ClInclude Include="scene\import-texture.h" />
-    <ClInclude Include="scene\rendertarget.h" />
-    <ClInclude Include="scene\scene.h" />
-    <ClInclude Include="scene\texture.h" />
-    <ClInclude Include="shader.h" />
-    <ClInclude Include="swapchain.h" />
-    <ClInclude Include="vulkan.h" />
+    <ClInclude Include="src\core\core.h" />
+    <ClInclude Include="src\core\memorymappedfile.h" />
+    <ClInclude Include="src\scene\buffer.h" />
+    <ClInclude Include="src\scene\import-texture.h" />
+    <ClInclude Include="src\scene\rendertarget.h" />
+    <ClInclude Include="src\scene\scene.h" />
+    <ClInclude Include="src\scene\texture.h" />
+    <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\swapchain.h" />
+    <ClInclude Include="src\vulkan.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="scene\buffer.cpp" />
-    <ClCompile Include="scene\import-texture.cpp" />
-    <ClCompile Include="scene\texture.cpp" />
-    <ClCompile Include="shader.cpp" />
-    <ClCompile Include="swapchain.cpp" />
-    <ClCompile Include="vkInstance.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\scene\buffer.cpp" />
+    <ClCompile Include="src\scene\import-texture.cpp" />
+    <ClCompile Include="src\scene\texture.cpp" />
+    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\swapchain.cpp" />
+    <ClCompile Include="src\vkInstance.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="shaders\*.frag">
+    <CustomBuild Include="src\shaders\*.frag">
       <FileType>Document</FileType>
-      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)%(Identity).spv</Command>
-      <Outputs>$(ProjectDir)%(Identity).spv</Outputs>
+      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)data\shaders\%(Filename)%(Extension).spv</Command>
+      <Outputs>$(ProjectDir)data\shaders\%(Filename)%(Extension).spv</Outputs>
       <LinkObjects>false</LinkObjects>
     </CustomBuild>
-    <CustomBuild Include="shaders\*.vert">
+    <CustomBuild Include="src\shaders\*.vert">
       <FileType>Document</FileType>
-      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)%(Identity).spv</Command>
-      <Outputs>$(ProjectDir)%(Identity).spv</Outputs>
+      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)data\shaders\%(Filename)%(Extension).spv</Command>
+      <Outputs>$(ProjectDir)data\shaders\%(Filename)%(Extension).spv</Outputs>
       <LinkObjects>false</LinkObjects>
     </CustomBuild>
-    <CustomBuild Include="shaders\*.comp">
+    <CustomBuild Include="src\shaders\*.comp">
       <FileType>Document</FileType>
-      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)%(Identity).spv</Command>
-      <Outputs>$(ProjectDir)%(Identity).spv</Outputs>
+      <Command>glslangValidator -V %(FullPath) -o $(ProjectDir)data\shaders\%(Filename)%(Extension).spv</Command>
+      <Outputs>$(ProjectDir)data\shaders\%(Filename)%(Extension).spv</Outputs>
       <LinkObjects>false</LinkObjects>
     </CustomBuild>
   </ItemGroup>
@@ -200,18 +200,18 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\glfw.3.2.1.5\build\native\glfw.targets" Condition="Exists('..\packages\glfw.3.2.1.5\build\native\glfw.targets')" />
-    <Import Project="..\packages\glm.0.9.8.5\build\native\glm.targets" Condition="Exists('..\packages\glm.0.9.8.5\build\native\glm.targets')" />
-    <Import Project="..\packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets" Condition="Exists('..\packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets')" />
-    <Import Project="..\packages\FreeImage.3.17.0\build\native\FreeImage.targets" Condition="Exists('..\packages\FreeImage.3.17.0\build\native\FreeImage.targets')" />
+    <Import Project="packages\glfw.3.2.1.5\build\native\glfw.targets" Condition="Exists('packages\glfw.3.2.1.5\build\native\glfw.targets')" />
+    <Import Project="packages\glm.0.9.8.5\build\native\glm.targets" Condition="Exists('packages\glm.0.9.8.5\build\native\glm.targets')" />
+    <Import Project="packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets" Condition="Exists('packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets')" />
+    <Import Project="packages\FreeImage.3.17.0\build\native\FreeImage.targets" Condition="Exists('packages\FreeImage.3.17.0\build\native\FreeImage.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\glfw.3.2.1.5\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\glfw.3.2.1.5\build\native\glfw.targets'))" />
-    <Error Condition="!Exists('..\packages\glm.0.9.8.5\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\glm.0.9.8.5\build\native\glm.targets'))" />
-    <Error Condition="!Exists('..\packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\FreeImage.3.17.0\build\native\FreeImage.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\FreeImage.3.17.0\build\native\FreeImage.targets'))" />
+    <Error Condition="!Exists('packages\glfw.3.2.1.5\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glfw.3.2.1.5\build\native\glfw.targets'))" />
+    <Error Condition="!Exists('packages\glm.0.9.8.5\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\glm.0.9.8.5\build\native\glm.targets'))" />
+    <Error Condition="!Exists('packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\FreeImage.redist.3.17.0\build\native\FreeImage.redist.targets'))" />
+    <Error Condition="!Exists('packages\FreeImage.3.17.0\build\native\FreeImage.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\FreeImage.3.17.0\build\native\FreeImage.targets'))" />
   </Target>
 </Project>
