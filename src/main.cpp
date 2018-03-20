@@ -271,6 +271,7 @@ int main(int argc, char *argv[])
 
 	auto appName = "some excess demo";
 	auto width = 1280, height = 720;
+	auto fullscreen = false;
 	GLFWwindow *win = nullptr;
 
 	try {
@@ -282,7 +283,7 @@ int main(int argc, char *argv[])
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-		win = glfwCreateWindow(width, height, appName, nullptr, nullptr);
+		win = glfwCreateWindow(width, height, appName, fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
 
 		glfwSetKeyCallback(win, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
 			if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
