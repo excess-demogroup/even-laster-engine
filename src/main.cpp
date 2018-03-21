@@ -18,6 +18,12 @@
 #include "scene/import-texture.h"
 #include "scene/sceneimporter.h"
 
+#include "sync/sync.h"
+
+const auto beatsPerMinute = 174.0f;
+const auto rowsPerBeat = 8;
+const auto rowRate = (beatsPerMinute / 60.0) * rowsPerBeat;
+
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -523,6 +529,21 @@ int main(int argc, char *argv[])
 		err = vkQueueWaitIdle(graphicsQueue);
 		assert(err == VK_SUCCESS);
 
+		auto rocket = sync_create_device("data/sync");
+		if (!rocket)
+			throw runtime_error("sync_create_device() failed: out of memory?");
+
+#ifndef SYNC_PLAYER
+		if (sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT))
+			throw runtime_error("failed to connect to host");
+#endif
+
+		auto clear_r = sync_get_track(rocket, "clear.r");
+		auto clear_g = sync_get_track(rocket, "clear.g");
+		auto clear_b = sync_get_track(rocket, "clear.b");
+		auto cam_rot = sync_get_track(rocket, "camera:rot.y");
+		auto cam_dist = sync_get_track(rocket, "camera:dist");
+
 		BASS_Start();
 		BASS_ChannelPlay(stream, false);
 
@@ -530,6 +551,35 @@ int main(int argc, char *argv[])
 		while (!glfwWindowShouldClose(win)) {
 			auto pos = BASS_ChannelGetPosition(stream, BASS_POS_BYTE);
 			auto time = BASS_ChannelBytes2Seconds(stream, pos);
+			auto row = time * rowRate;
+
+#ifndef SYNC_PLAYER
+			static sync_cb bassCallbacks = {
+				// pause
+				[](void *d, int flag) {
+					HSTREAM h = *((HSTREAM *)d);
+					if (flag)
+						BASS_ChannelPause(h);
+					else
+						BASS_ChannelPlay(h, false);
+				},
+					// set row
+					[](void *d, int row) {
+					HSTREAM h = *((HSTREAM *)d);
+					QWORD pos = BASS_ChannelSeconds2Bytes(h, row / rowRate);
+					BASS_ChannelSetPosition(h, pos, BASS_POS_BYTE);
+				},
+
+					// is playing
+					[](void *d) -> int {
+					HSTREAM h = *((HSTREAM *)d);
+					return BASS_ChannelIsActive(h) == BASS_ACTIVE_PLAYING;
+				},
+			};
+
+			if (sync_update(rocket, int(floor(row)), &bassCallbacks, (void *)&stream))
+				sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT);
+#endif
 
 			auto currentSwapImage = swapChain.aquireNextImage(backBufferSemaphore);
 			static int nextArrayBufferFrame = 0;
@@ -553,9 +603,9 @@ int main(int argc, char *argv[])
 			VkClearValue clearValues[2];
 			clearValues[0].depthStencil = { 1.0f, 0 };
 			clearValues[1].color = {
-				0.5f,
-				0.5f,
-				0.5f,
+				float(sync_get_val(clear_r, row)),
+				float(sync_get_val(clear_g, row)),
+				float(sync_get_val(clear_b, row)),
 				1.0f
 			};
 
@@ -575,9 +625,10 @@ int main(int argc, char *argv[])
 			setViewport(commandBuffer, 0, 0, float(width), float(height));
 			setScissor(commandBuffer, 0, 0, width, height);
 
-			auto th = float(time);
+			auto th = sync_get_val(cam_rot, row) * (M_PI / 180);
+			auto dist = sync_get_val(cam_dist, row);
 
-			auto viewPosition = glm::vec3(sin(th) * 3.0f, cos(th) * 0.5f, cos(th) * 3.0f);
+			auto viewPosition = glm::vec3(sin(th) * dist, cos(th) * 0.5f, cos(th) * dist);
 			auto viewMatrix = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 			auto fov = 60.0f;
 			auto aspect = float(width) / height;
@@ -700,6 +751,11 @@ int main(int argc, char *argv[])
 
 			glfwPollEvents();
 		}
+
+#ifndef SYNC_PLAYER
+		sync_save_tracks(rocket);
+#endif
+		sync_destroy_device(rocket);
 
 		err = vkDeviceWaitIdle(device);
 		assert(err == VK_SUCCESS);

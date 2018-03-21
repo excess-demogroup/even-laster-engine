@@ -11,6 +11,8 @@
     <ClCompile Include="src\scene\scene.cpp" />
     <ClCompile Include="src\scene\sceneimporter.cpp" />
     <ClCompile Include="src\scenerenderer.cpp" />
+    <ClCompile Include="src\sync\device.c" />
+    <ClCompile Include="src\sync\track.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\swapchain.h" />
@@ -22,6 +24,10 @@
     <ClInclude Include="src\scene\rendertarget.h" />
     <ClInclude Include="src\scene\scene.h" />
     <ClInclude Include="src\scene\texture.h" />
+    <ClInclude Include="src\sync\base.h" />
+    <ClInclude Include="src\sync\device.h" />
+    <ClInclude Include="src\sync\sync.h" />
+    <ClInclude Include="src\sync\track.h" />
     <ClInclude Include="src\vulkan.h" />
     <ClInclude Include="src\core\blobbuilder.h" />
     <ClInclude Include="src\scene\sceneimporter.h" />

@@ -1,0 +1,50 @@
+<sync rows="4096">
+	<tracks>
+		<track name="clear.r">
+			<key row="0" value="0" interpolation="0"/>
+			<key row="144" value="0.1" interpolation="1"/>
+			<key row="148" value="0" interpolation="0"/>
+		</track>
+		<track name="clear.g">
+			<key row="0" value="0" interpolation="0"/>
+			<key row="144" value="0.1" interpolation="1"/>
+			<key row="148" value="0" interpolation="0"/>
+		</track>
+		<track name="clear.b">
+			<key row="0" value="0" interpolation="0"/>
+			<key row="144" value="0.1" interpolation="1"/>
+			<key row="148" value="0" interpolation="0"/>
+		</track>
+		<track name="camera:rot.y">
+			<key row="0" value="0" interpolation="0"/>
+			<key row="288" value="50" interpolation="0"/>
+			<key row="289" value="-2" interpolation="0"/>
+			<key row="290" value="20" interpolation="0"/>
+			<key row="291" value="-2" interpolation="1"/>
+			<key row="296" value="0" interpolation="0"/>
+			<key row="440" value="50" interpolation="1"/>
+			<key row="480" value="0" interpolation="0"/>
+			<key row="1024" value="0" interpolation="1"/>
+			<key row="1071" value="180" interpolation="0"/>
+			<key row="1088" value="10" interpolation="0"/>
+			<key row="1089" value="20" interpolation="0"/>
+			<key row="1090" value="30" interpolation="0"/>
+			<key row="1091" value="40" interpolation="0"/>
+			<key row="1092" value="50" interpolation="0"/>
+		</track>
+		<track name="camera:dist">
+			<key row="0" value="1.5" interpolation="1"/>
+			<key row="15" value="1.1" interpolation="0"/>
+			<key row="16" value="1" interpolation="1"/>
+			<key row="439" value="5" interpolation="0"/>
+			<key row="440" value="4" interpolation="0"/>
+			<key row="456" value="3" interpolation="0"/>
+			<key row="459" value="4" interpolation="0"/>
+			<key row="461" value="2" interpolation="0"/>
+			<key row="1024" value="2.5" interpolation="0"/>
+			<key row="1087" value="3" interpolation="1"/>
+			<key row="1095" value="2.5" interpolation="0"/>
+		</track>
+	</tracks>
+	<bookmarks/>
+</sync>
