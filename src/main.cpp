@@ -38,56 +38,6 @@ static vector<const char *> getRequiredInstanceExtensions()
 #include "scene/scene.h"
 #include "scene/rendertarget.h"
 
-static Texture2D generateXorTexture(int baseWidth, int baseHeight, int mipLevels, bool useStaging = true)
-{
-	Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels, 1, useStaging);
-
-	if (useStaging) {
-		for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
-
-			auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
-			    mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
-
-			auto pitch = mipWidth * 4;
-			auto size = pitch * mipHeight;
-
-			auto stagingBuffer = new StagingBuffer(size);
-			void *ptr = stagingBuffer->map(0, size);
-
-			for (auto y = 0; y < mipHeight; ++y) {
-				auto *row = static_cast<uint8_t *>(ptr) + pitch * y;
-				for (auto x = 0; x < mipWidth; ++x) {
-					uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
-					row[x * 4 + 0] = 0x80 + (tmp >> 1);
-					row[x * 4 + 1] = 0xFF - (tmp >> 1);
-					row[x * 4 + 2] = 0x80 + (tmp >> 1);
-					row[x * 4 + 3] = 0xFF;
-				}
-			}
-			stagingBuffer->unmap();
-			texture.uploadFromStagingBuffer(stagingBuffer, mipLevel);
-			// TODO: delete staging buffer
-		}
-	} else {
-		assert(mipLevels == 1);
-		auto layout = texture.getSubresourceLayout(0, 0);
-		void *ptr = texture.map(layout.offset, layout.size);
-
-		for (auto y = 0; y < baseHeight; ++y) {
-			auto *row = static_cast<uint8_t *>(ptr) + layout.rowPitch * y;
-			for (auto x = 0; x < baseWidth; ++x) {
-				uint8_t tmp = ((x ^ y) & 16) != 0 ? 0xFF : 0x00;
-				row[x * 4 + 0] = 0x80 + (tmp >> 1);
-				row[x * 4 + 1] = 0xFF - (tmp >> 1);
-				row[x * 4 + 2] = 0x80 + (tmp >> 1);
-				row[x * 4 + 3] = 0xFF;
-			}
-		}
-		texture.unmap();
-	}
-	return texture;
-}
-
 static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const VkPipelineVertexInputStateCreateInfo &pipelineVertexInputStateCreateInfo)
 {
 	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
@@ -460,17 +410,7 @@ int main(int argc, char *argv[])
 
 		// OK, let's prepare for rendering!
 
-		auto baseWidth = 64, baseHeight = 64;
-#if 1
 		auto texture = importTexture("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
-#elif 0
-		auto mipLevels = 2;
-		auto texture = generateXorTexture(baseWidth, baseHeight, mipLevels, true);
-#else
-		auto mipLevels = 1;
-		auto texture = generateXorTexture(baseWidth, baseHeight, mipLevels, false);
-#endif
-
 
 		auto descriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT },
