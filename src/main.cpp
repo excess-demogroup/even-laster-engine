@@ -583,8 +583,8 @@ int main(int argc, char *argv[])
 		VkPipeline computePipeline = createComputePipeline(computePipelineLayout, loadShaderModule("data/shaders/postprocess.comp.spv"));
 
 		auto computeDescriptorPool = createDescriptorPool({
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, imageViews.size() },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, imageViews.size() },
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, uint32_t(imageViews.size()) },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(imageViews.size()) },
 		}, imageViews.size());
 
 		auto computeDescriptorSetLayouts = vector<VkDescriptorSetLayout>(imageViews.size(), computeDescriptorSetLayout);
