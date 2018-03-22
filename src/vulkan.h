@@ -36,7 +36,7 @@ namespace vulkan
 		PFN_vkDebugReportMessageEXT vkDebugReportMessageEXT;
 	} instanceFuncs;
 
-	static VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
+	inline VkDeviceSize alignSize(VkDeviceSize value, VkDeviceSize alignment)
 	{
 		return ((value + alignment - 1) / alignment) * alignment;
 	}
