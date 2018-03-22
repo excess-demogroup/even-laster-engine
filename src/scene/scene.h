@@ -42,6 +42,9 @@ public:
 	{
 	}
 
+	const Mesh *getMesh() const { return mesh; }
+	const Material *getMaterial() const { return material; }
+
 private:
 	const Mesh *mesh;
 	const Material *material;
