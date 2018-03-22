@@ -149,6 +149,7 @@ public:
 		assert(transform != nullptr);
 	}
 
+	const Model *getModel() const { return model; }
 	const Transform *getTransform() const { return transform; }
 
 private:
