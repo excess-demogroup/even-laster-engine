@@ -29,7 +29,6 @@ public:
 private:
 	VkSurfaceFormatKHR surfaceFormat;
 	VkSwapchainKHR swapChain;
-	uint32_t imageCount;
 	std::vector<VkImage> images;
 	std::vector<VkImageView> imageViews;
 };
