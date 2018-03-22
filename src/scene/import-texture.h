@@ -2,6 +2,7 @@
 #define IMPORT_TEXTURE_H
 
 #include "texture.h"
+#include <string>
 
 enum TextureImportFlags {
 	NONE = 0,
