@@ -54,9 +54,26 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 	if (!dib)
 		throw std::runtime_error("failed to load image");
 
-	FIBITMAP *temp = dib;
-	dib = FreeImage_ConvertTo32Bits(dib);
-	FreeImage_Unload(temp);
+	auto imageType = FreeImage_GetImageType(dib);
+	auto format = VK_FORMAT_R8G8B8A8_UNORM;
+	FIBITMAP *temp;
+	switch (imageType)
+	{
+	case FIT_BITMAP:
+		temp = dib;
+		dib = FreeImage_ConvertTo32Bits(dib);
+		FreeImage_Unload(temp);
+		if (!dib)
+			throw std::runtime_error("failed to convert to 32bits!");
+		break;
+
+	case FIT_RGBF:
+		format = VK_FORMAT_R32G32B32_SFLOAT; // TODO: convert to FP16?
+		break;
+
+	default:
+		throw std::runtime_error("unsupported image-type!");
+	}
 
 	if (flags & TextureImportFlags::PREMULTIPLY_ALPHA)
 		FreeImage_PreMultiplyWithAlpha(dib);
@@ -68,22 +85,27 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
 		mipLevels = 32 - clz(std::max(baseWidth, baseHeight));
 
-	Texture2D texture(VK_FORMAT_R8G8B8A8_UNORM, baseWidth, baseHeight, mipLevels, 1, true);
+	auto bpp = FreeImage_GetBPP(dib);
+	assert(bpp % 8 == 0);
+	auto pixelSize = bpp / 8;
+
+	Texture2D texture(format, baseWidth, baseHeight, mipLevels, 1, true);
 
 	for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
 		auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
-			mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
+		     mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
 
 		if (mipLevel > 0) {
-			temp = dib;
+			auto temp = dib;
 			dib = FreeImage_Rescale(dib, mipWidth, mipHeight, FILTER_BOX);
+			assert(dib != nullptr);
 			FreeImage_Unload(temp);
 		}
 
 		assert(FreeImage_GetWidth(dib) == mipWidth);
 		assert(FreeImage_GetHeight(dib) == mipHeight);
 
-		auto pitch = mipWidth * 4;
+		auto pitch = mipWidth * pixelSize;
 		auto size = pitch * mipHeight;
 
 		auto stagingBuffer = new StagingBuffer(size);
@@ -92,11 +114,29 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 		for (auto y = 0; y < mipHeight; ++y) {
 			auto srcRow = FreeImage_GetScanLine(dib, mipHeight - 1 - y);
 			auto dstRow = static_cast<uint8_t *>(ptr) + pitch * y;
-			for (int x = 0; x < mipWidth; ++x) {
-				dstRow[x * 4 + 0] = srcRow[x * 4 + FI_RGBA_RED];
-				dstRow[x * 4 + 1] = srcRow[x * 4 + FI_RGBA_GREEN];
-				dstRow[x * 4 + 2] = srcRow[x * 4 + FI_RGBA_BLUE];
-				dstRow[x * 4 + 3] = srcRow[x * 4 + FI_RGBA_ALPHA];
+			FIRGBF *srcRowRGBf;
+			float *dstRowFloat = (float *)dstRow;
+
+			switch (imageType)
+			{
+			case FIT_BITMAP:
+				for (int x = 0; x < mipWidth; ++x) {
+					dstRow[x * 4 + 0] = srcRow[x * 4 + FI_RGBA_RED];
+					dstRow[x * 4 + 1] = srcRow[x * 4 + FI_RGBA_GREEN];
+					dstRow[x * 4 + 2] = srcRow[x * 4 + FI_RGBA_BLUE];
+					dstRow[x * 4 + 3] = srcRow[x * 4 + FI_RGBA_ALPHA];
+				}
+				break;
+			case FIT_RGBF:
+				srcRowRGBf = (FIRGBF *)srcRow;
+				for (int x = 0; x < mipWidth; ++x) {
+					dstRowFloat[x * 3 + 0] = srcRowRGBf[x].red;
+					dstRowFloat[x * 3 + 1] = srcRowRGBf[x].green;
+					dstRowFloat[x * 3 + 2] = srcRowRGBf[x].blue;
+				}
+				break;
+			default:
+				unreachable("unsupported type!");
 			}
 		}
 		stagingBuffer->unmap();
