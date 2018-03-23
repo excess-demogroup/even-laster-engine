@@ -127,6 +127,33 @@ StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
 	return stagingBuffer;
 }
 
+void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, int face = 0)
+{
+	auto baseWidth = FreeImage_GetWidth(dib);
+	auto baseHeight = FreeImage_GetHeight(dib);
+
+	for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
+		auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
+		     mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
+
+		if (mipLevel > 0) {
+			auto temp = dib;
+			dib = FreeImage_Rescale(dib, mipWidth, mipHeight, FILTER_BOX);
+			assert(dib != nullptr);
+			FreeImage_Unload(temp);
+		}
+
+		assert(FreeImage_GetWidth(dib) == mipWidth);
+		assert(FreeImage_GetHeight(dib) == mipHeight);
+
+		auto stagingBuffer = copyToStagingBuffer(dib);
+		texture.uploadFromStagingBuffer(stagingBuffer, mipLevel, face);
+		// TODO: delete staging buffer
+	}
+
+	FreeImage_Unload(dib);
+}
+
 Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
@@ -144,23 +171,6 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 		mipLevels = 32 - clz(std::max(baseWidth, baseHeight));
 
 	Texture2D texture(format, baseWidth, baseHeight, mipLevels, 1, true);
-
-	for (auto mipLevel = 0; mipLevel < mipLevels; ++mipLevel) {
-		auto mipWidth = TextureBase::mipSize(baseWidth, mipLevel),
-		     mipHeight = TextureBase::mipSize(baseHeight, mipLevel);
-
-		if (mipLevel > 0) {
-			auto temp = dib;
-			dib = FreeImage_Rescale(dib, mipWidth, mipHeight, FILTER_BOX);
-			assert(dib != nullptr);
-			FreeImage_Unload(temp);
-		}
-
-		auto stagingBuffer = copyToStagingBuffer(dib);
-		texture.uploadFromStagingBuffer(stagingBuffer, mipLevel);
-		// TODO: delete staging buffer
-	}
-
-	FreeImage_Unload(dib);
+	uploadMipChain(texture, dib, mipLevels);
 	return texture;
 }
