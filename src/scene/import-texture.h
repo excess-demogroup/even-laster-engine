@@ -21,5 +21,6 @@ inline TextureImportFlags operator |= (TextureImportFlags &a, const TextureImpor
 }
 
 Texture2D importTexture2D(std::string filename, TextureImportFlags flags);
+TextureCube importTextureCube(std::string filename, TextureImportFlags flags);
 
 #endif // IMPORT_TEXTURE_H

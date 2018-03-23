@@ -174,3 +174,51 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 	uploadMipChain(texture, dib, mipLevels);
 	return texture;
 }
+
+TextureCube importTextureCube(std::string filename, TextureImportFlags flags)
+{
+	VkFormat format = VK_FORMAT_UNDEFINED;
+	auto dib = loadBitmap(filename, &format);
+	assert(format != VK_FORMAT_UNDEFINED);
+
+	auto imageWidth = FreeImage_GetWidth(dib);
+	auto imageHeight = FreeImage_GetHeight(dib);
+	auto baseSize = imageWidth / 3;
+
+	if (imageWidth % 3 != 0 ||
+		imageHeight != baseSize * 4)
+		throw std::runtime_error("unexpected image size!");
+
+	if (flags & TextureImportFlags::PREMULTIPLY_ALPHA)
+		FreeImage_PreMultiplyWithAlpha(dib);
+
+	auto mipLevels = 1;
+	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
+		mipLevels = 32 - clz(baseSize);
+
+	TextureCube texture(format, baseSize, mipLevels);
+
+	static const int offsets[6][2] = {
+		{ 2, 2 }, // -X
+		{ 0, 2 }, // +X
+		{ 1, 3 }, // +Y
+		{ 1, 1 }, // -Y
+		{ 1, 2 }, // +Z
+		{ 1, 0 }, // -Z - this one is upside down :(
+	};
+	for (auto face = 0; face < 6; ++face) {
+		auto left = offsets[face][0] * baseSize,
+		     top  = offsets[face][1] * baseSize;
+		auto faceDib = FreeImage_Copy(dib, left, top, left + baseSize, top + baseSize);
+
+		if (face == 5) {
+			FreeImage_FlipVertical(faceDib);
+			FreeImage_FlipHorizontal(faceDib);
+		}
+
+		uploadMipChain(texture, faceDib, mipLevels, face);
+	}
+
+	FreeImage_Unload(dib);
+	return texture;
+}
