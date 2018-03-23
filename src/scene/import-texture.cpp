@@ -78,6 +78,9 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 	if (flags & TextureImportFlags::PREMULTIPLY_ALPHA)
 		FreeImage_PreMultiplyWithAlpha(dib);
 
+	// FreeImage uses bottom-left origin, we use top-left
+	FreeImage_FlipVertical(dib);
+
 	auto baseWidth = FreeImage_GetWidth(dib);
 	auto baseHeight = FreeImage_GetHeight(dib);
 
@@ -112,7 +115,7 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 		void *ptr = stagingBuffer->map(0, size);
 
 		for (auto y = 0; y < mipHeight; ++y) {
-			auto srcRow = FreeImage_GetScanLine(dib, mipHeight - 1 - y);
+			auto srcRow = FreeImage_GetScanLine(dib, y);
 			auto dstRow = static_cast<uint8_t *>(ptr) + pitch * y;
 			FIRGBF *srcRowRGBf;
 			float *dstRowFloat = (float *)dstRow;
