@@ -101,7 +101,7 @@ StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
 	return stagingBuffer;
 }
 
-void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, int face = 0)
+void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, int arrayLayer = 0)
 {
 	auto baseWidth = FreeImage_GetWidth(dib);
 	auto baseHeight = FreeImage_GetHeight(dib);
@@ -121,7 +121,7 @@ void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, int face
 		assert(FreeImage_GetHeight(dib) == mipHeight);
 
 		auto stagingBuffer = copyToStagingBuffer(dib);
-		texture.uploadFromStagingBuffer(stagingBuffer, mipLevel, face);
+		texture.uploadFromStagingBuffer(stagingBuffer, mipLevel, arrayLayer);
 		// TODO: delete staging buffer
 	}
 
