@@ -394,6 +394,7 @@ int main(int argc, char *argv[])
 		// OK, let's prepare for rendering!
 
 		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
+		auto offsetMaps = importTexture2DArray("assets/offset-maps", TextureImportFlags::NONE);
 
 		auto descriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT },
@@ -462,19 +463,22 @@ int main(int argc, char *argv[])
 
 		VkSampler arrayTextureSampler = createSampler(1.0f, false, false);
 
-		VkDescriptorSetLayoutBinding computeDescriptorSetLayoutBindings[] = {
-			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
-			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
-		};
-
 		auto computeDescriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+			{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 		});
+
+		struct {
+			uint32_t arrayBufferFrame;
+			uint32_t validFrames;
+			uint32_t arrayLayer;
+		} pushConstantData;
+
 		VkPushConstantRange pushConstantRange = {
 			VK_SHADER_STAGE_COMPUTE_BIT,
 			0,
-			8
+			sizeof(pushConstantData)
 		};
 
 		auto computePipelineLayout = createPipelineLayout({ computeDescriptorSetLayout }, { pushConstantRange });
@@ -483,7 +487,7 @@ int main(int argc, char *argv[])
 
 		auto computeDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, uint32_t(imageViews.size()) },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(imageViews.size()) },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(imageViews.size() * 2) },
 		}, imageViews.size());
 
 		auto computeDescriptorSet = allocateDescriptorSet(computeDescriptorPool, computeDescriptorSetLayout);
@@ -492,7 +496,7 @@ int main(int argc, char *argv[])
 			computeDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 			computeDescriptorImageInfo.imageView = computeRenderTarget.getImageView();
 
-			VkWriteDescriptorSet writeDescriptorSets[2] = {};
+			VkWriteDescriptorSet writeDescriptorSets[3] = {};
 			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[0].dstSet = computeDescriptorSet;
 			writeDescriptorSets[0].dstBinding = 0;
@@ -500,17 +504,29 @@ int main(int argc, char *argv[])
 			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			writeDescriptorSets[0].pImageInfo = &computeDescriptorImageInfo;
 
-			VkDescriptorImageInfo descriptorImageInfo = {};
-			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			descriptorImageInfo.imageView = colorArray.getImageView();
-			descriptorImageInfo.sampler = arrayTextureSampler;
+			VkDescriptorImageInfo descriptorImageInfo1 = {};
+			descriptorImageInfo1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			descriptorImageInfo1.imageView = colorArray.getImageView();
+			descriptorImageInfo1.sampler = arrayTextureSampler;
 
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[1].dstSet = computeDescriptorSet;
 			writeDescriptorSets[1].dstBinding = 1;
 			writeDescriptorSets[1].descriptorCount = 1;
 			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
+			writeDescriptorSets[1].pImageInfo = &descriptorImageInfo1;
+
+			VkDescriptorImageInfo descriptorImageInfo2 = {};
+			descriptorImageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			descriptorImageInfo2.imageView = offsetMaps.getImageView();
+			descriptorImageInfo2.sampler = arrayTextureSampler;
+
+			writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[2].dstSet = computeDescriptorSet;
+			writeDescriptorSets[2].dstBinding = 2;
+			writeDescriptorSets[2].descriptorCount = 1;
+			writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSets[2].pImageInfo = &descriptorImageInfo2;
 
 			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 		}
@@ -685,15 +701,11 @@ int main(int argc, char *argv[])
 				0, VK_ACCESS_SHADER_WRITE_BIT,
 				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-			struct {
-				uint32_t arrayBufferFrame;
-				uint32_t validFrames;
-			} data = {
-				uint32_t(arrayBufferFrame),
-				uint32_t(validFrames)
-			};
+			pushConstantData.arrayBufferFrame = uint32_t(arrayBufferFrame);
+			pushConstantData.validFrames = uint32_t(validFrames);
+			pushConstantData.arrayLayer = 2;
 
-			vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(data), &data);
+			vkCmdPushConstants(commandBuffer, computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(pushConstantData), &pushConstantData);
 
 			vkCmdDispatch(commandBuffer, width / 16, height / 16, 1);
 
