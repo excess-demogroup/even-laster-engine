@@ -38,7 +38,7 @@ static inline uint32_t clz(uint32_t x)
 #endif
 
 
-Texture2D importTexture(std::string filename, TextureImportFlags flags)
+Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 {
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(filename.c_str(), 0);
 	if (fif == FIF_UNKNOWN) {

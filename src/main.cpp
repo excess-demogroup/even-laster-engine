@@ -410,7 +410,7 @@ int main(int argc, char *argv[])
 
 		// OK, let's prepare for rendering!
 
-		auto texture = importTexture("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
+		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
 
 		auto descriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT },

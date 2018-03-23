@@ -20,6 +20,6 @@ inline TextureImportFlags operator |= (TextureImportFlags &a, const TextureImpor
 	return static_cast<TextureImportFlags>(static_cast<int>(a) | static_cast<int>(b));
 }
 
-Texture2D importTexture(std::string filename, TextureImportFlags flags);
+Texture2D importTexture2D(std::string filename, TextureImportFlags flags);
 
 #endif // IMPORT_TEXTURE_H
