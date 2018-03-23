@@ -81,6 +81,14 @@ public:
 	}
 };
 
+class Texture2DArray : public TextureBase {
+public:
+	Texture2DArray(VkFormat format, int width, int height, int arrayLayers, int mipLevels = 1, bool useStaging = true) :
+		TextureBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D_ARRAY, width, height, 1, mipLevels, arrayLayers, useStaging)
+	{
+	}
+};
+
 class TextureCube : public TextureBase {
 public:
 	TextureCube(VkFormat format, int size, int mipLevels = 1) :
