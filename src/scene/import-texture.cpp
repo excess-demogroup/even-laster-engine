@@ -4,10 +4,14 @@
 #include <string>
 #include <stdexcept>
 #include <algorithm>
+#include <vector>
+
+#include <sys/stat.h>
 
 using std::string;
 using std::runtime_error;
 using std::max;
+using std::vector;
 
 #include <FreeImage.h>
 
@@ -148,6 +152,57 @@ Texture2D importTexture2D(string filename, TextureImportFlags flags)
 	uploadMipChain(texture, dib, mipLevels);
 	return texture;
 }
+
+Texture2DArray importTexture2DArray(string folder, TextureImportFlags flags)
+{
+	VkFormat firstFormat = VK_FORMAT_UNDEFINED;
+	unsigned int firstWidth, firstHeight;
+
+	vector<FIBITMAP *> bitmaps;
+	for (int i = 0; true; ++i) {
+		char path[256];
+		snprintf(path, sizeof(path), "%s/%04d.png", folder.c_str(), i);
+
+		struct stat st;
+		if (stat(path, &st) < 0 ||
+			(st.st_mode & _S_IFMT) != S_IFREG)
+			break;
+
+		VkFormat format = VK_FORMAT_UNDEFINED;
+		auto dib = loadBitmap(path, &format);
+
+		auto width = FreeImage_GetWidth(dib);
+		auto height = FreeImage_GetHeight(dib);
+
+		if (i == 0) {
+			firstFormat = format;
+			firstWidth = width;
+			firstHeight = height;
+		} else if (firstFormat != format ||
+		           firstWidth != width ||
+		           firstHeight != height)
+			throw runtime_error("inconsistent format or size!");
+
+		if (flags & TextureImportFlags::PREMULTIPLY_ALPHA)
+			FreeImage_PreMultiplyWithAlpha(dib);
+
+		bitmaps.push_back(dib);
+	}
+
+	if (bitmaps.size() == 0)
+		throw runtime_error("empty texture-array!");
+
+	auto mipLevels = 1;
+	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
+		mipLevels = 32 - clz(max(firstWidth, firstHeight));
+
+	Texture2DArray texture(firstFormat, firstWidth, firstHeight, bitmaps.size(), mipLevels, true);
+	for (size_t i = 0; i < bitmaps.size(); ++i)
+		uploadMipChain(texture, bitmaps[i], mipLevels, i);
+
+	return texture;
+}
+
 
 TextureCube importTextureCube(string filename, TextureImportFlags flags)
 {
