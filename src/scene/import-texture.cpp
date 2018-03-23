@@ -37,8 +37,7 @@ static inline uint32_t clz(uint32_t x)
 
 #endif
 
-
-Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
+static FIBITMAP *loadBitmap(std::string filename, VkFormat *format)
 {
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(filename.c_str(), 0);
 	if (fif == FIF_UNKNOWN) {
@@ -55,7 +54,6 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 		throw std::runtime_error("failed to load image");
 
 	auto imageType = FreeImage_GetImageType(dib);
-	auto format = VK_FORMAT_R8G8B8A8_UNORM;
 	FIBITMAP *temp;
 	switch (imageType)
 	{
@@ -65,21 +63,78 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 		FreeImage_Unload(temp);
 		if (!dib)
 			throw std::runtime_error("failed to convert to 32bits!");
+		*format = VK_FORMAT_R8G8B8A8_UNORM;
 		break;
 
 	case FIT_RGBF:
-		format = VK_FORMAT_R32G32B32_SFLOAT; // TODO: convert to FP16?
+		*format = VK_FORMAT_R32G32B32_SFLOAT; // TODO: convert to FP16?
 		break;
 
 	default:
 		throw std::runtime_error("unsupported image-type!");
 	}
 
-	if (flags & TextureImportFlags::PREMULTIPLY_ALPHA)
-		FreeImage_PreMultiplyWithAlpha(dib);
-
 	// FreeImage uses bottom-left origin, we use top-left
 	FreeImage_FlipVertical(dib);
+	return dib;
+}
+
+StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
+{
+	auto bpp = FreeImage_GetBPP(dib);
+	assert(bpp % 8 == 0);
+	auto pixelSize = bpp / 8;
+
+	auto imageType = FreeImage_GetImageType(dib);
+	auto width = FreeImage_GetWidth(dib);
+	auto height = FreeImage_GetHeight(dib);
+
+	auto pitch = width * pixelSize;
+	auto size = pitch * height;
+
+	auto stagingBuffer = new StagingBuffer(size);
+	void *ptr = stagingBuffer->map(0, size);
+
+	for (auto y = 0u; y < height; ++y) {
+		auto srcRow = FreeImage_GetScanLine(dib, y);
+		auto dstRow = static_cast<uint8_t *>(ptr) + pitch * y;
+		FIRGBF *srcRowRGBf;
+		float *dstRowFloat = (float *)dstRow;
+
+		switch (imageType)
+		{
+		case FIT_BITMAP:
+			for (auto x = 0u; x < width; ++x) {
+				dstRow[x * 4 + 0] = srcRow[x * 4 + FI_RGBA_RED];
+				dstRow[x * 4 + 1] = srcRow[x * 4 + FI_RGBA_GREEN];
+				dstRow[x * 4 + 2] = srcRow[x * 4 + FI_RGBA_BLUE];
+				dstRow[x * 4 + 3] = srcRow[x * 4 + FI_RGBA_ALPHA];
+			}
+			break;
+		case FIT_RGBF:
+			srcRowRGBf = (FIRGBF *)srcRow;
+			for (auto x = 0u; x < width; ++x) {
+				dstRowFloat[x * 3 + 0] = srcRowRGBf[x].red;
+				dstRowFloat[x * 3 + 1] = srcRowRGBf[x].green;
+				dstRowFloat[x * 3 + 2] = srcRowRGBf[x].blue;
+			}
+			break;
+		default:
+			unreachable("unsupported type!");
+		}
+	}
+	stagingBuffer->unmap();
+	return stagingBuffer;
+}
+
+Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
+{
+	VkFormat format = VK_FORMAT_UNDEFINED;
+	auto dib = loadBitmap(filename, &format);
+	assert(format != VK_FORMAT_UNDEFINED);
+
+	if (flags & TextureImportFlags::PREMULTIPLY_ALPHA)
+		FreeImage_PreMultiplyWithAlpha(dib);
 
 	auto baseWidth = FreeImage_GetWidth(dib);
 	auto baseHeight = FreeImage_GetHeight(dib);
@@ -87,10 +142,6 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 	auto mipLevels = 1;
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
 		mipLevels = 32 - clz(std::max(baseWidth, baseHeight));
-
-	auto bpp = FreeImage_GetBPP(dib);
-	assert(bpp % 8 == 0);
-	auto pixelSize = bpp / 8;
 
 	Texture2D texture(format, baseWidth, baseHeight, mipLevels, 1, true);
 
@@ -105,44 +156,7 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 			FreeImage_Unload(temp);
 		}
 
-		assert(FreeImage_GetWidth(dib) == mipWidth);
-		assert(FreeImage_GetHeight(dib) == mipHeight);
-
-		auto pitch = mipWidth * pixelSize;
-		auto size = pitch * mipHeight;
-
-		auto stagingBuffer = new StagingBuffer(size);
-		void *ptr = stagingBuffer->map(0, size);
-
-		for (auto y = 0; y < mipHeight; ++y) {
-			auto srcRow = FreeImage_GetScanLine(dib, y);
-			auto dstRow = static_cast<uint8_t *>(ptr) + pitch * y;
-			FIRGBF *srcRowRGBf;
-			float *dstRowFloat = (float *)dstRow;
-
-			switch (imageType)
-			{
-			case FIT_BITMAP:
-				for (int x = 0; x < mipWidth; ++x) {
-					dstRow[x * 4 + 0] = srcRow[x * 4 + FI_RGBA_RED];
-					dstRow[x * 4 + 1] = srcRow[x * 4 + FI_RGBA_GREEN];
-					dstRow[x * 4 + 2] = srcRow[x * 4 + FI_RGBA_BLUE];
-					dstRow[x * 4 + 3] = srcRow[x * 4 + FI_RGBA_ALPHA];
-				}
-				break;
-			case FIT_RGBF:
-				srcRowRGBf = (FIRGBF *)srcRow;
-				for (int x = 0; x < mipWidth; ++x) {
-					dstRowFloat[x * 3 + 0] = srcRowRGBf[x].red;
-					dstRowFloat[x * 3 + 1] = srcRowRGBf[x].green;
-					dstRowFloat[x * 3 + 2] = srcRowRGBf[x].blue;
-				}
-				break;
-			default:
-				unreachable("unsupported type!");
-			}
-		}
-		stagingBuffer->unmap();
+		auto stagingBuffer = copyToStagingBuffer(dib);
 		texture.uploadFromStagingBuffer(stagingBuffer, mipLevel);
 		// TODO: delete staging buffer
 	}
