@@ -1,5 +1,13 @@
 #include "import-texture.h"
 
+#include <string>
+#include <stdexcept>
+#include <algorithm>
+
+using std::string;
+using std::runtime_error;
+using std::max;
+
 #include <FreeImage.h>
 
 #ifdef _MSC_VER
@@ -37,21 +45,21 @@ static inline uint32_t clz(uint32_t x)
 
 #endif
 
-static FIBITMAP *loadBitmap(std::string filename, VkFormat *format)
+static FIBITMAP *loadBitmap(string filename, VkFormat *format)
 {
 	FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(filename.c_str(), 0);
 	if (fif == FIF_UNKNOWN) {
 		fif = FreeImage_GetFIFFromFilename(filename.c_str());
 		if (fif == FIF_UNKNOWN)
-			throw std::runtime_error("unknown image type");
+			throw runtime_error("unknown image type");
 	}
 
 	if (!FreeImage_FIFSupportsReading(fif))
-		throw std::runtime_error(std::string("file format can't be read: ") + FreeImage_GetFIFDescription(fif));
+		throw runtime_error(string("file format can't be read: ") + FreeImage_GetFIFDescription(fif));
 
 	FIBITMAP *dib = FreeImage_Load(fif, filename.c_str());
 	if (!dib)
-		throw std::runtime_error("failed to load image");
+		throw runtime_error("failed to load image");
 
 	auto imageType = FreeImage_GetImageType(dib);
 	FIBITMAP *temp;
@@ -62,7 +70,7 @@ static FIBITMAP *loadBitmap(std::string filename, VkFormat *format)
 		dib = FreeImage_ConvertTo32Bits(dib);
 		FreeImage_Unload(temp);
 		if (!dib)
-			throw std::runtime_error("failed to convert to 32bits!");
+			throw runtime_error("failed to convert to 32bits!");
 		*format = VK_FORMAT_R8G8B8A8_UNORM;
 		break;
 
@@ -71,7 +79,7 @@ static FIBITMAP *loadBitmap(std::string filename, VkFormat *format)
 		break;
 
 	default:
-		throw std::runtime_error("unsupported image-type!");
+		throw runtime_error("unsupported image-type!");
 	}
 
 	// FreeImage uses bottom-left origin, we use top-left
@@ -154,7 +162,7 @@ void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, int face
 	FreeImage_Unload(dib);
 }
 
-Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
+Texture2D importTexture2D(string filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
 	auto dib = loadBitmap(filename, &format);
@@ -168,14 +176,14 @@ Texture2D importTexture2D(std::string filename, TextureImportFlags flags)
 
 	auto mipLevels = 1;
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
-		mipLevels = 32 - clz(std::max(baseWidth, baseHeight));
+		mipLevels = 32 - clz(max(baseWidth, baseHeight));
 
 	Texture2D texture(format, baseWidth, baseHeight, mipLevels, 1, true);
 	uploadMipChain(texture, dib, mipLevels);
 	return texture;
 }
 
-TextureCube importTextureCube(std::string filename, TextureImportFlags flags)
+TextureCube importTextureCube(string filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
 	auto dib = loadBitmap(filename, &format);
@@ -187,7 +195,7 @@ TextureCube importTextureCube(std::string filename, TextureImportFlags flags)
 
 	if (imageWidth % 3 != 0 ||
 		imageHeight != baseSize * 4)
-		throw std::runtime_error("unexpected image size!");
+		throw runtime_error("unexpected image size!");
 
 	if (flags & TextureImportFlags::PREMULTIPLY_ALPHA)
 		FreeImage_PreMultiplyWithAlpha(dib);
