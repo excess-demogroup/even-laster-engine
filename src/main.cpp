@@ -219,6 +219,37 @@ namespace CubeData
 	};
 }
 
+VkPhysicalDevice choosePhysicalDevice()
+{
+	// Get number of available physical devices
+	uint32_t physicalDeviceCount = 0;
+	auto err = vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
+	assert(err == VK_SUCCESS);
+	assert(physicalDeviceCount > 0);
+
+	// Enumerate devices
+	auto physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
+	err = vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices);
+	assert(err == VK_SUCCESS);
+	assert(physicalDeviceCount > 0);
+
+	auto physicalDevice = physicalDevices[0];
+
+	for (uint32_t i = 0; i < physicalDeviceCount; ++i) {
+
+		VkPhysicalDeviceProperties deviceProps;
+		vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProps);
+
+		if (deviceProps.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+			physicalDevice = physicalDevices[i];
+			break;
+		}
+	}
+	delete[] physicalDevices;
+
+	return physicalDevice;
+}
+
 #ifdef WIN32
 
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -264,38 +295,13 @@ int main(int argc, char *argv[])
 
 		instanceInit(appName, enabledExtensions);
 
-		// Get number of available physical devices
-		uint32_t physicalDeviceCount = 0;
-		auto err = vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
-		assert(err == VK_SUCCESS);
-		assert(physicalDeviceCount > 0);
-
-		// Enumerate devices
-		auto physicalDevices = new VkPhysicalDevice[physicalDeviceCount];
-		err = vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices);
-		assert(err == VK_SUCCESS);
-		assert(physicalDeviceCount > 0);
-
-		auto physicalDevice = physicalDevices[0];
-
-		for (uint32_t i = 0; i < physicalDeviceCount; ++i) {
-
-			VkPhysicalDeviceProperties deviceProps;
-			vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProps);
-
-			if (deviceProps.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
-				physicalDevice = physicalDevices[i];
-				break;
-			}
-		}
-		delete[] physicalDevices;
-
+		auto physicalDevice = choosePhysicalDevice();
 		deviceInit(physicalDevice, [](VkInstance instance, VkPhysicalDevice physicalDevice, uint32_t queueIndex) {
 			return glfwGetPhysicalDevicePresentationSupport(instance, physicalDevice, queueIndex) == GLFW_TRUE;
 		});
 
 		VkSurfaceKHR surface;
-		err = glfwCreateWindowSurface(instance, win, nullptr, &surface);
+		auto err = glfwCreateWindowSurface(instance, win, nullptr, &surface);
 		if (err)
 			throw runtime_error("glfwCreateWindowSurface failed!");
 
