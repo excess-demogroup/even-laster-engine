@@ -57,7 +57,7 @@ static FIBITMAP *loadBitmap(string filename, VkFormat *format)
 	return dib;
 }
 
-StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
+static StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
 {
 	auto bpp = FreeImage_GetBPP(dib);
 	assert(bpp % 8 == 0);
@@ -105,7 +105,7 @@ StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
 	return stagingBuffer;
 }
 
-void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, int arrayLayer = 0)
+static void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, int arrayLayer = 0)
 {
 	auto baseWidth = FreeImage_GetWidth(dib);
 	auto baseHeight = FreeImage_GetHeight(dib);
