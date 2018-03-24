@@ -49,9 +49,9 @@ protected:
 
 public:
 
-	int getWidth() { return width; }
-	int getHeight() { return height; }
-	int getDepth() { return depth; }
+	int getWidth() const { return width; }
+	int getHeight() const { return height; }
+	int getDepth() const { return depth; }
 
 	int getArrayLayers() const { return arrayLayers; }
 
