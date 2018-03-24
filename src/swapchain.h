@@ -2,8 +2,7 @@
 
 #include <vector>
 
-class SwapChain
-{
+class SwapChain {
 public:
 	SwapChain(VkSurfaceKHR surface, int width, int height, VkImageUsageFlags imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 
