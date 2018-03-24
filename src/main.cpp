@@ -324,7 +324,8 @@ int main(int argc, char *argv[])
 		DepthRenderTarget depthRenderTarget(depthFormat, width, height);
 
 		auto renderTargetFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
-		Texture2DArrayRenderTarget colorArray(renderTargetFormat, width, height, 128);
+		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		Texture2DArrayRenderTarget colorArray(renderTargetFormat, width, height, 128, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		ColorRenderTarget computeRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 		VkAttachmentDescription attachments[2];
@@ -346,7 +347,7 @@ int main(int argc, char *argv[])
 		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[1].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		attachments[1].finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
 		VkAttachmentReference depthStencilReference = {};
 		depthStencilReference.attachment = 0;
@@ -373,17 +374,13 @@ int main(int argc, char *argv[])
 		err = vkCreateRenderPass(device, &renderpassCreateInfo, nullptr, &renderPass);
 		assert(err == VK_SUCCESS);
 
+		auto framebuffer = createFramebuffer(
+			width, height, 1,
+			{ depthRenderTarget.getImageView(), colorRenderTarget.getImageView() },
+			renderPass);
+
 		auto imageViews = swapChain.getImageViews();
 		auto images = swapChain.getImages();
-
-		auto colorArrayImageViews = colorArray.getArrayImageViews();
-		auto framebuffers = new VkFramebuffer[colorArrayImageViews.size()];
-		for (auto i = 0u; i < colorArrayImageViews.size(); i++) {
-			framebuffers[i] = createFramebuffer(
-				width, height, 1,
-				{ depthRenderTarget.getImageView(), colorArrayImageViews[i] },
-				renderPass);
-		}
 
 		Scene scene;
 		auto hackScene = SceneImporter::import("assets/teapots.DAE");
@@ -610,7 +607,7 @@ int main(int argc, char *argv[])
 			auto currentSwapImage = swapChain.aquireNextImage(backBufferSemaphore);
 			static int nextArrayBufferFrame = 0;
 			int arrayBufferFrame = nextArrayBufferFrame++;
-			int arrayBufferFrameWrapped = arrayBufferFrame  % colorArrayImageViews.size();
+			uint32_t arrayBufferFrameWrapped = arrayBufferFrame % colorArray.getArrayLayers();
 
 			err = vkWaitForFences(device, 1, &commandBufferFences[currentSwapImage], VK_TRUE, UINT64_MAX);
 			assert(err == VK_SUCCESS);
@@ -644,7 +641,7 @@ int main(int argc, char *argv[])
 			renderPassBeginInfo.renderArea.extent.height = height;
 			renderPassBeginInfo.clearValueCount = ARRAY_SIZE(clearValues);
 			renderPassBeginInfo.pClearValues = clearValues;
-			renderPassBeginInfo.framebuffer = framebuffers[arrayBufferFrameWrapped];
+			renderPassBeginInfo.framebuffer = framebuffer;
 
 			vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -699,6 +696,29 @@ int main(int argc, char *argv[])
 			}
 
 			vkCmdEndRenderPass(commandBuffer);
+
+			imageBarrier(
+				commandBuffer,
+				colorArray.getImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+				0, VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+			blitImage(commandBuffer,
+				colorRenderTarget.getImage(),
+				colorArray.getImage(),
+				width, height,
+				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, arrayBufferFrameWrapped, 1 });
+
+			imageBarrier(
+				commandBuffer,
+				colorArray.getImage(),
+				VK_IMAGE_ASPECT_COLOR_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+				VK_ACCESS_TRANSFER_WRITE_BIT, 0,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 			if (validFrames < colorArray.getArrayLayers())
 				validFrames++;
