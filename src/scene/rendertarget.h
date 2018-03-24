@@ -6,6 +6,7 @@
 class RenderTargetBase {
 protected:
 	RenderTargetBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int arrayLayers, VkImageUsageFlags usage, VkImageAspectFlags aspect) :
+		format(format),
 		width(width),
 		height(height),
 		depth(depth),
@@ -48,6 +49,7 @@ protected:
 	}
 
 public:
+	VkFormat getFormat() { return format; }
 
 	int getWidth() const { return width; }
 	int getHeight() const { return height; }
@@ -59,6 +61,8 @@ public:
 	VkImageView getImageView() { return imageView; }
 
 protected:
+	VkFormat format;
+
 	int width, height, depth;
 	int arrayLayers;
 
