@@ -11,7 +11,10 @@ layout (binding = 2) uniform sampler2DArray samplerOffsets;
 layout(push_constant) uniform fragmentPushConstants {
 	layout(offset = 0) int arrayBufferFrame;
 	layout(offset = 4) int validFrames;
-	layout(offset = 8) int arrayLayer;
+	layout(offset = 8) int delayImage;
+	layout(offset = 12) float delayAmount;
+	layout(offset = 16) float delayChroma;
+
 } u_pushConstants;
 
 vec3 spectrum_offset(float t)
@@ -61,10 +64,12 @@ void main()
 	vec2 pos = (gl_GlobalInvocationID.xy + 0.5) / imageSize(outputImage);
 
 	float time = u_pushConstants.arrayBufferFrame;
-	float delay = textureLod(samplerOffsets, vec3(pos.xy, u_pushConstants.arrayLayer), 0).x;
+	float delay = textureLod(samplerOffsets, vec3(pos.xy, u_pushConstants.delayImage), 0).x;
+	delay *= u_pushConstants.delayAmount;
 	delay *= textureSize(samplerColor, 0).z;
 	delay = clamp(delay, 0, u_pushConstants.validFrames - 1);
-	vec3 color = sampleSpectrum(time - delay, time - delay * 0.8);
+
+	vec3 color = sampleSpectrum(time - delay, time - delay * u_pushConstants.delayChroma);
 
 	// vignette
 	color *= 1.0 - distance(pos, vec2(0.5));
