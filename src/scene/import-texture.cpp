@@ -45,7 +45,7 @@ static FIBITMAP *loadBitmap(string filename, VkFormat *format)
 		break;
 
 	case FIT_RGBF:
-		*format = VK_FORMAT_R32G32B32A32_SFLOAT; // TODO: convert to FP16?
+		*format = VK_FORMAT_R16G16B16A16_SFLOAT;
 		break;
 
 	default:
@@ -62,10 +62,17 @@ static int getBpp(FIBITMAP *dib)
 	switch (FreeImage_GetImageType(dib))
 	{
 	case FIT_BITMAP: return FreeImage_GetBPP(dib);
-	case FIT_RGBF: return sizeof(float) * 8 * 4; // expand to RGBA, which is always supported
+	case FIT_RGBF: return sizeof(uint16_t) * 8 * 4; // expand to RGBA, which is always supported
 	default:
 		unreachable("unsupported type!");
 	}
+}
+
+inline uint16_t float_to_half(float input)
+{
+	__m128 single = _mm_set_ss(input);
+	__m128i half = _mm_cvtps_ph(single, 0);
+	return static_cast<uint16_t>(_mm_cvtsi128_si32(half));
 }
 
 static StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
@@ -88,7 +95,7 @@ static StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
 		auto srcRow = FreeImage_GetScanLine(dib, y);
 		auto dstRow = static_cast<uint8_t *>(ptr) + pitch * y;
 		FIRGBF *srcRowRGBf;
-		float *dstRowFloat = (float *)dstRow;
+		uint16_t *dstRowHalf = (uint16_t *)dstRow;
 
 		switch (imageType)
 		{
@@ -103,10 +110,10 @@ static StagingBuffer *copyToStagingBuffer(FIBITMAP *dib)
 		case FIT_RGBF:
 			srcRowRGBf = (FIRGBF *)srcRow;
 			for (auto x = 0u; x < width; ++x) {
-				dstRowFloat[x * 4 + 0] = srcRowRGBf[x].red;
-				dstRowFloat[x * 4 + 1] = srcRowRGBf[x].green;
-				dstRowFloat[x * 4 + 2] = srcRowRGBf[x].blue;
-				dstRowFloat[x * 4 + 3] = 1.0f;
+				dstRowHalf[x * 4 + 0] = float_to_half(srcRowRGBf[x].red);
+				dstRowHalf[x * 4 + 1] = float_to_half(srcRowRGBf[x].green);
+				dstRowHalf[x * 4 + 2] = float_to_half(srcRowRGBf[x].blue);
+				dstRowHalf[x * 4 + 3] = float_to_half(1.0f);
 			}
 			break;
 		default:
