@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
 			VK_FORMAT_R16G16B16A16_SFLOAT
 		};
 		auto renderTargetFormat = findBestFormat(renderTargetCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
-		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_IMAGE_ASPECT_COLOR_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
 
 		auto computeTargetFormat = findBestFormat(renderTargetCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
 		ColorRenderTarget computeRenderTarget(computeTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
