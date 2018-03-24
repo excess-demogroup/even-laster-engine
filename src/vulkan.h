@@ -300,6 +300,28 @@ namespace vulkan
 		return textureSampler;
 	}
 
+	inline VkFramebuffer createFramebuffer(int width, int height, int layers, std::vector<VkImageView> attachments, VkRenderPass renderPass)
+	{
+		assert(width > 0);
+		assert(height > 0);
+		assert(layers > 0);
+		assert(attachments.size() > 0);
+
+		VkFramebufferCreateInfo framebufferCreateInfo = {};
+		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferCreateInfo.renderPass = renderPass;
+		framebufferCreateInfo.attachmentCount = attachments.size();
+		framebufferCreateInfo.pAttachments = attachments.data();
+		framebufferCreateInfo.width = uint32_t(width);
+		framebufferCreateInfo.height = uint32_t(height);
+		framebufferCreateInfo.layers = uint32_t(layers);
+
+		VkFramebuffer framebuffer;
+		auto err = vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffer);
+		assert(err == VK_SUCCESS);
+		return framebuffer;
+	}
+
 	void instanceFuncsInit(VkInstance instance);
 };
 

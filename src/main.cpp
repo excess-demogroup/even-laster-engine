@@ -365,22 +365,11 @@ int main(int argc, char *argv[])
 		err = vkCreateRenderPass(device, &renderpassCreateInfo, nullptr, &renderPass);
 		assert(err == VK_SUCCESS);
 
-		VkImageView framebufferAttachments[2];
-		VkFramebufferCreateInfo framebufferCreateInfo = {};
-		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferCreateInfo.renderPass = renderPass;
-		framebufferCreateInfo.attachmentCount = ARRAY_SIZE(framebufferAttachments);
-		framebufferCreateInfo.pAttachments = framebufferAttachments;
-		framebufferCreateInfo.width = width;
-		framebufferCreateInfo.height = height;
-		framebufferCreateInfo.layers = 1;
 
-		framebufferAttachments[0] = depthRenderTarget.getImageView();
-		framebufferAttachments[1] = colorRenderTarget.getImageView();
-
-		VkFramebuffer framebuffer;
-		err = vkCreateFramebuffer(device, &framebufferCreateInfo, nullptr, &framebuffer);
-		assert(err == VK_SUCCESS);
+		auto framebuffer = createFramebuffer(
+			width, height, 1,
+			{ depthRenderTarget.getImageView(), colorRenderTarget.getImageView() },
+			renderPass);
 
 		auto imageViews = swapChain.getImageViews();
 		auto images = swapChain.getImages();
