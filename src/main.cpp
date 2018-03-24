@@ -303,14 +303,9 @@ int main(int argc, char *argv[])
 		auto depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 		DepthRenderTarget depthRenderTarget(depthFormat, width, height);
 
-		vector<VkFormat> renderTargetCandidates = {
-			VK_FORMAT_R16G16B16A16_SFLOAT
-		};
-		auto renderTargetFormat = findBestFormat(renderTargetCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT);
+		auto renderTargetFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-
-		auto computeTargetFormat = findBestFormat(renderTargetCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT);
-		ColorRenderTarget computeRenderTarget(computeTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		ColorRenderTarget computeRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
