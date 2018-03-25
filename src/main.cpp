@@ -486,17 +486,35 @@ int main(int argc, char *argv[])
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(imageViews.size()) },
 		}, imageViews.size());
 
-		auto computeDescriptorSetLayouts = vector<VkDescriptorSetLayout>(imageViews.size(), computeDescriptorSetLayout);
-		VkDescriptorSetAllocateInfo computeDescriptorSetAllocateInfo = {};
-		computeDescriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		computeDescriptorSetAllocateInfo.descriptorPool = computeDescriptorPool;
-		computeDescriptorSetAllocateInfo.descriptorSetCount = computeDescriptorSetLayouts.size();
-		computeDescriptorSetAllocateInfo.pSetLayouts = computeDescriptorSetLayouts.data();
+		auto computeDescriptorSet = allocateDescriptorSet(computeDescriptorPool, computeDescriptorSetLayout);
+		{
+			VkDescriptorImageInfo computeDescriptorImageInfo = {};
+			computeDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			computeDescriptorImageInfo.imageView = computeRenderTarget.getImageView();
 
-		auto computeDescriptorSets = new VkDescriptorSet[imageViews.size()];
+			VkWriteDescriptorSet writeDescriptorSets[2] = {};
+			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[0].dstSet = computeDescriptorSet;
+			writeDescriptorSets[0].dstBinding = 0;
+			writeDescriptorSets[0].descriptorCount = 1;
+			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			writeDescriptorSets[0].pImageInfo = &computeDescriptorImageInfo;
 
-		err = vkAllocateDescriptorSets(device, &computeDescriptorSetAllocateInfo, computeDescriptorSets);
-		assert(err == VK_SUCCESS);
+			VkDescriptorImageInfo descriptorImageInfo = {};
+			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			descriptorImageInfo.imageView = colorRenderTarget.getImageView();
+			descriptorImageInfo.sampler = textureSampler;
+
+			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[1].dstSet = computeDescriptorSet;
+			writeDescriptorSets[1].dstBinding = 1;
+			writeDescriptorSets[1].descriptorCount = 1;
+			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
+
+			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
+		}
+
 
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();
@@ -604,37 +622,8 @@ int main(int argc, char *argv[])
 
 			vkCmdEndRenderPass(commandBuffer);
 
-			{
-				VkDescriptorImageInfo computeDescriptorImageInfo = {};
-				computeDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-				computeDescriptorImageInfo.imageView = computeRenderTarget.getImageView();
-
-				VkWriteDescriptorSet writeDescriptorSets[2] = {};
-				writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[0].dstSet = computeDescriptorSets[currentSwapImage];
-				writeDescriptorSets[0].dstBinding = 0;
-				writeDescriptorSets[0].descriptorCount = 1;
-				writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-				writeDescriptorSets[0].pImageInfo = &computeDescriptorImageInfo;
-
-				VkDescriptorImageInfo descriptorImageInfo = {};
-				descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				descriptorImageInfo.imageView = colorRenderTarget.getImageView();
-				descriptorImageInfo.sampler = textureSampler;
-
-				writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				writeDescriptorSets[1].dstSet = computeDescriptorSets[currentSwapImage];
-				writeDescriptorSets[1].dstBinding = 1;
-				writeDescriptorSets[1].descriptorCount = 1;
-				writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-				writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
-
-				vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
-			}
-
-
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSets[currentSwapImage], 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSet, 0, nullptr);
 
 			imageBarrier(
 				commandBuffer,
