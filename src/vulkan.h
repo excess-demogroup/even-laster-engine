@@ -339,6 +339,23 @@ namespace vulkan
 		return pipelineLayout;
 	}
 
+	inline VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding> &layoutBindings, VkDescriptorSetLayoutCreateFlags flags = 0)
+	{
+		VkDescriptorSetLayoutCreateInfo desciptorSetLayoutCreateInfo = {};
+		desciptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+
+		desciptorSetLayoutCreateInfo.flags = flags;
+
+		desciptorSetLayoutCreateInfo.bindingCount = layoutBindings.size();
+		desciptorSetLayoutCreateInfo.pBindings = layoutBindings.data();
+
+		VkDescriptorSetLayout descriptorSetLayout;
+		auto err = vkCreateDescriptorSetLayout(device, &desciptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
+		assert(err == VK_SUCCESS);
+
+		return descriptorSetLayout;
+	}
+
 	void instanceFuncsInit(VkInstance instance);
 };
 

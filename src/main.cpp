@@ -144,20 +144,6 @@ static VkPipeline createComputePipeline(VkPipelineLayout layout, VkShaderModule 
 	return computePipeline;
 }
 
-static VkDescriptorSetLayout createDescriptorSetLayout(const vector<VkDescriptorSetLayoutBinding> &layoutBindings)
-{
-	VkDescriptorSetLayoutCreateInfo desciptorSetLayoutCreateInfo = {};
-	desciptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	desciptorSetLayoutCreateInfo.bindingCount = layoutBindings.size();
-	desciptorSetLayoutCreateInfo.pBindings = layoutBindings.data();
-
-	VkDescriptorSetLayout descriptorSetLayout;
-	auto err = vkCreateDescriptorSetLayout(device, &desciptorSetLayoutCreateInfo, nullptr, &descriptorSetLayout);
-	assert(err == VK_SUCCESS);
-
-	return descriptorSetLayout;
-}
-
 namespace CubeData
 {
 	glm::vec3 vertexPositions[] = {
