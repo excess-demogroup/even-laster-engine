@@ -32,10 +32,8 @@ public:
 		unmap();
 	}
 
-	VkBuffer getBuffer() const
-	{
-		return buffer;
-	}
+	VkBuffer getBuffer() const { return buffer; }
+	VkDeviceSize getSize() const { return size; }
 
 	VkDescriptorBufferInfo getDescriptorBufferInfo(VkDeviceSize offset = 0, VkDeviceSize range = VK_WHOLE_SIZE)
 	{
@@ -50,6 +48,7 @@ public:
 
 private:
 	VkBuffer buffer;
+	VkDeviceSize size;
 	VkDeviceMemory deviceMemory;
 };
 
