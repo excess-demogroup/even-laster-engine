@@ -16,6 +16,7 @@
 #include "shader.h"
 #include "scene/import-texture.h"
 
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
