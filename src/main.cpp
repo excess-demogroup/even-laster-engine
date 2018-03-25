@@ -633,11 +633,11 @@ int main(int argc, char *argv[])
 
 			vkCmdEndRenderPass(commandBuffer);
 
-			VkDescriptorImageInfo computeDescriptorImageInfo = {};
-			computeDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-			computeDescriptorImageInfo.imageView = computeRenderTarget.getImageView();
-
 			{
+				VkDescriptorImageInfo computeDescriptorImageInfo = {};
+				computeDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+				computeDescriptorImageInfo.imageView = computeRenderTarget.getImageView();
+
 				VkWriteDescriptorSet writeDescriptorSets[2] = {};
 				writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				writeDescriptorSets[0].dstSet = computeDescriptorSets[currentSwapImage];
