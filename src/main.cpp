@@ -474,6 +474,8 @@ int main(int argc, char *argv[])
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(imageViews.size()) },
 		}, imageViews.size());
 
+		auto colorRenderTargetSampler = createSampler(0.0f, true, true);
+
 		auto computeDescriptorSet = allocateDescriptorSet(computeDescriptorPool, computeDescriptorSetLayout);
 		{
 			VkDescriptorImageInfo computeDescriptorImageInfo = {};
@@ -491,7 +493,7 @@ int main(int argc, char *argv[])
 			VkDescriptorImageInfo descriptorImageInfo = {};
 			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			descriptorImageInfo.imageView = colorRenderTarget.getImageView();
-			descriptorImageInfo.sampler = textureSampler;
+			descriptorImageInfo.sampler = colorRenderTargetSampler;
 
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[1].dstSet = computeDescriptorSet;
