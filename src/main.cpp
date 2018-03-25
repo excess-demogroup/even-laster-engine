@@ -477,14 +477,10 @@ int main(int argc, char *argv[])
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 		};
 
-		VkDescriptorSetLayoutCreateInfo computeDescSetLayoutCreateInfo = {};
-		computeDescSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		computeDescSetLayoutCreateInfo.bindingCount = ARRAY_SIZE(computeDescriptorSetLayoutBindings);
-		computeDescSetLayoutCreateInfo.pBindings = computeDescriptorSetLayoutBindings;
-
-		VkDescriptorSetLayout computeDescriptorSetLayout;
-		err = vkCreateDescriptorSetLayout(device, &computeDescSetLayoutCreateInfo, nullptr, &computeDescriptorSetLayout);
-		assert(err == VK_SUCCESS);
+		auto computeDescriptorSetLayout = createDescriptorSetLayout({
+			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
+			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+		});
 
 		VkPipelineLayoutCreateInfo computePipelineLayoutCreateInfo = {};
 		computePipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
