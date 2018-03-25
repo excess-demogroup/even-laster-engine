@@ -203,6 +203,46 @@ namespace vulkan
 			oldQueueFamily, newQueueFamily);
 	}
 
+	inline void blitImage(
+		VkCommandBuffer commandBuffer,
+		VkImage srcImage, VkImage dstImage,
+		const std::vector<VkImageBlit> &imageBlits,
+		VkFilter filter = VK_FILTER_NEAREST,
+		VkImageLayout srcLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VkImageLayout dstLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		vkCmdBlitImage(commandBuffer,
+			srcImage, srcLayout,
+			dstImage, dstLayout,
+			imageBlits.size(), imageBlits.data(),
+			filter);
+	}
+
+	inline void blitImage(
+		VkCommandBuffer commandBuffer,
+		VkImage srcImage, VkImage dstImage,
+		int width, int height,
+		VkImageSubresourceLayers srcSubresourceLayers,
+		VkImageSubresourceLayers dstSubresourceLayers,
+		VkFilter filter = VK_FILTER_NEAREST,
+		VkImageLayout srcLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VkImageLayout dstLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		VkImageBlit imageBlit = {};
+		imageBlit.srcSubresource = srcSubresourceLayers;
+		imageBlit.srcOffsets[1].x = int32_t(width);
+		imageBlit.srcOffsets[1].y = int32_t(height);
+		imageBlit.srcOffsets[1].z = 1;
+
+		imageBlit.dstSubresource = dstSubresourceLayers;
+		imageBlit.dstOffsets[1].x = width;
+		imageBlit.dstOffsets[1].y = height;
+		imageBlit.dstOffsets[1].z = 1;
+
+		blitImage(commandBuffer,
+			srcImage, dstImage,
+			{ imageBlit }, filter,
+			srcLayout, dstLayout);
+	}
+
 	inline VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize> &poolSizes, int maxSets)
 	{
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};

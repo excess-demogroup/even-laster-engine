@@ -677,27 +677,12 @@ int main(int argc, char *argv[])
 				0, VK_ACCESS_TRANSFER_WRITE_BIT,
 				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-			VkImageBlit imageBlit = { };
-			imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			imageBlit.srcSubresource.layerCount = 1;
-			imageBlit.srcSubresource.mipLevel = 0;
-			imageBlit.srcOffsets[1].x = width;
-			imageBlit.srcOffsets[1].y = height;
-			imageBlit.srcOffsets[1].z = 1;
-			imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			imageBlit.dstSubresource.layerCount = 1;
-			imageBlit.dstSubresource.mipLevel = 0;
-			imageBlit.dstOffsets[1].x = width;
-			imageBlit.dstOffsets[1].y = height;
-			imageBlit.dstOffsets[1].z = 1;
-
-			vkCmdBlitImage(commandBuffer,
+			blitImage(commandBuffer,
 				computeRenderTarget.getImage(),
-				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 				images[currentSwapImage],
-				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				1, &imageBlit,
-				VK_FILTER_NEAREST);
+				width, height,
+				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
+				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 });
 
 			imageBarrier(
 				commandBuffer,
