@@ -9,6 +9,8 @@
     <ClCompile Include="src\scene\import-texture.cpp" />
     <ClCompile Include="src\scene\texture.cpp" />
     <ClCompile Include="src\scene\scene.cpp" />
+    <ClCompile Include="src\scene\sceneimporter.cpp" />
+    <ClCompile Include="src\scenerenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\swapchain.h" />
@@ -22,6 +24,8 @@
     <ClInclude Include="src\scene\texture.h" />
     <ClInclude Include="src\vulkan.h" />
     <ClInclude Include="src\core\blobbuilder.h" />
+    <ClInclude Include="src\scene\sceneimporter.h" />
+    <ClInclude Include="src\scenerenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\shaders\*.frag" />

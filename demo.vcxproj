@@ -158,6 +158,7 @@
     <ClInclude Include="src\core\blobbuilder.h" />
     <ClInclude Include="src\core\core.h" />
     <ClInclude Include="src\core\memorymappedfile.h" />
+    <ClInclude Include="src\scenerenderer.h" />
     <ClInclude Include="src\scene\buffer.h" />
     <ClInclude Include="src\scene\import-texture.h" />
     <ClInclude Include="src\scene\rendertarget.h" />
@@ -169,6 +170,7 @@
     <ClInclude Include="src\vulkan.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\scenerenderer.cpp" />
     <ClCompile Include="src\scene\buffer.cpp" />
     <ClCompile Include="src\scene\import-texture.cpp" />
     <ClCompile Include="src\scene\scene.cpp" />
