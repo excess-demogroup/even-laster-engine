@@ -11,6 +11,6 @@ void main()
 {
 	vec2 size = gl_NumWorkGroups.xy * gl_WorkGroupSize.xy;
 	vec2 pos = gl_GlobalInvocationID.xy / size;
-	vec3 color = textureLod(samplerColor, pos, 0).xyz * (1.0 - distance(pos, vec2(0.5)));
+	vec3 color = texelFetch(samplerColor, ivec2(gl_GlobalInvocationID.xy), 0).xyz * (1.0 - distance(pos, vec2(0.5)));
 	imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), vec4(color, 1));
 }
