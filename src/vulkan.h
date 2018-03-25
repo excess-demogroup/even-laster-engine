@@ -322,6 +322,23 @@ namespace vulkan
 		return framebuffer;
 	}
 
+	inline VkPipelineLayout createPipelineLayout(const std::vector<VkDescriptorSetLayout> &descriptorSetLayouts, const std::vector<VkPushConstantRange> &pushConstantRanges)
+	{
+		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
+		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+
+		pipelineLayoutCreateInfo.setLayoutCount = descriptorSetLayouts.size();
+		pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
+
+		pipelineLayoutCreateInfo.pushConstantRangeCount = pushConstantRanges.size();
+		pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRanges.data();
+
+		VkPipelineLayout pipelineLayout;
+		auto err = vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+		assert(err == VK_SUCCESS);
+		return pipelineLayout;
+	}
+
 	void instanceFuncsInit(VkInstance instance);
 };
 

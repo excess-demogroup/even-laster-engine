@@ -411,14 +411,7 @@ int main(int argc, char *argv[])
 			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT },
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
 		});
-
-		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
-		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutCreateInfo.pSetLayouts = &descriptorSetLayout;
-		pipelineLayoutCreateInfo.setLayoutCount = 1;
-
-		VkPipelineLayout pipelineLayout;
-		vkCreatePipelineLayout(device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout);
+		auto pipelineLayout = createPipelineLayout({ descriptorSetLayout }, {});
 
 		VkVertexInputBindingDescription vertexInputBindingDesc[1];
 		vertexInputBindingDesc[0].binding = 0;
