@@ -40,6 +40,11 @@
 			<key row="520" interpolation="1" value="0.2"/>
 			<key row="576" interpolation="0" value="0"/>
 		</track>
+		<track name="refraction:fade">
+			<key row="0" interpolation="0" value="1"/>
+			<key row="111" interpolation="0" value="0.1"/>
+			<key row="112" interpolation="0" value="1"/>
+		</track>
 	</tracks>
 	<bookmarks/>
 </sync>

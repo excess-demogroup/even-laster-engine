@@ -249,16 +249,30 @@ int main(int argc, char *argv[])
 		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), false, false);
 		VkDescriptorImageInfo descriptorImageInfo = texture.getDescriptorImageInfo(textureSampler);
 
+		struct {
+			float fade;
+		} refractionUniforms;
+		auto refractionUniformBuffer = new Buffer(sizeof(refractionUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
 		for (SceneRenderer &sceneRenderer : sceneRenderers) {
-			VkWriteDescriptorSet writeDescriptorSet = {};
-			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSet.dstSet = sceneRenderer.getDescriptorSet();
-			writeDescriptorSet.descriptorCount = 1;
-			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSet.pBufferInfo = nullptr;
-			writeDescriptorSet.pImageInfo = &descriptorImageInfo;
-			writeDescriptorSet.dstBinding = 1;
-			vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+			VkWriteDescriptorSet writeDescriptorSets[2] = {};
+			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[0].dstSet = sceneRenderer.getDescriptorSet();
+			writeDescriptorSets[0].descriptorCount = 1;
+			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSets[0].pBufferInfo = nullptr;
+			writeDescriptorSets[0].pImageInfo = &descriptorImageInfo;
+			writeDescriptorSets[0].dstBinding = 1;
+
+			auto descriptorBufferInfo = refractionUniformBuffer->getDescriptorBufferInfo();
+			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[1].dstSet = sceneRenderer.getDescriptorSet();
+			writeDescriptorSets[1].descriptorCount = 1;
+			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writeDescriptorSets[1].pBufferInfo = &descriptorBufferInfo;
+			writeDescriptorSets[1].dstBinding = 2;
+
+			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 		}
 
 		VkSampler arrayTextureSampler = createSampler(1.0f, false, false);
@@ -366,6 +380,8 @@ int main(int argc, char *argv[])
 		auto cam_dist = sync_get_track(rocket, "camera:dist");
 		auto cam_roll = sync_get_track(rocket, "camera:roll");
 
+		auto refractionFadeTrack = sync_get_track(rocket, "refraction:fade");
+
 		auto pp_delay_image = sync_get_track(rocket, "postprocess:delay.image");
 		auto pp_delay_amount = sync_get_track(rocket, "postprocess:delay.amount");
 		auto pp_delay_chroma = sync_get_track(rocket, "postprocess:delay.chroma");
@@ -472,6 +488,11 @@ int main(int argc, char *argv[])
 			sceneIndex = max(sceneIndex, 0);
 			sceneIndex %= sceneRenderers.size();
 			SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
+
+			refractionUniforms.fade = float(sync_get_val(refractionFadeTrack, row));
+			auto ptr = refractionUniformBuffer->map(0, sizeof(refractionUniforms));
+			memcpy(ptr, &refractionUniforms, sizeof(refractionUniforms));
+			refractionUniformBuffer->unmap();
 
 			sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix);
 			vkCmdEndRenderPass(commandBuffer);

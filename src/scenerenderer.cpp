@@ -95,7 +95,8 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 {
 	auto descriptorSetLayout = createDescriptorSetLayout({
 		{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT },
-		{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT }
+		{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
+		{ 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT }
 		});
 	pipelineLayout = createPipelineLayout({ descriptorSetLayout }, {});
 
@@ -147,6 +148,7 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 	auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS); // HACK!
 
 	auto descriptorPool = createDescriptorPool({
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
 		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
 		}, 1);

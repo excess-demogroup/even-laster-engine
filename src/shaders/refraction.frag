@@ -13,6 +13,11 @@ layout (location = 0) out vec4 outFragColor;
 
 layout (binding = 1) uniform sampler2D samplerColor;
 
+layout (binding = 2) uniform UBO
+{
+	float fade;
+} ubo;
+
 bool trace(vec3 pos, vec3 dir, out vec2 hit)
 {
 	float dist = 0;
@@ -75,7 +80,7 @@ void main()
 	vec2 hitA, hitB;
 	vec3 color = vec3(0);
 	if (trace(pos, dirR, hitA) && trace(pos, dirB, hitB))
-		color += sampleSpectrum(hitA, hitB);
+		color += sampleSpectrum(hitA, hitB) * ubo.fade;
 	color += pow(1 - dot(modelNormal, -view), 3) * 0.5;
 	outFragColor = vec4(color, 1);
 }
