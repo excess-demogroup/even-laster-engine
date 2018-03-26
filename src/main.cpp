@@ -675,10 +675,11 @@ int main(int argc, char *argv[])
 			for (auto transform : transforms) {
 				auto modelMatrix = transform->getAbsoluteMatrix();
 				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
+				auto modelMatrixInverse = glm::inverse(modelMatrix);
 
 				perObjectUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
 				// HACK: no non-per-object ubo yet
-				perObjectUniforms.viewPosition = glm::vec4(viewPosition, 0);
+				perObjectUniforms.viewPosition = modelMatrixInverse * glm::vec4(viewPosition, 1);
 
 				memcpy(static_cast<uint8_t *>(ptr) + offset, &perObjectUniforms, sizeof(perObjectUniforms));
 				offsetMap[transform] = offset;
