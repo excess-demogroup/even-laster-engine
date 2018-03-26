@@ -9,12 +9,11 @@ layout (binding = 1) uniform sampler2DArray samplerColor;
 layout (binding = 2) uniform sampler2DArray samplerOffsets;
 
 layout(push_constant) uniform fragmentPushConstants {
-	layout(offset = 0) int arrayBufferFrame;
-	layout(offset = 4) int validFrames;
-	layout(offset = 8) int delayImage;
-	layout(offset = 12) float delayAmount;
-	layout(offset = 16) float delayChroma;
-
+	int arrayBufferFrame;
+	int validFrames;
+	int delayImage;
+	float delayAmount;
+	float delayChroma;
 } u_pushConstants;
 
 vec3 spectrum_offset(float t)
