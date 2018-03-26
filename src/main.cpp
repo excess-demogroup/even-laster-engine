@@ -108,7 +108,7 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 		nullptr,
 		0,
 		VK_SHADER_STAGE_VERTEX_BIT,
-		loadShaderModule("data/shaders/triangle.vert.spv"),
+		loadShaderModule("data/shaders/refraction.vert.spv"),
 		"main",
 		NULL
 	}, {
@@ -116,7 +116,7 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 		nullptr,
 		0,
 		VK_SHADER_STAGE_FRAGMENT_BIT,
-		loadShaderModule("data/shaders/triangle.frag.spv"),
+		loadShaderModule("data/shaders/refraction.frag.spv"),
 		"main",
 		NULL
 	} };
