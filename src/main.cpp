@@ -604,7 +604,7 @@ int main(int argc, char *argv[])
 			auto dist = sync_get_val(cam_dist, row);
 			auto roll = sync_get_val(cam_roll, row) * (M_PI / 180);
 
-			auto viewPosition = glm::vec3(sin(th) * dist, cos(th) * 0.5f, cos(th) * dist);
+			auto viewPosition = glm::vec3(sin(th) * dist, 0.0f, cos(th) * dist);
 			auto lookAt = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
 			auto viewMatrix = glm::rotate(lookAt, float(roll), glm::vec3(0, 0, 1));
 
