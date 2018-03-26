@@ -507,6 +507,8 @@ int main(int argc, char *argv[])
 			throw runtime_error("failed to connect to host");
 #endif
 
+		auto sceneIndexTrack = sync_get_track(rocket, "scene.index");
+
 		auto clear_r = sync_get_track(rocket, "background:clear.r");
 		auto clear_g = sync_get_track(rocket, "background:clear.g");
 		auto clear_b = sync_get_track(rocket, "background:clear.b");
@@ -616,7 +618,11 @@ int main(int argc, char *argv[])
 
 			auto offset = 0u;
 			map<const Transform*, unsigned int> offsetMap;
-			int sceneIndex = 0;
+
+			int sceneIndex = int(sync_get_val(sceneIndexTrack, row));
+			sceneIndex = max(sceneIndex, 0);
+			sceneIndex %= sceneRenderers.size();
+
 			SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
 			sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix, viewPosition);
 			vkCmdEndRenderPass(commandBuffer);

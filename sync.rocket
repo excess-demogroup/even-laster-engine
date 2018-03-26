@@ -1,5 +1,9 @@
 <sync rows="3072">
 	<tracks>
+		<track name="scene.index">
+			<key row="0" interpolation="0" value="0"/>
+			<key row="1024" interpolation="0" value="1"/>
+		</track>
 		<track name="background:clear.r"/>
 		<track name="background:clear.g"/>
 		<track name="background:clear.b"/>
@@ -10,6 +14,8 @@
 			<key row="767" interpolation="0" value="-45"/>
 			<key row="768" interpolation="1" value="80"/>
 			<key row="1023" interpolation="0" value="20"/>
+			<key row="1024" interpolation="1" value="0"/>
+			<key row="1097" interpolation="0" value="180"/>
 		</track>
 		<track name="camera:dist">
 			<key row="0" interpolation="1" value="1.25"/>
