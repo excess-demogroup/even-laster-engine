@@ -15,5 +15,5 @@ void main()
 {
 	outModelPos = inPos;
 	outTexCoord = 0.5 + 0.5 * inPos.xy;
-	gl_Position = ubo.modelViewProjectionMatrix * vec4(inPos.xyz, 1.0);
+	gl_Position = perObjectUBO.modelViewProjectionMatrix * vec4(inPos.xyz, 1.0);
 }

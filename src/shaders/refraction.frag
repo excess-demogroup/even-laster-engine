@@ -65,7 +65,7 @@ void main()
 {
 	vec3 modelNormal = normalize(cross(dFdx(modelPos), dFdy(modelPos)));
 	vec3 pos = modelPos;
-	vec3 viewPos = ubo.modelViewInverseMatrix[3].xyz;
+	vec3 viewPos = perObjectUBO.modelViewInverseMatrix[3].xyz;
 	vec3 view = normalize(modelPos - viewPos);
 
 	float refractiveIndex = 1.1;
