@@ -307,7 +307,7 @@ int main(int argc, char *argv[])
 
 		auto renderTargetFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		ColorRenderTarget computeRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		ColorRenderTarget postProcessRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
@@ -470,32 +470,32 @@ int main(int argc, char *argv[])
 		auto indexBuffer = Buffer(sizeof(CubeData::vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		indexBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
 
-		auto computeDescriptorSetLayout = createDescriptorSetLayout({
+		auto postProcessDescriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 		});
-		auto computePipelineLayout = createPipelineLayout({ computeDescriptorSetLayout }, {});
+		auto postProcessPipelineLayout = createPipelineLayout({ postProcessDescriptorSetLayout }, { });
 
-		VkPipeline computePipeline = createComputePipeline(computePipelineLayout, loadShaderModule("data/shaders/postprocess.comp.spv"));
+		VkPipeline postProcessPipeline = createComputePipeline(postProcessPipelineLayout, loadShaderModule("data/shaders/postprocess.comp.spv"));
 
-		auto computeDescriptorPool = createDescriptorPool({
+		auto postProcessDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, uint32_t(imageViews.size()) },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(imageViews.size()) },
 		}, imageViews.size());
 
-		auto computeDescriptorSet = allocateDescriptorSet(computeDescriptorPool, computeDescriptorSetLayout);
+		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessDescriptorSetLayout);
 		{
-			VkDescriptorImageInfo computeDescriptorImageInfo = {};
-			computeDescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-			computeDescriptorImageInfo.imageView = computeRenderTarget.getImageView();
+			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
+			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			postProcessRenderTargetImageInfo.imageView = postProcessRenderTarget.getImageView();
 
 			VkWriteDescriptorSet writeDescriptorSets[2] = {};
 			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSets[0].dstSet = computeDescriptorSet;
+			writeDescriptorSets[0].dstSet = postProcessDescriptorSet;
 			writeDescriptorSets[0].dstBinding = 0;
 			writeDescriptorSets[0].descriptorCount = 1;
 			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-			writeDescriptorSets[0].pImageInfo = &computeDescriptorImageInfo;
+			writeDescriptorSets[0].pImageInfo = &postProcessRenderTargetImageInfo;
 
 			VkDescriptorImageInfo descriptorImageInfo = {};
 			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -503,7 +503,7 @@ int main(int argc, char *argv[])
 			descriptorImageInfo.sampler = textureSampler;
 
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSets[1].dstSet = computeDescriptorSet;
+			writeDescriptorSets[1].dstSet = postProcessDescriptorSet;
 			writeDescriptorSets[1].dstBinding = 1;
 			writeDescriptorSets[1].descriptorCount = 1;
 			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -619,12 +619,12 @@ int main(int argc, char *argv[])
 
 			vkCmdEndRenderPass(commandBuffer);
 
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 1, &computeDescriptorSet, 0, nullptr);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipelineLayout, 0, 1, &postProcessDescriptorSet, 0, nullptr);
 
 			imageBarrier(
 				commandBuffer,
-				computeRenderTarget.getImage(),
+				postProcessRenderTarget.getImage(),
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 				0, VK_ACCESS_SHADER_WRITE_BIT,
@@ -634,7 +634,7 @@ int main(int argc, char *argv[])
 
 			imageBarrier(
 				commandBuffer,
-				computeRenderTarget.getImage(),
+				postProcessRenderTarget.getImage(),
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
@@ -649,7 +649,7 @@ int main(int argc, char *argv[])
 				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 			blitImage(commandBuffer,
-				computeRenderTarget.getImage(),
+				postProcessRenderTarget.getImage(),
 				images[currentSwapImage],
 				width, height,
 				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
