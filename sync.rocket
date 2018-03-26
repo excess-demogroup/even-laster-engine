@@ -15,7 +15,13 @@
 			<key row="768" interpolation="1" value="80"/>
 			<key row="1023" interpolation="0" value="20"/>
 			<key row="1024" interpolation="1" value="0"/>
-			<key row="1097" interpolation="0" value="180"/>
+			<key row="1095" interpolation="0" value="180"/>
+			<key row="1096" interpolation="1" value="20"/>
+			<key row="1111" interpolation="0" value="-20"/>
+			<key row="1112" interpolation="1" value="-70"/>
+			<key row="1247" interpolation="0" value="70"/>
+			<key row="1248" interpolation="1" value="-20"/>
+			<key row="1295" interpolation="0" value="20"/>
 		</track>
 		<track name="camera:dist">
 			<key row="0" interpolation="1" value="1.25"/>
@@ -24,18 +30,25 @@
 		</track>
 		<track name="camera:roll">
 			<key row="0" interpolation="0" value="0"/>
-			<key row="1060" interpolation="0" value="90"/>
+			<key row="1112" interpolation="1" value="0"/>
+			<key row="1247" interpolation="0" value="180"/>
+			<key row="1248" interpolation="0" value="0"/>
 		</track>
 		<track name="postprocess:delay.image">
 			<key row="0" interpolation="0" value="0"/>
+			<key row="1152" interpolation="0" value="1"/>
 		</track>
 		<track name="postprocess:delay.amount">
 			<key row="0" interpolation="0" value="0"/>
 			<key row="512" interpolation="1" value="0"/>
 			<key row="520" interpolation="1" value="1"/>
 			<key row="576" interpolation="0" value="0"/>
-			<key row="744" interpolation="0" value="0"/>
-			<key row="768" interpolation="0" value="1"/>
+			<key row="768" interpolation="1" value="1"/>
+			<key row="856" interpolation="0" value="0"/>
+			<key row="1024" interpolation="0" value="1"/>
+			<key row="1152" interpolation="0" value="0"/>
+			<key row="1256" interpolation="1" value="1"/>
+			<key row="1344" interpolation="0" value="0"/>
 		</track>
 		<track name="postprocess:delay.chroma">
 			<key row="0" interpolation="0" value="0"/>
@@ -44,6 +57,8 @@
 			<key row="576" interpolation="0" value="0"/>
 			<key row="768" interpolation="1" value="0.5"/>
 			<key row="832" interpolation="0" value="0.2"/>
+			<key row="1256" interpolation="1" value="0.5"/>
+			<key row="1320" interpolation="0" value="0.2"/>
 		</track>
 		<track name="refraction:fade">
 			<key row="0" interpolation="0" value="1"/>
