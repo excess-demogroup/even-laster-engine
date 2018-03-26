@@ -17,6 +17,7 @@
 #include "shader.h"
 #include "scene/import-texture.h"
 #include "scene/sceneimporter.h"
+#include "scenerenderer.h"
 
 #include "sync/sync.h"
 
@@ -387,82 +388,29 @@ int main(int argc, char *argv[])
 			SceneImporter::import("assets/scenes/0001.dae")
 		};
 
-		// just a hack to get the vertex-layout
-		auto model = const_cast<Model*>(scenes.front()->getObjects().front()->getModel());
-		Mesh &mesh = *const_cast<Mesh*>(model->getMesh());
+		vector<SceneRenderer> sceneRenderers;
+		for (auto scene : scenes)
+			sceneRenderers.push_back(SceneRenderer(scene, renderPass));
 
 		// OK, let's prepare for rendering!
 
 		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
 		auto offsetMaps = importTexture2DArray("assets/offset-maps", TextureImportFlags::NONE);
 
-		auto descriptorSetLayout = createDescriptorSetLayout({
-			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT },
-			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
-		});
-		auto pipelineLayout = createPipelineLayout({ descriptorSetLayout }, {});
-
-		VkVertexInputBindingDescription vertexInputBindingDesc[1];
-		vertexInputBindingDesc[0].binding = 0;
-		vertexInputBindingDesc[0].stride = mesh.getVertexStride();
-		vertexInputBindingDesc[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		auto vertexInputAttributeDescriptions = vertexFormatToInputAttributeDescriptions(mesh.getVertexFormat());
-
-		VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
-		pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = ARRAY_SIZE(vertexInputBindingDesc);
-		pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = vertexInputBindingDesc;
-		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = vertexInputAttributeDescriptions.size();
-		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
-
-		auto pipeline = createGraphicsPipeline(pipelineLayout, renderPass, pipelineVertexInputStateCreateInfo);
-
-		auto descriptorPool = createDescriptorPool({
-			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
-		}, 1);
-
-		struct {
-			glm::mat4 modelViewProjectionMatrix;
-			glm::vec4 viewPosition;
-		} perObjectUniforms;
-		auto uniformSize = sizeof(perObjectUniforms);
-		auto uniformBufferSpacing = uint32_t(alignSize(uniformSize, deviceProperties.limits.minUniformBufferOffsetAlignment));
-		int maxTransforms = 1;
-		for (auto scene : scenes)
-			maxTransforms = max(maxTransforms, int(scene->getTransforms().size()));
-		auto uniformBufferSize = VkDeviceSize(uniformBufferSpacing * maxTransforms);
-
-		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-
-		auto descriptorSet = allocateDescriptorSet(descriptorPool, descriptorSetLayout);
-
-		VkDescriptorBufferInfo descriptorBufferInfo = uniformBuffer.getDescriptorBufferInfo();
-
-		VkWriteDescriptorSet writeDescriptorSets[2] = {};
-		writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeDescriptorSets[0].dstSet = descriptorSet;
-		writeDescriptorSets[0].descriptorCount = 1;
-		writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
-		writeDescriptorSets[0].dstBinding = 0;
-
 		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), false, false);
-
 		VkDescriptorImageInfo descriptorImageInfo = texture.getDescriptorImageInfo(textureSampler);
 
-		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeDescriptorSets[1].dstSet = descriptorSet;
-		writeDescriptorSets[1].descriptorCount = 1;
-		writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		writeDescriptorSets[1].pBufferInfo = nullptr;
-		writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
-		writeDescriptorSets[1].dstBinding = 1;
-		vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
-
-		// Go make vertex buffer yo!
-		auto indexedBatch = meshToIndexedBatch(mesh);
+		for (SceneRenderer &sceneRenderer : sceneRenderers) {
+			VkWriteDescriptorSet writeDescriptorSet = {};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.dstSet = sceneRenderer.getDescriptorSet();
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSet.pBufferInfo = nullptr;
+			writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+			writeDescriptorSet.dstBinding = 1;
+			vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+		}
 
 		VkSampler arrayTextureSampler = createSampler(1.0f, false, false);
 
@@ -665,42 +613,12 @@ int main(int argc, char *argv[])
 			auto znear = 0.01f;
 			auto zfar = 100.0f;
 			auto projectionMatrix = glm::perspective(fov * float(M_PI / 180.0f), aspect, znear, zfar);
-			auto viewProjectionMatrix = projectionMatrix * viewMatrix;
 
 			auto offset = 0u;
 			map<const Transform*, unsigned int> offsetMap;
-			auto scene = scenes.front();
-			auto transforms = scene->getTransforms();
-			auto ptr = uniformBuffer.map(0, uniformBufferSpacing * transforms.size());
-			for (auto transform : transforms) {
-				auto modelMatrix = transform->getAbsoluteMatrix();
-				auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
-				auto modelMatrixInverse = glm::inverse(modelMatrix);
-
-				perObjectUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
-				// HACK: no non-per-object ubo yet
-				perObjectUniforms.viewPosition = modelMatrixInverse * glm::vec4(viewPosition, 1);
-
-				memcpy(static_cast<uint8_t *>(ptr) + offset, &perObjectUniforms, sizeof(perObjectUniforms));
-				offsetMap[transform] = offset;
-				offset += uniformBufferSpacing;
-			}
-			uniformBuffer.unmap();
-
-			indexedBatch.bind(commandBuffer);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-			for (auto object : scene->getObjects()) {
-				assert(offsetMap.count(object->getTransform()) > 0);
-
-				auto offset = offsetMap[object->getTransform()];
-				assert(offset <= uniformBufferSize - uniformSize);
-				uint32_t dynamicOffsets[] = { (uint32_t)offset };
-				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);
-				// vkCmdDraw(commandBuffer, ARRAY_SIZE(vertexPositions), 1, 0, 0);
-				indexedBatch.draw(commandBuffer);
-			}
-
+			int sceneIndex = 0;
+			SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
+			sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix, viewPosition);
 			vkCmdEndRenderPass(commandBuffer);
 
 			imageBarrier(

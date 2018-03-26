@@ -13,8 +13,10 @@ using namespace vulkan;
 using std::map;
 
 struct PerObjectUniforms {
+	glm::mat4 modelViewMatrix;
 	glm::mat4 modelViewProjectionMatrix;
 	glm::mat4 modelViewProjectionInverseMatrix;
+	glm::vec4 viewPosition;
 };
 
 static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const VkPipelineVertexInputStateCreateInfo &pipelineVertexInputStateCreateInfo, const std::vector<VkPipelineShaderStageCreateInfo> shaderStages)
@@ -28,7 +30,7 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 	pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
 
 	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1] = { { 0 } };
@@ -93,7 +95,8 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 	scene(scene)
 {
 	auto descriptorSetLayout = createDescriptorSetLayout({
-		{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT }
+		{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT },
+		{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT }
 		});
 	pipelineLayout = createPipelineLayout({ descriptorSetLayout }, {});
 
@@ -126,7 +129,7 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 					nullptr,
 					0,
 					VK_SHADER_STAGE_VERTEX_BIT,
-					loadShaderModule("data/shaders/mesh.vert.spv"),
+					loadShaderModule("data/shaders/triangle.vert.spv"),
 					"main",
 					NULL
 				},{
@@ -134,7 +137,7 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 					nullptr,
 					0,
 					VK_SHADER_STAGE_FRAGMENT_BIT,
-					loadShaderModule("data/shaders/mesh.frag.spv"),
+					loadShaderModule("data/shaders/triangle.frag.spv"),
 					"main",
 					NULL
 				}});
@@ -146,6 +149,7 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 
 	auto descriptorPool = createDescriptorPool({
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
 		}, 1);
 
 	uniformBufferSpacing = uint32_t(alignSize(sizeof(PerObjectUniforms), deviceProperties.limits.minUniformBufferOffsetAlignment));
@@ -168,20 +172,25 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 	vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 }
 
-void SceneRenderer::draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewProjectionMatrix)
+void SceneRenderer::draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, const glm::vec3 &viewPosition)
 {
 	auto offset = 0u;
 	map<const Transform*, unsigned int> offsetMap;
 	auto transforms = scene->getTransforms();
 	auto ptr = uniformBuffer->map(0, uniformBufferSpacing * transforms.size());
+
+	auto viewProjectionMatrix = projectionMatrix * viewMatrix;
 	for (auto transform : transforms) {
-		auto modelMatrix = transform->getAbsoluteMatrix();
-		auto modelViewProjectionMatrix = viewProjectionMatrix * modelMatrix;
+		auto modelMatrix = glm::mat4(1); //  transform->getAbsoluteMatrix();
+		auto modelViewMatrix = viewMatrix * modelMatrix;
+		auto modelViewProjectionMatrix = projectionMatrix * modelViewMatrix;
 		auto modelViewProjectionInverseMatrix = glm::inverse(modelViewProjectionMatrix);
 
 		PerObjectUniforms perObjectUniforms;
+		perObjectUniforms.modelViewMatrix = modelViewMatrix;
 		perObjectUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
 		perObjectUniforms.modelViewProjectionInverseMatrix = modelViewProjectionInverseMatrix;
+		perObjectUniforms.viewPosition = glm::vec4(viewPosition, 1.0f);
 
 		memcpy(static_cast<uint8_t *>(ptr) + offset, &perObjectUniforms, sizeof(perObjectUniforms));
 		offsetMap[transform] = offset;

@@ -7,7 +7,10 @@ layout (location = 0) in vec3 inPos;
 
 layout (binding = 0) uniform UBO
 {
+	mat4 modelViewMatrix;
 	mat4 modelViewProjectionMatrix;
+	mat4 modelViewProjectionInverseMatrix;
+	vec4 viewPosition;
 } ubo;
 
 layout (location = 0) out vec2 outTexCoord;
