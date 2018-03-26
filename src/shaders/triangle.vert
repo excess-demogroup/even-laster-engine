@@ -2,15 +2,11 @@
 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
+#extension GL_GOOGLE_include_directive : enable
 
 layout (location = 0) in vec3 inPos;
 
-layout (binding = 0) uniform UBO
-{
-	mat4 modelViewMatrix;
-	mat4 modelViewInverseMatrix;
-	mat4 modelViewProjectionMatrix;
-} ubo;
+#include "perobject.glsl"
 
 layout (location = 0) out vec2 outTexCoord;
 layout (location = 1) out vec3 outModelPos;
