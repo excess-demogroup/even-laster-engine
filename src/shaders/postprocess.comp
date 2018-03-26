@@ -30,6 +30,7 @@ float nrand( vec2 n )
 
 vec3 sampleSpectrum(float timeA, float timeB)
 {
+	// thanks to Hornet ;)
 	const int num_iter = 7;
 	const float stepsiz = 1.0 / (float(num_iter)-1.0);
 
