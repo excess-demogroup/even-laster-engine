@@ -16,7 +16,6 @@ struct PerObjectUniforms {
 	glm::mat4 modelViewMatrix;
 	glm::mat4 modelViewInverseMatrix;
 	glm::mat4 modelViewProjectionMatrix;
-	glm::mat4 modelViewProjectionInverseMatrix;
 };
 
 static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const VkPipelineVertexInputStateCreateInfo &pipelineVertexInputStateCreateInfo, const std::vector<VkPipelineShaderStageCreateInfo> shaderStages)
@@ -189,7 +188,6 @@ void SceneRenderer::draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewMat
 		perObjectUniforms.modelViewMatrix = modelViewMatrix;
 		perObjectUniforms.modelViewInverseMatrix = glm::inverse(modelViewMatrix);
 		perObjectUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
-		perObjectUniforms.modelViewProjectionInverseMatrix = glm::inverse(modelViewProjectionMatrix);
 
 		memcpy(static_cast<uint8_t *>(ptr) + offset, &perObjectUniforms, sizeof(perObjectUniforms));
 		offsetMap[transform] = offset;
