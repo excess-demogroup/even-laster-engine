@@ -11,9 +11,9 @@ layout (location = 0) out vec4 outFragColor;
 layout (binding = 0) uniform UBO
 {
 	mat4 modelViewMatrix;
+	mat4 modelViewInverseMatrix;
 	mat4 modelViewProjectionMatrix;
 	mat4 modelViewProjectionInverseMatrix;
-	vec4 viewPosition;
 } ubo;
 
 layout (binding = 1) uniform sampler2D samplerColor;
@@ -70,7 +70,7 @@ void main()
 {
 	vec3 modelNormal = normalize(cross(dFdx(modelPos), dFdy(modelPos)));
 	vec3 pos = modelPos;
-	vec3 viewPos = ubo.viewPosition.xyz;
+	vec3 viewPos = ubo.modelViewInverseMatrix[3].xyz;
 	vec3 view = normalize(modelPos - viewPos);
 
 	float refractiveIndex = 1.1;

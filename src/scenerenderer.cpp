@@ -14,9 +14,9 @@ using std::map;
 
 struct PerObjectUniforms {
 	glm::mat4 modelViewMatrix;
+	glm::mat4 modelViewInverseMatrix;
 	glm::mat4 modelViewProjectionMatrix;
 	glm::mat4 modelViewProjectionInverseMatrix;
-	glm::vec4 viewPosition;
 };
 
 static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const VkPipelineVertexInputStateCreateInfo &pipelineVertexInputStateCreateInfo, const std::vector<VkPipelineShaderStageCreateInfo> shaderStages)
@@ -172,7 +172,7 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 	vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 }
 
-void SceneRenderer::draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, const glm::vec3 &viewPosition)
+void SceneRenderer::draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix)
 {
 	auto offset = 0u;
 	map<const Transform*, unsigned int> offsetMap;
@@ -184,13 +184,12 @@ void SceneRenderer::draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewMat
 		auto modelMatrix = glm::mat4(1); //  transform->getAbsoluteMatrix();
 		auto modelViewMatrix = viewMatrix * modelMatrix;
 		auto modelViewProjectionMatrix = projectionMatrix * modelViewMatrix;
-		auto modelViewProjectionInverseMatrix = glm::inverse(modelViewProjectionMatrix);
 
 		PerObjectUniforms perObjectUniforms;
 		perObjectUniforms.modelViewMatrix = modelViewMatrix;
+		perObjectUniforms.modelViewInverseMatrix = glm::inverse(modelViewMatrix);
 		perObjectUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
-		perObjectUniforms.modelViewProjectionInverseMatrix = modelViewProjectionInverseMatrix;
-		perObjectUniforms.viewPosition = glm::vec4(viewPosition, 1.0f);
+		perObjectUniforms.modelViewProjectionInverseMatrix = glm::inverse(modelViewProjectionMatrix);
 
 		memcpy(static_cast<uint8_t *>(ptr) + offset, &perObjectUniforms, sizeof(perObjectUniforms));
 		offsetMap[transform] = offset;

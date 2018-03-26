@@ -17,7 +17,7 @@ class SceneRenderer {
 public:
 
 	SceneRenderer(Scene *scene, VkRenderPass renderPass);
-	void draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, const glm::vec3 &viewPosition);
+	void draw(VkCommandBuffer commandBuffer, const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix);
 
 	VkDescriptorSet getDescriptorSet() { return descriptorSet; } // HACK! Yuck yuck yuck!
 

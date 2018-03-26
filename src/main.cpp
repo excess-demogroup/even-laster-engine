@@ -608,7 +608,7 @@ int main(int argc, char *argv[])
 
 			auto viewPosition = glm::vec3(sin(th) * dist, 0.0f, cos(th) * dist);
 			auto lookAt = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
-			auto viewMatrix = glm::rotate(lookAt, float(roll), glm::vec3(0, 0, 1));
+			auto viewMatrix = glm::rotate(glm::mat4(1), float(roll), glm::vec3(0, 0, 1)) * lookAt;
 
 			auto fov = 60.0f;
 			auto aspect = float(width) / height;
@@ -622,9 +622,9 @@ int main(int argc, char *argv[])
 			int sceneIndex = int(sync_get_val(sceneIndexTrack, row));
 			sceneIndex = max(sceneIndex, 0);
 			sceneIndex %= sceneRenderers.size();
-
 			SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
-			sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix, viewPosition);
+
+			sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix);
 			vkCmdEndRenderPass(commandBuffer);
 
 			imageBarrier(
