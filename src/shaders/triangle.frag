@@ -16,12 +16,16 @@ layout (binding = 0) uniform UBO
 
 layout (binding = 1) uniform sampler2D samplerColor;
 
-vec2 trace(vec3 pos, vec3 dir)
+bool trace(vec3 pos, vec3 dir, out vec2 hit)
 {
 	float dist = 0;
 	float t = -(pos.z + dist) / dir.z;
-	pos += dir * t;
-	return (pos.xy + 1) * 0.5;
+	if (t > 0.0) {
+		pos += dir * t;
+		hit = (pos.xy + 1) * 0.5;
+		return true;
+	} else
+		return false;
 }
 
 vec3 spectrum_offset(float t)
@@ -71,10 +75,10 @@ void main()
 	vec3 dirR = refract(view, modelNormal, 1.0 / (refractiveIndex + 0.025));
 	vec3 dirB = refract(view, modelNormal, 1.0 / (refractiveIndex + 0.075));
 
-	vec2 hitA = trace(pos, dirR);
-	vec2 hitB = trace(pos, dirB);
-
-	vec3 color = sampleSpectrum(hitA, hitB);
+	vec2 hitA, hitB;
+	vec3 color = vec3(0);
+	if (trace(pos, dirR, hitA) && trace(pos, dirB, hitB))
+		color += sampleSpectrum(hitA, hitB);
 	color += pow(1 - dot(modelNormal, -view), 3) * 0.5;
 	outFragColor = vec4(color, 1);
 }
