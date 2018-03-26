@@ -24,6 +24,7 @@
 		</track>
 		<track name="camera:roll">
 			<key row="0" interpolation="0" value="0"/>
+			<key row="1060" interpolation="0" value="90"/>
 		</track>
 		<track name="postprocess:delay.image">
 			<key row="0" interpolation="0" value="0"/>
@@ -33,12 +34,16 @@
 			<key row="512" interpolation="1" value="0"/>
 			<key row="520" interpolation="1" value="1"/>
 			<key row="576" interpolation="0" value="0"/>
+			<key row="744" interpolation="0" value="0"/>
+			<key row="768" interpolation="0" value="1"/>
 		</track>
 		<track name="postprocess:delay.chroma">
 			<key row="0" interpolation="0" value="0"/>
 			<key row="512" interpolation="0" value="0.2"/>
 			<key row="520" interpolation="1" value="0.2"/>
 			<key row="576" interpolation="0" value="0"/>
+			<key row="768" interpolation="1" value="0.5"/>
+			<key row="832" interpolation="0" value="0.2"/>
 		</track>
 		<track name="refraction:fade">
 			<key row="0" interpolation="0" value="1"/>
