@@ -525,6 +525,7 @@ int main(int argc, char *argv[])
 		struct {
 			float planeIndex;
 			float fade;
+			float refractiveIndex;
 		} refractionUniforms;
 		auto refractionUniformBuffer = new Buffer(sizeof(refractionUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
@@ -655,9 +656,13 @@ int main(int argc, char *argv[])
 		auto cam_rot = sync_get_track(rocket, "camera:rot.y");
 		auto cam_dist = sync_get_track(rocket, "camera:dist");
 		auto cam_roll = sync_get_track(rocket, "camera:roll");
+		auto camTargetX = sync_get_track(rocket, "camera:target.x");
+		auto camTargetY = sync_get_track(rocket, "camera:target.y");
+		auto camTargetZ = sync_get_track(rocket, "camera:target.z");
 
 		auto refractionPlaneIndexTrack = sync_get_track(rocket, "refraction:plane");
 		auto refractionFadeTrack = sync_get_track(rocket, "refraction:fade");
+		auto refractionIndexTrack = sync_get_track(rocket, "refraction:index");
 
 		auto pp_delay_image = sync_get_track(rocket, "postprocess:delay.image");
 		auto pp_delay_amount = sync_get_track(rocket, "postprocess:delay.amount");
@@ -755,8 +760,12 @@ int main(int argc, char *argv[])
 			auto dist = sync_get_val(cam_dist, row);
 			auto roll = sync_get_val(cam_roll, row) * (M_PI / 180);
 
+			auto targetPosition = glm::vec3(
+				float(sync_get_val(camTargetX, row)),
+				float(sync_get_val(camTargetY, row)),
+				float(sync_get_val(camTargetZ, row)));
 			auto viewPosition = glm::vec3(sin(th) * dist, 0.0f, cos(th) * dist);
-			auto lookAt = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
+			auto lookAt = glm::lookAt(viewPosition, targetPosition, glm::vec3(0, 1, 0));
 			auto viewMatrix = glm::rotate(glm::mat4(1), float(roll), glm::vec3(0, 0, 1)) * lookAt;
 
 			auto fov = 60.0f;
@@ -775,6 +784,8 @@ int main(int argc, char *argv[])
 
 			refractionUniforms.planeIndex = float(sync_get_val(refractionPlaneIndexTrack, row));
 			refractionUniforms.fade = float(sync_get_val(refractionFadeTrack, row));
+			refractionUniforms.refractiveIndex = float(sync_get_val(refractionIndexTrack, row));
+
 			auto ptr = refractionUniformBuffer->map(0, sizeof(refractionUniforms));
 			memcpy(ptr, &refractionUniforms, sizeof(refractionUniforms));
 			refractionUniformBuffer->unmap();

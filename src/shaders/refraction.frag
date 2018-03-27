@@ -17,6 +17,7 @@ layout (binding = 2) uniform UBO
 {
 	float planeIndex;
 	float fade;
+	float refractiveIndex;
 } ubo;
 
 bool trace(vec3 pos, vec3 dir, out vec2 hit)
@@ -74,9 +75,8 @@ void main()
 	vec3 viewPos = perObjectUBO.modelViewInverseMatrix[3].xyz;
 	vec3 view = normalize(modelPos - viewPos);
 
-	float refractiveIndex = 1.1;
-	vec3 dirR = refract(view, modelNormal, 1.0 / (refractiveIndex + 0.025));
-	vec3 dirB = refract(view, modelNormal, 1.0 / (refractiveIndex + 0.075));
+	vec3 dirR = refract(view, modelNormal, 1.0 / (ubo.refractiveIndex + 0.025));
+	vec3 dirB = refract(view, modelNormal, 1.0 / (ubo.refractiveIndex + 0.075));
 
 	vec2 hitA, hitB;
 	vec3 color = vec3(0);
