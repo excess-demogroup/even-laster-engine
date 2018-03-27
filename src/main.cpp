@@ -504,13 +504,14 @@ int main(int argc, char *argv[])
 		for (auto scene : scenes)
 			sceneRenderers.push_back(SceneRenderer(scene, sceneRenderPass));
 
-		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
+		auto planes = importTexture2DArray("assets/planes", TextureImportFlags::NONE);
 		auto offsetMaps = importTexture2DArray("assets/offset-maps", TextureImportFlags::NONE);
 
-		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), false, false);
-		VkDescriptorImageInfo descriptorImageInfo = texture.getDescriptorImageInfo(textureSampler);
+		VkSampler textureSampler = createSampler(float(planes.getMipLevels()), false, false);
+		VkDescriptorImageInfo descriptorImageInfo = planes.getDescriptorImageInfo(textureSampler);
 
 		struct {
+			float planeIndex;
 			float fade;
 		} refractionUniforms;
 		auto refractionUniformBuffer = new Buffer(sizeof(refractionUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
@@ -637,6 +638,7 @@ int main(int argc, char *argv[])
 		auto cam_dist = sync_get_track(rocket, "camera:dist");
 		auto cam_roll = sync_get_track(rocket, "camera:roll");
 
+		auto refractionPlaneIndexTrack = sync_get_track(rocket, "refraction:plane");
 		auto refractionFadeTrack = sync_get_track(rocket, "refraction:fade");
 
 		auto pp_delay_image = sync_get_track(rocket, "postprocess:delay.image");
@@ -746,6 +748,7 @@ int main(int argc, char *argv[])
 			sceneIndex %= sceneRenderers.size();
 			SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
 
+			refractionUniforms.planeIndex = float(sync_get_val(refractionPlaneIndexTrack, row));
 			refractionUniforms.fade = float(sync_get_val(refractionFadeTrack, row));
 			auto ptr = refractionUniformBuffer->map(0, sizeof(refractionUniforms));
 			memcpy(ptr, &refractionUniforms, sizeof(refractionUniforms));

@@ -11,10 +11,11 @@ layout (location = 0) out vec4 outFragColor;
 
 #include "perobject.glsl"
 
-layout (binding = 1) uniform sampler2D samplerColor;
+layout (binding = 1) uniform sampler2DArray samplerPlane;
 
 layout (binding = 2) uniform UBO
 {
+	float planeIndex;
 	float fade;
 } ubo;
 
@@ -58,7 +59,7 @@ vec3 sampleSpectrum(vec2 uvA, vec2 uvB)
 		sumw += w;
 
 		vec2 uv = mix(uvA, uvB, t);
-		vec3 color = textureLod(samplerColor, uv, 0).xyz;
+		vec3 color = textureLod(samplerPlane, vec3(uv, ubo.planeIndex), 0).xyz;
 
 		sumcol += w * color;
 		t += stepsiz;
