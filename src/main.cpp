@@ -210,20 +210,18 @@ int main(int argc, char *argv[])
 		sceneColorAttachmentReference.attachment = 1;
 		sceneColorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		vector<VkSubpassDescription> sceneSubPasses;
 		VkSubpassDescription sceneSubpass = {};
 		sceneSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		sceneSubpass.colorAttachmentCount = 1;
 		sceneSubpass.pColorAttachments = &sceneColorAttachmentReference;
 		sceneSubpass.pDepthStencilAttachment = &sceneDepthAttachmentReference;
-		sceneSubPasses.push_back(sceneSubpass);
 
 		VkRenderPassCreateInfo sceneRenderPassCreateInfo = {};
 		sceneRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		sceneRenderPassCreateInfo.attachmentCount = sceneRenderPassAttachments.size();
 		sceneRenderPassCreateInfo.pAttachments = sceneRenderPassAttachments.data();
-		sceneRenderPassCreateInfo.subpassCount = sceneSubPasses.size();
-		sceneRenderPassCreateInfo.pSubpasses = sceneSubPasses.data();
+		sceneRenderPassCreateInfo.subpassCount = 1;
+		sceneRenderPassCreateInfo.pSubpasses = &sceneSubpass;
 
 		VkRenderPass sceneRenderPass;
 		err = vkCreateRenderPass(device, &sceneRenderPassCreateInfo, nullptr, &sceneRenderPass);
