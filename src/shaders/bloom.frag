@@ -9,7 +9,6 @@ layout (location = 0) out vec4 outFragColor;
 
 layout (binding = 0) uniform sampler2D textureSampler;
 
-
 void main()
 {
 	float centerWeight = 0.16210282163712664;

@@ -481,7 +481,18 @@ int main(int argc, char *argv[])
 			vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
 		}
 
-		auto bloomUpscalePipelineLayout = createPipelineLayout({ bloomUpscaleDescriptorSetLayout }, {});
+		struct {
+			float bloomAmount;
+			float bloomShape;
+			float seed;
+		} bloomUpscalePushConstants;
+
+		VkPushConstantRange bloomUpscalePushConstantRange = {
+			VK_SHADER_STAGE_FRAGMENT_BIT,
+			0,
+			sizeof(bloomUpscalePushConstants)
+		};
+		auto bloomUpscalePipelineLayout = createPipelineLayout({ bloomUpscaleDescriptorSetLayout }, { bloomUpscalePushConstantRange });
 		auto bloomUpscaleFragmentShader = loadShaderModule("data/shaders/bloom_upscale.frag.spv");
 		auto bloomUpscalePipeline = createFullScreenQuadPipeline(bloomUpscalePipelineLayout, bloomUpscaleRenderPass, bloomUpscaleFragmentShader);
 
@@ -651,6 +662,8 @@ int main(int argc, char *argv[])
 		auto pp_delay_image = sync_get_track(rocket, "postprocess:delay.image");
 		auto pp_delay_amount = sync_get_track(rocket, "postprocess:delay.amount");
 		auto pp_delay_chroma = sync_get_track(rocket, "postprocess:delay.chroma");
+		auto bloomAmountTrack = sync_get_track(rocket, "postprocess:bloom.amount");
+		auto bloomShapeTrack = sync_get_track(rocket, "postprocess:bloom.shape");
 
 		auto overlayIndexTrack = sync_get_track(rocket, "overlay.index");
 		auto overlayAlphaTrack = sync_get_track(rocket, "overlay.alpha");
@@ -810,6 +823,12 @@ int main(int argc, char *argv[])
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bloomUpscalePipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bloomUpscalePipelineLayout, 0, 1, &bloomUpscaleDescriptorSet, 0, nullptr);
+
+			bloomUpscalePushConstants.bloomAmount = float(sync_get_val(bloomAmountTrack, row));
+			bloomUpscalePushConstants.bloomShape = float(sync_get_val(bloomShapeTrack, row));
+			bloomUpscalePushConstants.seed = float(rand()) / RAND_MAX;
+			vkCmdPushConstants(commandBuffer, bloomUpscalePipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(bloomUpscalePushConstants), &bloomUpscalePushConstants);
+
 			vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
 			vkCmdEndRenderPass(commandBuffer);
@@ -860,8 +879,6 @@ int main(int argc, char *argv[])
 			postProcessPushConstantData.overlayAlpha = float(sync_get_val(overlayAlphaTrack, row));
 			postProcessPushConstantData.fade = float(sync_get_val(fadeTrack, row));
 			postProcessPushConstantData.flash = float(sync_get_val(flashTrack, row));
-
-
 			vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(postProcessPushConstantData), &postProcessPushConstantData);
 
 			vkCmdDispatch(commandBuffer, width / 16, height / 16, 1);
