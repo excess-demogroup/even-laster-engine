@@ -234,9 +234,6 @@ int main(int argc, char *argv[])
 			{ depthRenderTarget.getImageView(), colorRenderTarget.getImageView() },
 			sceneRenderPass);
 
-		auto imageViews = swapChain.getImageViews();
-		auto images = swapChain.getImages();
-
 		vector<Scene *> scenes = {
 			SceneImporter::import("assets/scenes/0000.dae"),
 			SceneImporter::import("assets/scenes/0001.dae")
@@ -309,7 +306,7 @@ int main(int argc, char *argv[])
 		auto postProcessDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
-		}, imageViews.size());
+		}, swapChain.getImageViews().size());
 
 		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessDescriptorSetLayout);
 		{
@@ -357,10 +354,11 @@ int main(int argc, char *argv[])
 		     presentCompleteSemaphore = createSemaphore();
 
 		VkCommandPool commandPool = createCommandPool(graphicsQueueIndex);
-		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
 
-		auto commandBufferFences = new VkFence[imageViews.size()];
-		for (auto i = 0u; i < imageViews.size(); ++i)
+		auto commandBuffers = allocateCommandBuffers(commandPool, swapChain.getImageViews().size());
+
+		auto commandBufferFences = new VkFence[commandBuffers.size()];
+		for (auto i = 0u; i < commandBuffers.size(); ++i)
 			commandBufferFences[i] = createFence(VK_FENCE_CREATE_SIGNALED_BIT);
 
 		err = vkQueueWaitIdle(graphicsQueue);
@@ -557,9 +555,10 @@ int main(int argc, char *argv[])
 				VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
 				VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
+			auto swapChainImage = swapChain.getImages()[currentSwapImage];
 			imageBarrier(
 				commandBuffer,
-				images[currentSwapImage],
+				swapChainImage,
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
 				0, VK_ACCESS_TRANSFER_WRITE_BIT,
@@ -567,14 +566,14 @@ int main(int argc, char *argv[])
 
 			blitImage(commandBuffer,
 				postProcessRenderTarget.getImage(),
-				images[currentSwapImage],
+				swapChainImage,
 				width, height,
 				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
 				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 });
 
 			imageBarrier(
 				commandBuffer,
-				images[currentSwapImage],
+				swapChainImage,
 				VK_IMAGE_ASPECT_COLOR_BIT,
 				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 				VK_ACCESS_TRANSFER_WRITE_BIT, 0,

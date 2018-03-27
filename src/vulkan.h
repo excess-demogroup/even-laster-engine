@@ -70,7 +70,7 @@ namespace vulkan
 		return deviceMemory;
 	}
 
-	inline VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
+	inline std::vector<VkCommandBuffer> allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
 	{
 		VkCommandBufferAllocateInfo commandAllocInfo = {};
 		commandAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -78,8 +78,9 @@ namespace vulkan
 		commandAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		commandAllocInfo.commandBufferCount = commandBufferCount;
 
-		auto commandBuffers = new VkCommandBuffer[commandBufferCount];
-		VkResult err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers);
+		std::vector<VkCommandBuffer> commandBuffers;
+		commandBuffers.resize(commandBufferCount);
+		VkResult err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers.data());
 		assert(err == VK_SUCCESS);
 
 		return commandBuffers;
