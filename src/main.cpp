@@ -234,10 +234,19 @@ int main(int argc, char *argv[])
 			{ depthRenderTarget.getImageView(), colorRenderTarget.getImageView() },
 			sceneRenderPass);
 
-		vector<Scene *> scenes = {
-			SceneImporter::import("assets/scenes/0000.dae"),
-			SceneImporter::import("assets/scenes/0001.dae")
-		};
+		vector<Scene *> scenes;
+		for (int i = 0; true; ++i) {
+			char path[256];
+			snprintf(path, sizeof(path), "assets/scenes/%04d.dae", i);
+
+			struct stat st;
+			if (stat(path, &st) < 0 ||
+				(st.st_mode & _S_IFMT) != S_IFREG)
+				break;
+
+			VkFormat format = VK_FORMAT_UNDEFINED;
+			scenes.push_back(SceneImporter::import(path));
+		}
 
 		vector<SceneRenderer> sceneRenderers;
 		for (auto scene : scenes)
