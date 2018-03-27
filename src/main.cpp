@@ -177,30 +177,30 @@ int main(int argc, char *argv[])
 		Texture2DArrayRenderTarget colorArray(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 128, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		ColorRenderTarget postProcessRenderTarget(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 1, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
-		vector<VkAttachmentDescription> attachments;
-		VkAttachmentDescription depthAttachment;
-		depthAttachment.flags = 0;
-		depthAttachment.format = depthFormat;
-		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		attachments.push_back(depthAttachment);
+		vector<VkAttachmentDescription> sceneRenderPassAttachments;
+		VkAttachmentDescription sceneDepthAttachment;
+		sceneDepthAttachment.flags = 0;
+		sceneDepthAttachment.format = depthFormat;
+		sceneDepthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		sceneDepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		sceneDepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		sceneDepthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		sceneDepthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		sceneDepthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		sceneDepthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		sceneRenderPassAttachments.push_back(sceneDepthAttachment);
 
-		VkAttachmentDescription colorAttachment;
-		colorAttachment.flags = 0;
-		colorAttachment.format = colorRenderTarget.getFormat();
-		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		attachments.push_back(colorAttachment);
+		VkAttachmentDescription sceneColorAttachment;
+		sceneColorAttachment.flags = 0;
+		sceneColorAttachment.format = colorRenderTarget.getFormat();
+		sceneColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		sceneColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		sceneColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		sceneColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		sceneColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		sceneColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		sceneColorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		sceneRenderPassAttachments.push_back(sceneColorAttachment);
 
 		VkAttachmentReference sceneDepthAttachmentReference = {};
 		sceneDepthAttachmentReference.attachment = 0;
@@ -220,8 +220,8 @@ int main(int argc, char *argv[])
 
 		VkRenderPassCreateInfo sceneRenderPassCreateInfo = {};
 		sceneRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		sceneRenderPassCreateInfo.attachmentCount = attachments.size();
-		sceneRenderPassCreateInfo.pAttachments = attachments.data();
+		sceneRenderPassCreateInfo.attachmentCount = sceneRenderPassAttachments.size();
+		sceneRenderPassCreateInfo.pAttachments = sceneRenderPassAttachments.data();
 		sceneRenderPassCreateInfo.subpassCount = sceneSubPasses.size();
 		sceneRenderPassCreateInfo.pSubpasses = sceneSubPasses.data();
 
