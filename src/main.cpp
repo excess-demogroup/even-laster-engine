@@ -243,8 +243,6 @@ int main(int argc, char *argv[])
 		for (auto scene : scenes)
 			sceneRenderers.push_back(SceneRenderer(scene, sceneRenderPass));
 
-		// OK, let's prepare for rendering!
-
 		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
 		auto offsetMaps = importTexture2DArray("assets/offset-maps", TextureImportFlags::NONE);
 
