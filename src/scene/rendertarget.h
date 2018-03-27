@@ -5,7 +5,7 @@
 
 class RenderTargetBase {
 protected:
-	RenderTargetBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int arrayLayers, VkImageUsageFlags usage, VkImageAspectFlags aspect) :
+	RenderTargetBase(VkFormat format, VkImageType imageType, VkImageViewType imageViewType, int width, int height, int depth, int arrayLayers, int mipLevels, VkImageUsageFlags usage, VkImageAspectFlags aspect) :
 		format(format),
 		width(width),
 		height(height),
@@ -18,7 +18,7 @@ protected:
 		imageCreateInfo.imageType = imageType;
 		imageCreateInfo.format = format;
 		imageCreateInfo.extent = { (uint32_t)width, (uint32_t)height, (uint32_t)depth };
-		imageCreateInfo.mipLevels = 1;
+		imageCreateInfo.mipLevels = mipLevels;
 		imageCreateInfo.arrayLayers = arrayLayers;
 		imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
@@ -72,8 +72,8 @@ protected:
 
 class ColorRenderTarget : public RenderTargetBase {
 public:
-	ColorRenderTarget(VkFormat format, int width, int height, VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) :
-		RenderTargetBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, 1, usage, VK_IMAGE_ASPECT_COLOR_BIT)
+	ColorRenderTarget(VkFormat format, int width, int height, int mipLevels = 1, VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) :
+		RenderTargetBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, 1, mipLevels, usage, VK_IMAGE_ASPECT_COLOR_BIT)
 	{
 	}
 };
@@ -81,7 +81,7 @@ public:
 class DepthRenderTarget : public RenderTargetBase {
 public:
 	DepthRenderTarget(VkFormat format, int width, int height, VkImageUsageFlags usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT) :
-		RenderTargetBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, 1, usage, VK_IMAGE_ASPECT_DEPTH_BIT)
+		RenderTargetBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D, width, height, 1, 1, 1, usage, VK_IMAGE_ASPECT_DEPTH_BIT)
 	{
 	}
 };
@@ -89,7 +89,7 @@ public:
 class Texture2DArrayRenderTarget : public RenderTargetBase {
 public:
 	Texture2DArrayRenderTarget(VkFormat format, int width, int height, int arrayLayers, VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) :
-		RenderTargetBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D_ARRAY, width, height, 1, arrayLayers, usage, VK_IMAGE_ASPECT_COLOR_BIT)
+		RenderTargetBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D_ARRAY, width, height, 1, arrayLayers, 1, usage, VK_IMAGE_ASPECT_COLOR_BIT)
 	{
 		arrayImageViews.reserve(arrayLayers);
 		for (int i = 0; i < arrayLayers; ++i) {
