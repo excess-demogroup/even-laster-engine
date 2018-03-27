@@ -173,9 +173,7 @@ int main(int argc, char *argv[])
 		auto depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 		DepthRenderTarget depthRenderTarget(depthFormat, width, height);
 
-		auto renderTargetFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
-		int colorRenderTargetMipLevels = 32 - clz(max(width, height));
-		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, colorRenderTargetMipLevels, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		ColorRenderTarget colorRenderTarget(VK_FORMAT_R16G16B16A16_SFLOAT, width, height, 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 		Texture2DArrayRenderTarget colorArray(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 128, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		ColorRenderTarget postProcessRenderTarget(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 1, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
@@ -194,7 +192,7 @@ int main(int argc, char *argv[])
 
 		VkAttachmentDescription colorAttachment;
 		colorAttachment.flags = 0;
-		colorAttachment.format = renderTargetFormat;
+		colorAttachment.format = colorRenderTarget.getFormat();
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
