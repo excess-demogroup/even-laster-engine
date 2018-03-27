@@ -179,26 +179,30 @@ int main(int argc, char *argv[])
 		Texture2DArrayRenderTarget colorArray(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 128, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		ColorRenderTarget postProcessRenderTarget(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 1, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
-		VkAttachmentDescription attachments[2];
-		attachments[0].flags = 0;
-		attachments[0].format = depthFormat;
-		attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[0].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		vector<VkAttachmentDescription> attachments;
+		VkAttachmentDescription depthAttachment;
+		depthAttachment.flags = 0;
+		depthAttachment.format = depthFormat;
+		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		attachments.push_back(depthAttachment);
 
-		attachments[1].flags = 0;
-		attachments[1].format = renderTargetFormat;
-		attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
-		attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-		attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachments[1].finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		VkAttachmentDescription colorAttachment;
+		colorAttachment.flags = 0;
+		colorAttachment.format = renderTargetFormat;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		attachments.push_back(colorAttachment);
 
 		VkAttachmentReference depthStencilReference = {};
 		depthStencilReference.attachment = 0;
@@ -208,18 +212,20 @@ int main(int argc, char *argv[])
 		colorReference.attachment = 1;
 		colorReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = 1;
-		subpass.pColorAttachments = &colorReference;
-		subpass.pDepthStencilAttachment = &depthStencilReference;
+		vector<VkSubpassDescription> subPasses;
+		VkSubpassDescription renderSceneSubpass = {};
+		renderSceneSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		renderSceneSubpass.colorAttachmentCount = 1;
+		renderSceneSubpass.pColorAttachments = &colorReference;
+		renderSceneSubpass.pDepthStencilAttachment = &depthStencilReference;
+		subPasses.push_back(renderSceneSubpass);
 
 		VkRenderPassCreateInfo renderpassCreateInfo = {};
 		renderpassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderpassCreateInfo.attachmentCount = ARRAY_SIZE(attachments);
-		renderpassCreateInfo.pAttachments = attachments;
-		renderpassCreateInfo.subpassCount = 1;
-		renderpassCreateInfo.pSubpasses = &subpass;
+		renderpassCreateInfo.attachmentCount = attachments.size();
+		renderpassCreateInfo.pAttachments = attachments.data();
+		renderpassCreateInfo.subpassCount = subPasses.size();
+		renderpassCreateInfo.pSubpasses = subPasses.data();
 
 		VkRenderPass renderPass;
 		err = vkCreateRenderPass(device, &renderpassCreateInfo, nullptr, &renderPass);
