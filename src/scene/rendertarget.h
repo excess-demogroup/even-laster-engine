@@ -42,7 +42,7 @@ protected:
 		subresourceRange.aspectMask = aspect;
 		subresourceRange.baseMipLevel = 0;
 		subresourceRange.baseArrayLayer = 0;
-		subresourceRange.levelCount = 1;
+		subresourceRange.levelCount = mipLevels;
 		subresourceRange.layerCount = arrayLayers;
 
 		imageView = createImageView(image, imageViewType, format, subresourceRange);

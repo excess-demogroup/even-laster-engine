@@ -7,6 +7,7 @@ layout (local_size_x = 16, local_size_y = 16) in;
 layout (rgba8, binding = 0) uniform writeonly image2D outputImage;
 layout (binding = 1) uniform sampler2DArray samplerColor;
 layout (binding = 2) uniform sampler2DArray samplerOffsets;
+layout (binding = 3) uniform sampler2D bloomSampler;
 
 layout(push_constant) uniform fragmentPushConstants {
 	int arrayBufferFrame;
@@ -59,6 +60,22 @@ vec3 sampleSpectrum(float timeA, float timeB)
 	return sumcol.rgb /= sumw;
 }
 
+vec3 sampleBloom(vec2 pos)
+{
+	vec3 sum = vec3(0);
+	int levels = textureQueryLevels(bloomSampler);
+	float total = 0;
+	for (int i = 0; i < levels; ++i) {
+		float weight = pow(float(i), 0.5);
+		vec2 rnd = vec2(nrand(3 + gl_GlobalInvocationID.xy + u_pushConstants.arrayBufferFrame * 0.01),
+		                nrand(5 + gl_GlobalInvocationID.yx - u_pushConstants.arrayBufferFrame * 0.01));
+		rnd = (rnd * 2 - 1) / textureSize(bloomSampler, i);
+		sum += textureLod(bloomSampler, pos + rnd * 0.25, float(i)).rgb * weight;
+		total += weight;
+	}
+	return sum / total;
+}
+
 void main()
 {
 	vec2 pos = (gl_GlobalInvocationID.xy + 0.5) / imageSize(outputImage);
@@ -70,6 +87,8 @@ void main()
 	delay = clamp(delay, 0, u_pushConstants.validFrames - 1);
 
 	vec3 color = sampleSpectrum(time - delay, time - delay * u_pushConstants.delayChroma);
+	// vec3 color = sampleBloom(pos);
+	// color = textureLod(bloomSampler, pos, 5).rgb;
 
 	// vignette
 	color *= 1.0 - distance(pos, vec2(0.5));

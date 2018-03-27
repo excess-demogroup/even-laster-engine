@@ -100,6 +100,103 @@ VkPhysicalDevice choosePhysicalDevice()
 	return physicalDevice;
 }
 
+static VkPipeline createFullScreenQuadPipeline(VkPipelineLayout layout, VkRenderPass renderPass, VkShaderModule fragmentShader)
+{
+	VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
+	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	pipelineVertexInputStateCreateInfo.vertexBindingDescriptionCount = 0;
+	pipelineVertexInputStateCreateInfo.pVertexBindingDescriptions = nullptr;
+	pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = 0;
+	pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = nullptr;
+
+	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
+	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+	VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {};
+	pipelineRasterizationStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	pipelineRasterizationStateCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	pipelineRasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
+	pipelineRasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	pipelineRasterizationStateCreateInfo.lineWidth = 1.0f;
+
+	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1] = { { 0 } };
+	pipelineColorBlendAttachmentState[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	pipelineColorBlendAttachmentState[0].blendEnable = VK_FALSE;
+
+	VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = {};
+	pipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	pipelineColorBlendStateCreateInfo.attachmentCount = ARRAY_SIZE(pipelineColorBlendAttachmentState);
+	pipelineColorBlendStateCreateInfo.pAttachments = pipelineColorBlendAttachmentState;
+
+	VkPipelineMultisampleStateCreateInfo pipelineMultisampleStateCreateInfo = {};
+	pipelineMultisampleStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	pipelineMultisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	VkPipelineViewportStateCreateInfo pipelineViewportStateCreateInfo = {};
+	pipelineViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	pipelineViewportStateCreateInfo.viewportCount = 1;
+	pipelineViewportStateCreateInfo.pViewports = nullptr;
+	pipelineViewportStateCreateInfo.scissorCount = 1;
+	pipelineViewportStateCreateInfo.pScissors = nullptr;
+
+	VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
+	pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
+	pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+	pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+
+	VkDynamicState dynamicStateEnables[] = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo = {};
+	pipelineDynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
+	pipelineDynamicStateCreateInfo.dynamicStateCount = ARRAY_SIZE(dynamicStateEnables);
+
+	vector<VkPipelineShaderStageCreateInfo> shaderStages = { {
+		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_SHADER_STAGE_VERTEX_BIT,
+		loadShaderModule("data/shaders/fullscreenquad.vert.spv"),
+		"main",
+		nullptr
+	}, {
+		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_SHADER_STAGE_FRAGMENT_BIT,
+		fragmentShader,
+		"main",
+		nullptr
+	} };
+
+	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
+	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineCreateInfo.layout = layout;
+	pipelineCreateInfo.renderPass = renderPass;
+	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
+	pipelineCreateInfo.pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo;
+	pipelineCreateInfo.pRasterizationState = &pipelineRasterizationStateCreateInfo;
+	pipelineCreateInfo.pColorBlendState = &pipelineColorBlendStateCreateInfo;
+	pipelineCreateInfo.pMultisampleState = &pipelineMultisampleStateCreateInfo;
+	pipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
+	pipelineCreateInfo.pDepthStencilState = &pipelineDepthStencilStateCreateInfo;
+	pipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
+	pipelineCreateInfo.stageCount = shaderStages.size();
+	pipelineCreateInfo.pStages = shaderStages.data();
+
+	VkPipeline pipeline;
+	auto err = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
+	assert(err == VK_SUCCESS);
+
+	return pipeline;
+}
+
 #ifdef WIN32
 
 int APIENTRY WinMain(_In_ HINSTANCE hInstance,
@@ -172,7 +269,11 @@ int main(int argc, char *argv[])
 
 		auto depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 		DepthRenderTarget sceneDepthRenderTarget(depthFormat, width, height);
-		ColorRenderTarget sceneColorRenderTarget(VK_FORMAT_R16G16B16A16_SFLOAT, width, height, 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		ColorRenderTarget sceneColorRenderTarget(VK_FORMAT_R16G16B16A16_SFLOAT, width, height, 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+
+		int bloomLevels = 32 - clz(max(width, height));
+		ColorRenderTarget bloomRenderTarget(VK_FORMAT_R16G16B16A16_SFLOAT, width, height, bloomLevels, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		ColorRenderTarget bloomUpscaleRenderTarget(VK_FORMAT_R16G16B16A16_SFLOAT, width, height, 1, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 		Texture2DArrayRenderTarget colorArray(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 128, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 		ColorRenderTarget postProcessRenderTarget(VK_FORMAT_A2B10G10R10_UNORM_PACK32, width, height, 1, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
@@ -199,7 +300,7 @@ int main(int argc, char *argv[])
 		sceneColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		sceneColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		sceneColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		sceneColorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		sceneColorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		sceneRenderPassAttachments.push_back(sceneColorAttachment);
 
 		VkAttachmentReference sceneDepthAttachmentReference = {};
@@ -231,6 +332,159 @@ int main(int argc, char *argv[])
 			width, height, 1,
 			{ sceneDepthRenderTarget.getImageView(), sceneColorRenderTarget.getImageView() },
 			sceneRenderPass);
+
+		VkAttachmentDescription bloomColorAttachment;
+		bloomColorAttachment.flags = 0;
+		bloomColorAttachment.format = bloomRenderTarget.getFormat();
+		bloomColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		bloomColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		bloomColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		bloomColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		bloomColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		bloomColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		bloomColorAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		VkAttachmentReference bloomColorAttachmentReference = {};
+		bloomColorAttachmentReference.attachment = 0;
+		bloomColorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription bloomSubpass = {};
+		bloomSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		bloomSubpass.colorAttachmentCount = 1;
+		bloomSubpass.pColorAttachments = &bloomColorAttachmentReference;
+
+		VkRenderPassCreateInfo bloomRenderPassCreateInfo = {};
+		bloomRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		bloomRenderPassCreateInfo.attachmentCount = 1;
+		bloomRenderPassCreateInfo.pAttachments = &bloomColorAttachment;
+		bloomRenderPassCreateInfo.subpassCount = 1;
+		bloomRenderPassCreateInfo.pSubpasses = &bloomSubpass;
+
+		VkRenderPass bloomRenderPass;
+		err = vkCreateRenderPass(device, &bloomRenderPassCreateInfo, nullptr, &bloomRenderPass);
+		assert(err == VK_SUCCESS);
+
+		auto bloomDescriptorSetLayout = createDescriptorSetLayout({
+			{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
+		});
+
+		auto bloomUpscaleDescriptorSetLayout = createDescriptorSetLayout({
+			{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
+			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
+		});
+
+		auto bloomDescriptorPool = createDescriptorPool({
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(bloomLevels + 2) },
+		}, bloomLevels + 1);
+
+		vector<VkFramebuffer> bloomFramebuffers;
+		vector<VkDescriptorSet> bloomDescriptorSets;
+		vector<VkImageView> bloomImageViews;
+
+		VkSampler bloomInputSampler = createSampler(0.0f, false, false);
+		for (int mipLevel = 0; mipLevel < bloomLevels; ++mipLevel) {
+			VkImageSubresourceRange subresourceRange;
+			subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			subresourceRange.baseMipLevel = mipLevel;
+			subresourceRange.baseArrayLayer = 0;
+			subresourceRange.levelCount = 1;
+			subresourceRange.layerCount = 1;
+			auto imageView = createImageView(bloomRenderTarget.getImage(), VK_IMAGE_VIEW_TYPE_2D, bloomRenderTarget.getFormat(), subresourceRange);
+			bloomImageViews.push_back(imageView);
+
+			auto mipWidth = TextureBase::mipSize(bloomRenderTarget.getWidth(), mipLevel);
+			auto mipHeight = TextureBase::mipSize(bloomRenderTarget.getHeight(), mipLevel);
+			auto framebuffer = createFramebuffer(mipWidth, mipHeight, 1, { imageView }, bloomRenderPass);
+			bloomFramebuffers.push_back(framebuffer);
+
+			auto descriptorSet = allocateDescriptorSet(bloomDescriptorPool, bloomDescriptorSetLayout);
+
+			VkDescriptorImageInfo descriptorImageInfo = {};
+			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			if (mipLevel == 0)
+				descriptorImageInfo.imageView = sceneColorRenderTarget.getImageView();
+			else
+				descriptorImageInfo.imageView = bloomImageViews[mipLevel - 1];
+			descriptorImageInfo.sampler = bloomInputSampler;
+
+			VkWriteDescriptorSet writeDescriptorSet = {};
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.dstSet = descriptorSet;
+			writeDescriptorSet.descriptorCount = 1;
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSet.pBufferInfo = nullptr;
+			writeDescriptorSet.pImageInfo = &descriptorImageInfo;
+			writeDescriptorSet.dstBinding = 0;
+			vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+
+			bloomDescriptorSets.push_back(descriptorSet);
+		}
+
+		auto bloomPipelineLayout = createPipelineLayout({ bloomDescriptorSetLayout }, {});
+		auto bloomFragmentShader = loadShaderModule("data/shaders/bloom.frag.spv");
+		auto bloomPipeline = createFullScreenQuadPipeline(bloomPipelineLayout, bloomRenderPass, bloomFragmentShader);
+
+		VkAttachmentDescription bloomUpscaleColorAttachment;
+		bloomUpscaleColorAttachment.flags = 0;
+		bloomUpscaleColorAttachment.format = bloomUpscaleRenderTarget.getFormat();
+		bloomUpscaleColorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		bloomUpscaleColorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		bloomUpscaleColorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		bloomUpscaleColorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		bloomUpscaleColorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		bloomUpscaleColorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		bloomUpscaleColorAttachment.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+		VkAttachmentReference bloomUpscaleColorAttachmentReference = {};
+		bloomUpscaleColorAttachmentReference.attachment = 0;
+		bloomUpscaleColorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		VkSubpassDescription bloomUpscaleSubpass = {};
+		bloomUpscaleSubpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		bloomUpscaleSubpass.colorAttachmentCount = 1;
+		bloomUpscaleSubpass.pColorAttachments = &bloomUpscaleColorAttachmentReference;
+
+		VkRenderPassCreateInfo bloomUpscaleRenderPassCreateInfo = {};
+		bloomUpscaleRenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		bloomUpscaleRenderPassCreateInfo.attachmentCount = 1;
+		bloomUpscaleRenderPassCreateInfo.pAttachments = &bloomUpscaleColorAttachment;
+		bloomUpscaleRenderPassCreateInfo.subpassCount = 1;
+		bloomUpscaleRenderPassCreateInfo.pSubpasses = &bloomUpscaleSubpass;
+
+		VkRenderPass bloomUpscaleRenderPass;
+		err = vkCreateRenderPass(device, &bloomUpscaleRenderPassCreateInfo, nullptr, &bloomUpscaleRenderPass);
+		assert(err == VK_SUCCESS);
+
+		auto bloomUpscaleFramebuffer = createFramebuffer(width, height, 1, { bloomUpscaleRenderTarget.getImageView() }, bloomUpscaleRenderPass);
+		auto bloomUpscaleDescriptorSet = allocateDescriptorSet(bloomDescriptorPool, bloomUpscaleDescriptorSetLayout);
+		VkSampler bloomSampler = createSampler(float(bloomLevels), false, false);
+
+		{
+			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
+			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			postProcessRenderTargetImageInfo.imageView = postProcessRenderTarget.getImageView();
+
+			VkWriteDescriptorSet writeDescriptorSet = {};
+
+			vector<VkDescriptorImageInfo> descriptorImageInfos = {
+				{ bloomSampler, sceneColorRenderTarget.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+				{ bloomSampler, bloomRenderTarget.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }
+			};
+
+			writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSet.dstSet = bloomUpscaleDescriptorSet;
+			writeDescriptorSet.dstBinding = 0;
+			writeDescriptorSet.descriptorCount = descriptorImageInfos.size();
+			writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSet.pImageInfo = descriptorImageInfos.data();
+
+			vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+		}
+
+		auto bloomUpscalePipelineLayout = createPipelineLayout({ bloomUpscaleDescriptorSetLayout }, {});
+		auto bloomUpscaleFragmentShader = loadShaderModule("data/shaders/bloom_upscale.frag.spv");
+		auto bloomUpscalePipeline = createFullScreenQuadPipeline(bloomUpscalePipelineLayout, bloomUpscaleRenderPass, bloomUpscaleFragmentShader);
+
 
 		vector<Scene *> scenes;
 		for (int i = 0; true; ++i) {
@@ -282,13 +536,14 @@ int main(int argc, char *argv[])
 			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 		}
 
-		VkSampler arrayTextureSampler = createSampler(1.0f, false, false);
+		VkSampler arrayTextureSampler = createSampler(0.0f, false, false);
 
 		auto postProcessDescriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 			{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
-		});
+			{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+			});
 
 		struct {
 			uint32_t arrayBufferFrame;
@@ -310,7 +565,7 @@ int main(int argc, char *argv[])
 
 		auto postProcessDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3 },
 		}, swapChain.getImageViews().size());
 
 		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessDescriptorSetLayout);
@@ -319,7 +574,7 @@ int main(int argc, char *argv[])
 			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 			postProcessRenderTargetImageInfo.imageView = postProcessRenderTarget.getImageView();
 
-			VkWriteDescriptorSet writeDescriptorSets[3] = {};
+			VkWriteDescriptorSet writeDescriptorSets[2] = {};
 			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[0].dstSet = postProcessDescriptorSet;
 			writeDescriptorSets[0].dstBinding = 0;
@@ -327,29 +582,23 @@ int main(int argc, char *argv[])
 			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			writeDescriptorSets[0].pImageInfo = &postProcessRenderTargetImageInfo;
 
+			vector<VkDescriptorImageInfo> descriptorImageInfos = {
+				{ arrayTextureSampler, colorArray.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+				{ arrayTextureSampler, offsetMaps.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+				{ bloomSampler, bloomRenderTarget.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+			};
+
 			VkDescriptorImageInfo descriptorImageInfo1 = {};
-			descriptorImageInfo1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			descriptorImageInfo1.imageView = colorArray.getImageView();
 			descriptorImageInfo1.sampler = arrayTextureSampler;
+			descriptorImageInfo1.imageView = colorArray.getImageView();
+			descriptorImageInfo1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[1].dstSet = postProcessDescriptorSet;
 			writeDescriptorSets[1].dstBinding = 1;
-			writeDescriptorSets[1].descriptorCount = 1;
+			writeDescriptorSets[1].descriptorCount = descriptorImageInfos.size();
 			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSets[1].pImageInfo = &descriptorImageInfo1;
-
-			VkDescriptorImageInfo descriptorImageInfo2 = {};
-			descriptorImageInfo2.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			descriptorImageInfo2.imageView = offsetMaps.getImageView();
-			descriptorImageInfo2.sampler = arrayTextureSampler;
-
-			writeDescriptorSets[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSets[2].dstSet = postProcessDescriptorSet;
-			writeDescriptorSets[2].dstBinding = 2;
-			writeDescriptorSets[2].descriptorCount = 1;
-			writeDescriptorSets[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSets[2].pImageInfo = &descriptorImageInfo2;
+			writeDescriptorSets[1].pImageInfo = descriptorImageInfos.data();
 
 			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 		}
@@ -503,6 +752,51 @@ int main(int argc, char *argv[])
 			refractionUniformBuffer->unmap();
 
 			sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix);
+
+			vkCmdEndRenderPass(commandBuffer);
+
+			for (int i = 0; i < bloomLevels; ++i) {
+				int levelWidth = TextureBase::mipSize(bloomRenderTarget.getWidth(), i);
+				int levelHeight = TextureBase::mipSize(bloomRenderTarget.getHeight(), i);
+				VkRenderPassBeginInfo bloomRenderPassBegin = {};
+				bloomRenderPassBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+				bloomRenderPassBegin.renderPass = bloomRenderPass;
+				bloomRenderPassBegin.renderArea.offset.x = 0;
+				bloomRenderPassBegin.renderArea.offset.y = 0;
+				bloomRenderPassBegin.renderArea.extent.width = levelWidth;
+				bloomRenderPassBegin.renderArea.extent.height = levelHeight;
+				bloomRenderPassBegin.framebuffer = bloomFramebuffers[i];
+
+				vkCmdBeginRenderPass(commandBuffer, &bloomRenderPassBegin, VK_SUBPASS_CONTENTS_INLINE);
+
+				setViewport(commandBuffer, 0, 0, float(levelWidth), float(levelHeight));
+				setScissor(commandBuffer, 0, 0, levelWidth, levelHeight);
+
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bloomPipeline);
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bloomPipelineLayout, 0, 1, &bloomDescriptorSets[i], 0, nullptr);
+				vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+				vkCmdEndRenderPass(commandBuffer);
+			}
+
+			VkRenderPassBeginInfo bloomUpscaleRenderPassBegin = {};
+			bloomUpscaleRenderPassBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			bloomUpscaleRenderPassBegin.renderPass = bloomUpscaleRenderPass;
+			bloomUpscaleRenderPassBegin.renderArea.offset.x = 0;
+			bloomUpscaleRenderPassBegin.renderArea.offset.y = 0;
+			bloomUpscaleRenderPassBegin.renderArea.extent.width = width;
+			bloomUpscaleRenderPassBegin.renderArea.extent.height = height;
+			bloomUpscaleRenderPassBegin.framebuffer = bloomUpscaleFramebuffer;
+
+			vkCmdBeginRenderPass(commandBuffer, &bloomUpscaleRenderPassBegin, VK_SUBPASS_CONTENTS_INLINE);
+
+			setViewport(commandBuffer, 0, 0, float(width), float(height));
+			setScissor(commandBuffer, 0, 0, width, height);
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bloomUpscalePipeline);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, bloomUpscalePipelineLayout, 0, 1, &bloomUpscaleDescriptorSet, 0, nullptr);
+			vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
 			vkCmdEndRenderPass(commandBuffer);
 
 			imageBarrier(
@@ -514,7 +808,7 @@ int main(int argc, char *argv[])
 				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 			blitImage(commandBuffer,
-				sceneColorRenderTarget.getImage(),
+				bloomUpscaleRenderTarget.getImage(),
 				colorArray.getImage(),
 				width, height,
 				{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 },
