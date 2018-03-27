@@ -506,6 +506,7 @@ int main(int argc, char *argv[])
 
 		auto planes = importTexture2DArray("assets/planes", TextureImportFlags::NONE);
 		auto offsetMaps = importTexture2DArray("assets/offset-maps", TextureImportFlags::NONE);
+		auto overlays = importTexture2DArray("assets/overlays", TextureImportFlags::PREMULTIPLY_ALPHA);
 
 		VkSampler textureSampler = createSampler(float(planes.getMipLevels()), false, false);
 		VkDescriptorImageInfo descriptorImageInfo = planes.getDescriptorImageInfo(textureSampler);
@@ -544,14 +545,19 @@ int main(int argc, char *argv[])
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 			{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 			{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+			{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 			});
 
 		struct {
 			uint32_t arrayBufferFrame;
 			uint32_t validFrames;
 			uint32_t delayImage;
+			uint32_t overlayIndex;
 			float delayAmount;
 			float delayChroma;
+			float overlayAlpha;
+			float fade;
+			float flash;
 		} postProcessPushConstantData;
 
 		VkPushConstantRange postProcessPushConstantRange = {
@@ -587,6 +593,7 @@ int main(int argc, char *argv[])
 				{ arrayTextureSampler, colorArray.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
 				{ arrayTextureSampler, offsetMaps.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
 				{ bloomSampler, bloomRenderTarget.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+				{ arrayTextureSampler, overlays.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }
 			};
 
 			VkDescriptorImageInfo descriptorImageInfo1 = {};
@@ -644,6 +651,11 @@ int main(int argc, char *argv[])
 		auto pp_delay_image = sync_get_track(rocket, "postprocess:delay.image");
 		auto pp_delay_amount = sync_get_track(rocket, "postprocess:delay.amount");
 		auto pp_delay_chroma = sync_get_track(rocket, "postprocess:delay.chroma");
+
+		auto overlayIndexTrack = sync_get_track(rocket, "overlay.index");
+		auto overlayAlphaTrack = sync_get_track(rocket, "overlay.alpha");
+		auto fadeTrack = sync_get_track(rocket, "fade");
+		auto flashTrack = sync_get_track(rocket, "flash");
 
 		BASS_Start();
 		BASS_ChannelPlay(stream, false);
@@ -842,8 +854,13 @@ int main(int argc, char *argv[])
 			postProcessPushConstantData.arrayBufferFrame = uint32_t(arrayBufferFrame);
 			postProcessPushConstantData.validFrames = uint32_t(validFrames);
 			postProcessPushConstantData.delayImage = uint32_t(sync_get_val(pp_delay_image, row));
+			postProcessPushConstantData.overlayIndex = uint32_t(sync_get_val(overlayIndexTrack, row));
 			postProcessPushConstantData.delayAmount = float(sync_get_val(pp_delay_amount, row));
 			postProcessPushConstantData.delayChroma = float(1.0 - min(max(0.0, sync_get_val(pp_delay_chroma, row)), 1.0));
+			postProcessPushConstantData.overlayAlpha = float(sync_get_val(overlayAlphaTrack, row));
+			postProcessPushConstantData.fade = float(sync_get_val(fadeTrack, row));
+			postProcessPushConstantData.flash = float(sync_get_val(flashTrack, row));
+
 
 			vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(postProcessPushConstantData), &postProcessPushConstantData);
 
