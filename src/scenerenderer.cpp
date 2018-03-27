@@ -145,8 +145,6 @@ SceneRenderer::SceneRenderer(Scene *scene, VkRenderPass renderPass) :
 		}
 	}
 
-	auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS); // HACK!
-
 	auto descriptorPool = createDescriptorPool({
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
 		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
