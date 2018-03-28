@@ -656,6 +656,7 @@ int main(int argc, char *argv[])
 		auto cameraRotYTrack = sync_get_track(rocket, "camera:rot.y");
 		auto cameraDistTrack = sync_get_track(rocket, "camera:dist");
 		auto cameraRollTrack = sync_get_track(rocket, "camera:roll");
+		auto cameraUpTrack = sync_get_track(rocket, "camera:up");
 		auto cameraTargetXTrack = sync_get_track(rocket, "camera:target.x");
 		auto cameraTargetYTrack = sync_get_track(rocket, "camera:target.y");
 		auto cameraTargetZTrack = sync_get_track(rocket, "camera:target.z");
@@ -764,7 +765,10 @@ int main(int argc, char *argv[])
 				float(sync_get_val(cameraTargetXTrack, row)),
 				float(sync_get_val(cameraTargetYTrack, row)),
 				float(sync_get_val(cameraTargetZTrack, row)));
-			auto viewPosition = glm::vec3(sin(th) * dist, 0.0f, cos(th) * dist);
+			auto viewPosition = glm::vec3(
+				sin(th) * dist,
+				sync_get_val(cameraUpTrack, row),
+				cos(th) * dist);
 			auto lookAt = glm::lookAt(viewPosition, targetPosition, glm::vec3(0, 1, 0));
 			auto viewMatrix = glm::rotate(glm::mat4(1), float(roll), glm::vec3(0, 0, 1)) * lookAt;
 
