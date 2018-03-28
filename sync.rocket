@@ -1,69 +1,125 @@
 <sync rows="3072">
 	<tracks>
 		<track name="scene.index">
-			<key row="0" interpolation="0" value="0"/>
-			<key row="1024" interpolation="0" value="1"/>
+			<key value="0" row="0" interpolation="0"/>
+			<key value="1" row="1024" interpolation="0"/>
+			<key value="0" row="1052" interpolation="0"/>
 		</track>
-		<track name="background:clear.r"/>
-		<track name="background:clear.g"/>
-		<track name="background:clear.b"/>
+		<track name="overlay.index">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="overlay.alpha">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="fade">
+			<key value="1" row="0" interpolation="0"/>
+		</track>
+		<track name="flash">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="background:clear.r">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="background:clear.g">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="background:clear.b">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
 		<track name="camera:rot.y">
-			<key row="0" interpolation="0" value="0"/>
-			<key row="512" interpolation="1" value="0"/>
-			<key row="520" interpolation="1" value="45"/>
-			<key row="767" interpolation="0" value="-45"/>
-			<key row="768" interpolation="1" value="80"/>
-			<key row="1023" interpolation="0" value="20"/>
-			<key row="1024" interpolation="1" value="0"/>
-			<key row="1095" interpolation="0" value="180"/>
-			<key row="1096" interpolation="1" value="20"/>
-			<key row="1111" interpolation="0" value="-20"/>
-			<key row="1112" interpolation="1" value="-70"/>
-			<key row="1247" interpolation="0" value="70"/>
-			<key row="1248" interpolation="1" value="-20"/>
-			<key row="1295" interpolation="0" value="20"/>
+			<key value="0" row="0" interpolation="0"/>
+			<key value="0" row="512" interpolation="1"/>
+			<key value="45" row="520" interpolation="1"/>
+			<key value="-45" row="767" interpolation="0"/>
+			<key value="80" row="768" interpolation="1"/>
+			<key value="20" row="1023" interpolation="0"/>
+			<key value="0" row="1024" interpolation="1"/>
+			<key value="180" row="1095" interpolation="0"/>
+			<key value="20" row="1096" interpolation="1"/>
+			<key value="-20" row="1111" interpolation="0"/>
+			<key value="-70" row="1112" interpolation="1"/>
+			<key value="70" row="1247" interpolation="0"/>
+			<key value="-20" row="1248" interpolation="1"/>
+			<key value="20" row="1295" interpolation="0"/>
 		</track>
 		<track name="camera:dist">
-			<key row="0" interpolation="1" value="1.25"/>
-			<key row="512" interpolation="3" value="10"/>
-			<key row="520" interpolation="0" value="3"/>
+			<key value="1.25" row="0" interpolation="1"/>
+			<key value="10" row="512" interpolation="3"/>
+			<key value="3" row="520" interpolation="0"/>
+			<key value="1" row="1024" interpolation="1"/>
+			<key value="4" row="1028" interpolation="0"/>
+			<key value="1" row="1052" interpolation="1"/>
+			<key value="4" row="1054" interpolation="0"/>
 		</track>
 		<track name="camera:roll">
-			<key row="0" interpolation="0" value="0"/>
-			<key row="1112" interpolation="1" value="0"/>
-			<key row="1247" interpolation="0" value="180"/>
-			<key row="1248" interpolation="0" value="0"/>
+			<key value="0" row="0" interpolation="0"/>
+			<key value="120" row="1096" interpolation="0"/>
+			<key value="0" row="1112" interpolation="1"/>
+			<key value="180" row="1247" interpolation="0"/>
+			<key value="0" row="1248" interpolation="0"/>
+		</track>
+		<track name="camera:up">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="camera:target.x">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="camera:target.y">
+			<key value="0" row="0" interpolation="0"/>
+		</track>
+		<track name="camera:target.z">
+			<key value="0" row="0" interpolation="0"/>
 		</track>
 		<track name="postprocess:delay.image">
-			<key row="0" interpolation="0" value="0"/>
-			<key row="1152" interpolation="0" value="1"/>
+			<key value="0" row="0" interpolation="0"/>
+			<key value="1" row="1072" interpolation="0"/>
 		</track>
 		<track name="postprocess:delay.amount">
-			<key row="0" interpolation="0" value="0"/>
-			<key row="512" interpolation="1" value="0"/>
-			<key row="520" interpolation="1" value="1"/>
-			<key row="576" interpolation="0" value="0"/>
-			<key row="768" interpolation="1" value="1"/>
-			<key row="856" interpolation="0" value="0"/>
-			<key row="1024" interpolation="0" value="1"/>
-			<key row="1152" interpolation="0" value="0"/>
-			<key row="1256" interpolation="1" value="1"/>
-			<key row="1344" interpolation="0" value="0"/>
+			<key value="0" row="0" interpolation="0"/>
+			<key value="0" row="512" interpolation="1"/>
+			<key value="1" row="520" interpolation="1"/>
+			<key value="0" row="576" interpolation="0"/>
+			<key value="1" row="768" interpolation="1"/>
+			<key value="0" row="856" interpolation="0"/>
+			<key value="1" row="1024" interpolation="0"/>
+			<key value="0" row="1152" interpolation="0"/>
+			<key value="1" row="1256" interpolation="1"/>
+			<key value="0" row="1344" interpolation="0"/>
 		</track>
 		<track name="postprocess:delay.chroma">
-			<key row="0" interpolation="0" value="0"/>
-			<key row="512" interpolation="0" value="0.2"/>
-			<key row="520" interpolation="1" value="0.2"/>
-			<key row="576" interpolation="0" value="0"/>
-			<key row="768" interpolation="1" value="0.5"/>
-			<key row="832" interpolation="0" value="0.2"/>
-			<key row="1256" interpolation="1" value="0.5"/>
-			<key row="1320" interpolation="0" value="0.2"/>
+			<key value="0" row="0" interpolation="0"/>
+			<key value="0.2" row="512" interpolation="0"/>
+			<key value="0.2" row="520" interpolation="1"/>
+			<key value="0" row="576" interpolation="0"/>
+			<key value="0.5" row="768" interpolation="1"/>
+			<key value="0.2" row="832" interpolation="0"/>
+			<key value="0.5" row="1256" interpolation="1"/>
+			<key value="0.2" row="1320" interpolation="0"/>
+		</track>
+		<track name="postprocess:bloom.amount">
+			<key value="1" row="0" interpolation="0"/>
+		</track>
+		<track name="postprocess:bloom.shape">
+			<key value="0.5" row="0" interpolation="0"/>
 		</track>
 		<track name="refraction:fade">
-			<key row="0" interpolation="0" value="1"/>
-			<key row="111" interpolation="0" value="0.1"/>
-			<key row="112" interpolation="0" value="1"/>
+			<key value="1" row="0" interpolation="0"/>
+			<key value="0.1" row="111" interpolation="0"/>
+			<key value="1" row="112" interpolation="0"/>
+			<key value="0" row="1024" interpolation="0"/>
+			<key value="1" row="1039" interpolation="1"/>
+			<key value="0" row="1044" interpolation="0"/>
+		</track>
+		<track name="refraction:plane">
+			<key value="0" row="0" interpolation="0"/>
+			<key value="0" row="157" interpolation="0"/>
+			<key value="1" row="164" interpolation="0"/>
+			<key value="0" row="165" interpolation="0"/>
+			<key value="1" row="564" interpolation="0"/>
+			<key value="0" row="565" interpolation="0"/>
+		</track>
+		<track name="refraction:index">
+			<key value="1.1" row="0" interpolation="0"/>
 		</track>
 	</tracks>
 	<bookmarks/>
