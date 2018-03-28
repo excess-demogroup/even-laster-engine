@@ -7,8 +7,7 @@ layout (local_size_x = 16, local_size_y = 16) in;
 layout (rgba8, binding = 0) uniform writeonly image2D outputImage;
 layout (binding = 1) uniform sampler2DArray samplerColor;
 layout (binding = 2) uniform sampler2DArray samplerOffsets;
-layout (binding = 3) uniform sampler2D bloomSampler;
-layout (binding = 4) uniform sampler2DArray overlaySampler;
+layout (binding = 3) uniform sampler2DArray overlaySampler;
 
 layout(push_constant) uniform PushConstants {
 	int arrayBufferFrame;
@@ -63,22 +62,6 @@ vec3 sampleSpectrum(float timeA, float timeB)
 		t += stepsiz;
 	}
 	return sumcol.rgb /= sumw;
-}
-
-vec3 sampleBloom(vec2 pos)
-{
-	vec3 sum = vec3(0);
-	int levels = textureQueryLevels(bloomSampler);
-	float total = 0;
-	for (int i = 0; i < levels; ++i) {
-		float weight = pow(float(i), 0.5);
-		vec2 rnd = vec2(nrand(3 + gl_GlobalInvocationID.xy + pushConstants.arrayBufferFrame * 0.01),
-		                nrand(5 + gl_GlobalInvocationID.yx - pushConstants.arrayBufferFrame * 0.01));
-		rnd = (rnd * 2 - 1) / textureSize(bloomSampler, i);
-		sum += textureLod(bloomSampler, pos + rnd * 0.25, float(i)).rgb * weight;
-		total += weight;
-	}
-	return sum / total;
 }
 
 void main()
