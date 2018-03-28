@@ -4,12 +4,13 @@
 #extension GL_ARB_shading_language_420pack : enable
 #extension GL_GOOGLE_include_directive : enable
 
+#include "utils.glsl"
+#include "perobject.glsl"
+
 layout (location = 0) in vec2 texCoord;
 layout (location = 1) in vec3 modelPos;
 
 layout (location = 0) out vec4 outFragColor;
-
-#include "perobject.glsl"
 
 layout (binding = 1) uniform sampler2DArray samplerPlane;
 
@@ -30,18 +31,6 @@ bool trace(vec3 pos, vec3 dir, out vec2 hit)
 		return true;
 	} else
 		return false;
-}
-
-vec3 spectrum_offset(float t)
-{
-	// Thanks to mentor! https://twitter.com/Stubbesaurus/status/818847844790575104
-	float t0 = 3.0 * t - 1.5;
-	return clamp( vec3( -t0, 1.0-abs(t0), t0), 0.0, 1.0);
-}
-
-float nrand(vec2 n)
-{
-	return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
 }
 
 vec3 sampleSpectrum(vec2 uvA, vec2 uvB)

@@ -4,6 +4,8 @@
 #extension GL_ARB_shading_language_420pack : enable
 #extension GL_GOOGLE_include_directive : enable
 
+#include "utils.glsl"
+
 layout (location = 0) in vec2 texCoord;
 layout (location = 0) out vec4 outFragColor;
 
@@ -16,11 +18,6 @@ layout(push_constant) uniform PushConstants {
 	float seed;
 } pushConstants;
 
-
-float nrand(vec2 n)
-{
-	return fract(sin(dot(n.xy, vec2(12.9898, 78.233))) * 43758.5453);
-}
 
 vec3 sampleBloom(vec2 pos, float shape)
 {
