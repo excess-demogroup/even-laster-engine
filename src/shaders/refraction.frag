@@ -35,6 +35,7 @@ bool trace(vec3 pos, vec3 dir, out vec2 hit)
 
 vec3 sampleSpectrum(vec2 uvA, vec2 uvB)
 {
+	// thanks to Hornet ;)
 	const int num_iter = 7;
 	const float stepsiz = 1.0 / (float(num_iter)-1.0);
 
