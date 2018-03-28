@@ -696,7 +696,7 @@ int main(int argc, char *argv[])
 					// set row
 					[](void *d, int row) {
 					HSTREAM h = *((HSTREAM *)d);
-					QWORD pos = BASS_ChannelSeconds2Bytes(h, row / rowRate);
+					QWORD pos = BASS_ChannelSeconds2Bytes(h, (row + 0.01) / rowRate);
 					BASS_ChannelSetPosition(h, pos, BASS_POS_BYTE);
 				},
 
