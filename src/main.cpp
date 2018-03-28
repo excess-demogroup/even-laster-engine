@@ -673,6 +673,8 @@ int main(int argc, char *argv[])
 		auto overlayAlphaTrack = sync_get_track(rocket, "overlay.alpha");
 		auto fadeTrack = sync_get_track(rocket, "fade");
 		auto flashTrack = sync_get_track(rocket, "flash");
+		auto pulseAmountTrack = sync_get_track(rocket, "pulse.amount");
+		auto pulseSpeedTrack = sync_get_track(rocket, "pulse.speed");
 
 		BASS_Start();
 		BASS_ChannelPlay(stream, false);
@@ -883,6 +885,11 @@ int main(int argc, char *argv[])
 				0, VK_ACCESS_SHADER_WRITE_BIT,
 				VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
+			auto fade = sync_get_val(fadeTrack, row);
+			auto pulseAmount = sync_get_val(pulseAmountTrack, row);
+			auto pulseSpeed = sync_get_val(pulseSpeedTrack, row);
+			fade = max(0.0, fade - pulseAmount + float(cos(row * pulseSpeed * (M_PI / rowsPerBeat))) * pulseAmount);
+
 			postProcessPushConstantData.arrayBufferFrame = uint32_t(arrayBufferFrame);
 			postProcessPushConstantData.validFrames = uint32_t(validFrames);
 			postProcessPushConstantData.delayImage = uint32_t(sync_get_val(delayImageTrack, row));
@@ -890,7 +897,7 @@ int main(int argc, char *argv[])
 			postProcessPushConstantData.delayAmount = float(sync_get_val(delayAmountTrack, row));
 			postProcessPushConstantData.delayChroma = float(1.0 - min(max(0.0, sync_get_val(delayChromaTrack, row)), 1.0));
 			postProcessPushConstantData.overlayAlpha = float(sync_get_val(overlayAlphaTrack, row));
-			postProcessPushConstantData.fade = float(sync_get_val(fadeTrack, row));
+			postProcessPushConstantData.fade = float(fade);
 			postProcessPushConstantData.flash = float(sync_get_val(flashTrack, row));
 			vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(postProcessPushConstantData), &postProcessPushConstantData);
 
