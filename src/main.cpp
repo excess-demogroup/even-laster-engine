@@ -649,24 +649,24 @@ int main(int argc, char *argv[])
 
 		auto sceneIndexTrack = sync_get_track(rocket, "scene.index");
 
-		auto clear_r = sync_get_track(rocket, "background:clear.r");
-		auto clear_g = sync_get_track(rocket, "background:clear.g");
-		auto clear_b = sync_get_track(rocket, "background:clear.b");
+		auto clearRTrack = sync_get_track(rocket, "background:clear.r");
+		auto clearGTrack = sync_get_track(rocket, "background:clear.g");
+		auto clearBTrack = sync_get_track(rocket, "background:clear.b");
 
-		auto cam_rot = sync_get_track(rocket, "camera:rot.y");
-		auto cam_dist = sync_get_track(rocket, "camera:dist");
-		auto cam_roll = sync_get_track(rocket, "camera:roll");
-		auto camTargetX = sync_get_track(rocket, "camera:target.x");
-		auto camTargetY = sync_get_track(rocket, "camera:target.y");
-		auto camTargetZ = sync_get_track(rocket, "camera:target.z");
+		auto cameraRotYTrack = sync_get_track(rocket, "camera:rot.y");
+		auto cameraDistTrack = sync_get_track(rocket, "camera:dist");
+		auto cameraRollTrack = sync_get_track(rocket, "camera:roll");
+		auto cameraTargetXTrack = sync_get_track(rocket, "camera:target.x");
+		auto cameraTargetYTrack = sync_get_track(rocket, "camera:target.y");
+		auto cameraTargetZTrack = sync_get_track(rocket, "camera:target.z");
 
 		auto refractionPlaneIndexTrack = sync_get_track(rocket, "refraction:plane");
 		auto refractionFadeTrack = sync_get_track(rocket, "refraction:fade");
 		auto refractionIndexTrack = sync_get_track(rocket, "refraction:index");
 
-		auto pp_delay_image = sync_get_track(rocket, "postprocess:delay.image");
-		auto pp_delay_amount = sync_get_track(rocket, "postprocess:delay.amount");
-		auto pp_delay_chroma = sync_get_track(rocket, "postprocess:delay.chroma");
+		auto delayImageTrack = sync_get_track(rocket, "postprocess:delay.image");
+		auto delayAmountTrack = sync_get_track(rocket, "postprocess:delay.amount");
+		auto delayChromaTrack = sync_get_track(rocket, "postprocess:delay.chroma");
 		auto bloomAmountTrack = sync_get_track(rocket, "postprocess:bloom.amount");
 		auto bloomShapeTrack = sync_get_track(rocket, "postprocess:bloom.shape");
 
@@ -734,9 +734,9 @@ int main(int argc, char *argv[])
 			VkClearValue clearValues[2];
 			clearValues[0].depthStencil = { 1.0f, 0 };
 			clearValues[1].color = {
-				float(sync_get_val(clear_r, row)),
-				float(sync_get_val(clear_g, row)),
-				float(sync_get_val(clear_b, row)),
+				float(sync_get_val(clearRTrack, row)),
+				float(sync_get_val(clearGTrack, row)),
+				float(sync_get_val(clearBTrack, row)),
 				1.0f
 			};
 
@@ -756,14 +756,14 @@ int main(int argc, char *argv[])
 			setViewport(commandBuffer, 0, 0, float(width), float(height));
 			setScissor(commandBuffer, 0, 0, width, height);
 
-			auto th = sync_get_val(cam_rot, row) * (M_PI / 180);
-			auto dist = sync_get_val(cam_dist, row);
-			auto roll = sync_get_val(cam_roll, row) * (M_PI / 180);
+			auto th = sync_get_val(cameraRotYTrack, row) * (M_PI / 180);
+			auto dist = sync_get_val(cameraDistTrack, row);
+			auto roll = sync_get_val(cameraRollTrack, row) * (M_PI / 180);
 
 			auto targetPosition = glm::vec3(
-				float(sync_get_val(camTargetX, row)),
-				float(sync_get_val(camTargetY, row)),
-				float(sync_get_val(camTargetZ, row)));
+				float(sync_get_val(cameraTargetXTrack, row)),
+				float(sync_get_val(cameraTargetYTrack, row)),
+				float(sync_get_val(cameraTargetZTrack, row)));
 			auto viewPosition = glm::vec3(sin(th) * dist, 0.0f, cos(th) * dist);
 			auto lookAt = glm::lookAt(viewPosition, targetPosition, glm::vec3(0, 1, 0));
 			auto viewMatrix = glm::rotate(glm::mat4(1), float(roll), glm::vec3(0, 0, 1)) * lookAt;
@@ -883,10 +883,10 @@ int main(int argc, char *argv[])
 
 			postProcessPushConstantData.arrayBufferFrame = uint32_t(arrayBufferFrame);
 			postProcessPushConstantData.validFrames = uint32_t(validFrames);
-			postProcessPushConstantData.delayImage = uint32_t(sync_get_val(pp_delay_image, row));
+			postProcessPushConstantData.delayImage = uint32_t(sync_get_val(delayImageTrack, row));
 			postProcessPushConstantData.overlayIndex = uint32_t(sync_get_val(overlayIndexTrack, row));
-			postProcessPushConstantData.delayAmount = float(sync_get_val(pp_delay_amount, row));
-			postProcessPushConstantData.delayChroma = float(1.0 - min(max(0.0, sync_get_val(pp_delay_chroma, row)), 1.0));
+			postProcessPushConstantData.delayAmount = float(sync_get_val(delayAmountTrack, row));
+			postProcessPushConstantData.delayChroma = float(1.0 - min(max(0.0, sync_get_val(delayChromaTrack, row)), 1.0));
 			postProcessPushConstantData.overlayAlpha = float(sync_get_val(overlayAlphaTrack, row));
 			postProcessPushConstantData.fade = float(sync_get_val(fadeTrack, row));
 			postProcessPushConstantData.flash = float(sync_get_val(flashTrack, row));
