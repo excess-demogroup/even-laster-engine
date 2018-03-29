@@ -25,11 +25,13 @@ void main()
 	int stripIndex = gl_VertexIndex & 0xFFFF;
 	vec2 texCoord = vec2(stripIndex >> 1, strip + (stripIndex & 1));
 	texCoord = (texCoord - 127.5) / 128;
+	texCoord *= 0.1;
 	vec3 position = vec3(ubo.offset + ubo.scale * texCoord, ubo.time);
 
 	position = textureLod(volumeSampler, position, 0).xyz;
 	position += textureLod(volumeSampler, position * 3, 0).xyz * 0.5;
 	position += textureLod(volumeSampler, position * 15, 0).xyz * 0.1;
+	position *= 5;
 
 	outTexCoord = texCoord;
 	outModelPos = position;

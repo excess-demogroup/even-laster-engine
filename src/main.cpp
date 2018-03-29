@@ -856,6 +856,12 @@ int main(int argc, char *argv[])
 		auto pulseAmountTrack = sync_get_track(rocket, "pulse.amount");
 		auto pulseSpeedTrack = sync_get_track(rocket, "pulse.speed");
 
+		auto wavePlaneOffsetXTrack = sync_get_track(rocket, "waveplane:offset.x");
+		auto wavePlaneOffsetYTrack = sync_get_track(rocket, "waveplane:offset.y");
+		auto wavePlaneScaleXTrack = sync_get_track(rocket, "waveplane:scale.x");
+		auto wavePlaneScaleYTrack = sync_get_track(rocket, "waveplane:scale.y");
+		auto wavePlaneTimeTrack = sync_get_track(rocket, "waveplane:time");
+
 		BASS_Start();
 		BASS_ChannelPlay(stream, false);
 
@@ -962,9 +968,8 @@ int main(int argc, char *argv[])
 			auto zfar = 100.0f;
 			auto projectionMatrix = glm::perspective(float(fov * M_PI / 180), aspect, znear, zfar);
 
-			if (false) {
-				int sceneIndex = int(sync_get_val(sceneIndexTrack, row));
-				sceneIndex = max(sceneIndex, 0);
+			int sceneIndex = int(sync_get_val(sceneIndexTrack, row));
+			if (sceneIndex >= 0) {
 				sceneIndex %= sceneRenderers.size();
 				SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
 
@@ -986,9 +991,12 @@ int main(int argc, char *argv[])
 				wavePlaneUniforms.modelViewMatrix = modelViewMatrix;
 				wavePlaneUniforms.modelViewInverseMatrix = glm::inverse(modelViewMatrix);
 				wavePlaneUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
-				wavePlaneUniforms.offset = glm::vec2(0);
-				wavePlaneUniforms.scale = glm::vec2(sin(row * 0.1) * 0.25f, cos(row * 0.1) * 0.25f);
-				wavePlaneUniforms.time = float(row * 0.001);
+
+				wavePlaneUniforms.offset = glm::vec2(sync_get_val(wavePlaneOffsetXTrack, row),
+				                                     sync_get_val(wavePlaneOffsetYTrack, row));
+				wavePlaneUniforms.scale = glm::vec2(sync_get_val(wavePlaneScaleXTrack, row),
+				                                    sync_get_val(wavePlaneScaleYTrack, row));
+				wavePlaneUniforms.time = float(sync_get_val(wavePlaneTimeTrack, row));
 
 				auto ptr = wavePlaneUniformBuffer->map(0, sizeof(wavePlaneUniforms));
 				memcpy(ptr, &wavePlaneUniforms, sizeof(wavePlaneUniforms));

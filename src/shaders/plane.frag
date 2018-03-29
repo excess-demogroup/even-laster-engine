@@ -19,6 +19,6 @@ void main()
 	vec3 viewPos = perObjectUBO.modelViewInverseMatrix[3].xyz;
 	vec3 view = normalize(modelPos - viewPos);
 
-	vec3 color = vec3(pow(1 - dot(modelNormal, -view), 3) * 0.5);
+	vec3 color = vec3(pow(1 - dot(modelNormal, -view), 3) * 0.1);
 	outFragColor = vec4(color, 1);
 }
