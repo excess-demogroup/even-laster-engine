@@ -13,6 +13,7 @@
     <ClCompile Include="src\scenerenderer.cpp" />
     <ClCompile Include="src\sync\device.c" />
     <ClCompile Include="src\sync\track.c" />
+    <ClCompile Include="src\FastNoise.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\swapchain.h" />
@@ -32,6 +33,7 @@
     <ClInclude Include="src\core\blobbuilder.h" />
     <ClInclude Include="src\scene\sceneimporter.h" />
     <ClInclude Include="src\scenerenderer.h" />
+    <ClInclude Include="src\FastNoise.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\shaders\*.frag" />

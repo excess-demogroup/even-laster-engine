@@ -1,4 +1,5 @@
 #ifdef WIN32
+#define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -100,7 +101,12 @@ VkPhysicalDevice choosePhysicalDevice()
 	return physicalDevice;
 }
 
-static VkPipeline createGeometrylessPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const vector<VkPipelineShaderStageCreateInfo> &shaderStages)
+enum BlendMode {
+	None,
+	Additive
+};
+
+static VkPipeline createGeometrylessPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const vector<VkPipelineShaderStageCreateInfo> &shaderStages, VkPrimitiveTopology topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, bool depthWrite = true, BlendMode blendMode = None)
 {
 	VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
 	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -111,7 +117,7 @@ static VkPipeline createGeometrylessPipeline(VkPipelineLayout layout, VkRenderPa
 
 	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
 	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	pipelineInputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	pipelineInputAssemblyStateCreateInfo.topology = topology;
 	pipelineInputAssemblyStateCreateInfo.primitiveRestartEnable = VK_FALSE;
 
 	VkPipelineRasterizationStateCreateInfo pipelineRasterizationStateCreateInfo = {};
@@ -123,7 +129,20 @@ static VkPipeline createGeometrylessPipeline(VkPipelineLayout layout, VkRenderPa
 
 	VkPipelineColorBlendAttachmentState pipelineColorBlendAttachmentState[1] = { { 0 } };
 	pipelineColorBlendAttachmentState[0].colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	pipelineColorBlendAttachmentState[0].blendEnable = VK_FALSE;
+	switch (blendMode) {
+	case BlendMode::None:
+		pipelineColorBlendAttachmentState[0].blendEnable = VK_FALSE;
+		break;
+	case BlendMode::Additive:
+		pipelineColorBlendAttachmentState[0].blendEnable = VK_TRUE;
+		pipelineColorBlendAttachmentState[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+		pipelineColorBlendAttachmentState[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+		pipelineColorBlendAttachmentState[0].colorBlendOp = VK_BLEND_OP_ADD;
+		pipelineColorBlendAttachmentState[0].srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		pipelineColorBlendAttachmentState[0].dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		pipelineColorBlendAttachmentState[0].alphaBlendOp = VK_BLEND_OP_ADD;
+		break;
+	}
 
 	VkPipelineColorBlendStateCreateInfo pipelineColorBlendStateCreateInfo = {};
 	pipelineColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -143,8 +162,8 @@ static VkPipeline createGeometrylessPipeline(VkPipelineLayout layout, VkRenderPa
 
 	VkPipelineDepthStencilStateCreateInfo pipelineDepthStencilStateCreateInfo = {};
 	pipelineDepthStencilStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	pipelineDepthStencilStateCreateInfo.depthTestEnable = VK_TRUE;
-	pipelineDepthStencilStateCreateInfo.depthWriteEnable = VK_TRUE;
+	pipelineDepthStencilStateCreateInfo.depthTestEnable = depthWrite;
+	pipelineDepthStencilStateCreateInfo.depthWriteEnable = depthWrite;
 	pipelineDepthStencilStateCreateInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 
 	VkDynamicState dynamicStateEnables[] = {
@@ -201,6 +220,84 @@ static VkPipeline createFullScreenQuadPipeline(VkPipelineLayout layout, VkRender
 
 	return createGeometrylessPipeline(layout, renderPass, shaderStages);
 }
+
+#include "FastNoise.h"
+
+static Texture3D generateFractalNoise(int width, int height, int depth)
+{
+	Texture3D texture(VK_FORMAT_R32G32B32A32_SFLOAT, width, height, depth, 1);
+
+	auto size = sizeof(float) * 4 * width * height * depth;
+	auto stagingBuffer = new StagingBuffer(size);
+	void *ptr = stagingBuffer->map(0, size);
+
+#if 0
+	FastNoise noiseX(1337), noiseY(1338), noiseZ(1339);
+
+	auto type = FastNoise::NoiseType::PerlinFractal;
+	noiseX.SetNoiseType(type);
+	noiseY.SetNoiseType(type);
+	noiseZ.SetNoiseType(type);
+
+	auto octaves = 10;
+	noiseX.SetFractalOctaves(octaves);
+	noiseY.SetFractalOctaves(octaves);
+	noiseZ.SetFractalOctaves(octaves);
+
+	noiseX.SetFrequency(4.0f / width);
+	noiseY.SetFrequency(4.0f / height);
+	noiseZ.SetFrequency(4.0f / depth);
+
+	FastNoise noises[] = { noiseX, noiseY, noiseZ };
+
+	for (auto z = 0; z < depth; ++z) {
+		float zw = float(z) / depth;
+		for (auto y = 0; y < height; ++y) {
+			float yw = float(y) / height;
+			auto row = static_cast<float *>(ptr) + 4 * (z * width * height + y * width);
+			for (auto x = 0; x < width; ++x) {
+				float xw = float(x) / width;
+
+				for (int i = 0; i < 3; ++i) {
+					auto a = noises[i].GetNoise(x,         y,          z);
+					auto b = noises[i].GetNoise(x + width, y,          z);
+					auto c = noises[i].GetNoise(x,         y + height, z);
+					auto d = noises[i].GetNoise(x + width, y + height, z);
+
+					auto e = noises[i].GetNoise(x,         y,          z + depth);
+					auto f = noises[i].GetNoise(x + width, y,          z + depth);
+					auto g = noises[i].GetNoise(x,         y + height, z + depth);
+					auto h = noises[i].GetNoise(x + width, y + height, z + depth);
+
+					float h1 = a * xw + b * (1 - xw);
+					float h2 = c * xw + d * (1 - xw);
+					float h3 = e * xw + f * (1 - xw);
+					float h4 = g * xw + h * (1 - xw);
+
+					float v1 = h1 * yw + h2 * (1 - yw);
+					float v2 = h3 * yw + h4 * (1 - yw);
+
+					row[x * 4 + i] = v1 * zw + v2 * (1 - zw);
+				}
+				row[x * 4 + 3] = 0.0f;
+			}
+		}
+	}
+	FILE *fp = fopen("data/fbm.raw", "wb");
+	fwrite(ptr, 1, size, fp);
+	fclose(fp);
+#else
+	FILE *fp = fopen("data/fbm.raw", "rb");
+	if (!fp)
+		throw runtime_error("failed to open FBM cache");
+	fread(ptr, 1, size, fp);
+	fclose(fp);
+#endif
+	stagingBuffer->unmap();
+	texture.uploadFromStagingBuffer(stagingBuffer, 0);
+	return texture;
+}
+
 
 #ifdef WIN32
 
@@ -505,6 +602,79 @@ int main(int argc, char *argv[])
 		auto bloomUpscaleFragmentShader = loadShaderModule("data/shaders/bloom_upscale.frag.spv");
 		auto bloomUpscalePipeline = createFullScreenQuadPipeline(bloomUpscalePipelineLayout, bloomUpscaleRenderPass, bloomUpscaleFragmentShader);
 
+		struct {
+			glm::mat4 modelViewMatrix;
+			glm::mat4 modelViewInverseMatrix;
+			glm::mat4 modelViewProjectionMatrix;
+			glm::vec2 offset;
+			glm::vec2 scale;
+			float time;
+		} wavePlaneUniforms;
+		auto wavePlaneUniformBuffer = new Buffer(sizeof(wavePlaneUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+
+		auto wavePlaneDescriptorSetLayout = createDescriptorSetLayout({
+			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT },
+			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_VERTEX_BIT },
+		});
+		auto wavePlanePipelineLayout = createPipelineLayout({ wavePlaneDescriptorSetLayout }, {});
+		vector<VkPipelineShaderStageCreateInfo> wavePlaneShaderStages = { {
+				VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+				nullptr,
+				0,
+				VK_SHADER_STAGE_VERTEX_BIT,
+				loadShaderModule("data/shaders/plane.vert.spv"),
+				"main",
+				nullptr
+			},{
+				VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+				nullptr,
+				0,
+				VK_SHADER_STAGE_FRAGMENT_BIT,
+				loadShaderModule("data/shaders/plane.frag.spv"),
+				"main",
+				nullptr
+			} };
+
+		auto wavePlanePipeline = createGeometrylessPipeline(wavePlanePipelineLayout, sceneRenderPass, wavePlaneShaderStages, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, false, BlendMode::Additive);
+
+		auto wavePlaneDescriptorPool = createDescriptorPool({
+			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 }
+			}, 1);
+
+		auto wavePlaneDescriptorSet = allocateDescriptorSet(wavePlaneDescriptorPool, wavePlaneDescriptorSetLayout);
+
+		Texture3D fractalNoise = generateFractalNoise(64, 64, 64);
+		VkSampler fractalNoiseSampler = createSampler(0.0f, true, false);
+
+		{
+			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
+			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+			postProcessRenderTargetImageInfo.imageView = postProcessRenderTarget.getImageView();
+
+			VkWriteDescriptorSet writeDescriptorSets[2] = {};
+
+			auto descriptorBufferInfo = wavePlaneUniformBuffer->getDescriptorBufferInfo();
+			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[0].dstSet = wavePlaneDescriptorSet;
+			writeDescriptorSets[0].dstBinding = 0;
+			writeDescriptorSets[0].descriptorCount = 1;
+			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
+
+			vector<VkDescriptorImageInfo> descriptorImageInfos = {
+				{ fractalNoiseSampler, fractalNoise.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }
+			};
+
+			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			writeDescriptorSets[1].dstSet = wavePlaneDescriptorSet;
+			writeDescriptorSets[1].dstBinding = 1;
+			writeDescriptorSets[1].descriptorCount = descriptorImageInfos.size();
+			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSets[1].pImageInfo = descriptorImageInfos.data();
+
+			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
+		}
 
 		vector<Scene *> scenes;
 		for (int i = 0; true; ++i) {
@@ -792,23 +962,44 @@ int main(int argc, char *argv[])
 			auto zfar = 100.0f;
 			auto projectionMatrix = glm::perspective(float(fov * M_PI / 180), aspect, znear, zfar);
 
-			auto offset = 0u;
-			map<const Transform*, unsigned int> offsetMap;
+			if (false) {
+				int sceneIndex = int(sync_get_val(sceneIndexTrack, row));
+				sceneIndex = max(sceneIndex, 0);
+				sceneIndex %= sceneRenderers.size();
+				SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
 
-			int sceneIndex = int(sync_get_val(sceneIndexTrack, row));
-			sceneIndex = max(sceneIndex, 0);
-			sceneIndex %= sceneRenderers.size();
-			SceneRenderer &sceneRenderer = sceneRenderers[sceneIndex];
+				refractionUniforms.planeIndex = float(sync_get_val(refractionPlaneIndexTrack, row));
+				refractionUniforms.fade = float(sync_get_val(refractionFadeTrack, row));
+				refractionUniforms.refractiveIndex = float(sync_get_val(refractionIndexTrack, row));
 
-			refractionUniforms.planeIndex = float(sync_get_val(refractionPlaneIndexTrack, row));
-			refractionUniforms.fade = float(sync_get_val(refractionFadeTrack, row));
-			refractionUniforms.refractiveIndex = float(sync_get_val(refractionIndexTrack, row));
+				auto ptr = refractionUniformBuffer->map(0, sizeof(refractionUniforms));
+				memcpy(ptr, &refractionUniforms, sizeof(refractionUniforms));
+				refractionUniformBuffer->unmap();
 
-			auto ptr = refractionUniformBuffer->map(0, sizeof(refractionUniforms));
-			memcpy(ptr, &refractionUniforms, sizeof(refractionUniforms));
-			refractionUniformBuffer->unmap();
+				sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix);
+			} else {
+				int size = 256;
 
-			sceneRenderer.draw(commandBuffer, viewMatrix, projectionMatrix);
+				auto modelMatrix = glm::mat4(1);
+				auto modelViewMatrix = viewMatrix * modelMatrix;
+				auto modelViewProjectionMatrix = projectionMatrix * modelViewMatrix;
+				wavePlaneUniforms.modelViewMatrix = modelViewMatrix;
+				wavePlaneUniforms.modelViewInverseMatrix = glm::inverse(modelViewMatrix);
+				wavePlaneUniforms.modelViewProjectionMatrix = modelViewProjectionMatrix;
+				wavePlaneUniforms.offset = glm::vec2(0);
+				wavePlaneUniforms.scale = glm::vec2(sin(row * 0.1) * 0.25f, cos(row * 0.1) * 0.25f);
+				wavePlaneUniforms.time = float(row * 0.001);
+
+				auto ptr = wavePlaneUniformBuffer->map(0, sizeof(wavePlaneUniforms));
+				memcpy(ptr, &wavePlaneUniforms, sizeof(wavePlaneUniforms));
+				wavePlaneUniformBuffer->unmap();
+
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,  wavePlanePipeline);
+				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, wavePlanePipelineLayout, 0, 1, &wavePlaneDescriptorSet, 0, nullptr);
+	
+				for (int i = 0; i < size; ++i)
+					vkCmdDraw(commandBuffer, 2 + 2 * size, 1, (1 << 16) * i, 0);
+			}
 
 			vkCmdEndRenderPass(commandBuffer);
 
