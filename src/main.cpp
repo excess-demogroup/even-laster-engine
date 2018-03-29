@@ -651,6 +651,7 @@ int main(int argc, char *argv[])
 		auto clearGTrack = sync_get_track(rocket, "background:clear.g");
 		auto clearBTrack = sync_get_track(rocket, "background:clear.b");
 
+		auto cameraFOVTrack = sync_get_track(rocket, "camera:fov");
 		auto cameraRotYTrack = sync_get_track(rocket, "camera:rot.y");
 		auto cameraDistTrack = sync_get_track(rocket, "camera:dist");
 		auto cameraRollTrack = sync_get_track(rocket, "camera:roll");
@@ -761,22 +762,26 @@ int main(int argc, char *argv[])
 			auto dist = sync_get_val(cameraDistTrack, row);
 			auto roll = sync_get_val(cameraRollTrack, row) * (M_PI / 180);
 
+			auto cameraTargetX = sync_get_val(cameraTargetXTrack, row);
+			auto cameraTargetY = sync_get_val(cameraTargetYTrack, row);
+			auto cameraTargetZ = sync_get_val(cameraTargetZTrack, row);
+
 			auto targetPosition = glm::vec3(
-				float(sync_get_val(cameraTargetXTrack, row)),
-				float(sync_get_val(cameraTargetYTrack, row)),
-				float(sync_get_val(cameraTargetZTrack, row)));
+				float(cameraTargetX),
+				float(cameraTargetY),
+				float(cameraTargetZ));
 			auto viewPosition = glm::vec3(
-				sin(th) * dist,
-				sync_get_val(cameraUpTrack, row),
-				cos(th) * dist);
+				cameraTargetX + sin(th) * dist,
+				cameraTargetY + sync_get_val(cameraUpTrack, row),
+				cameraTargetZ + cos(th) * dist);
 			auto lookAt = glm::lookAt(viewPosition, targetPosition, glm::vec3(0, 1, 0));
 			auto viewMatrix = glm::rotate(glm::mat4(1), float(roll), glm::vec3(0, 0, 1)) * lookAt;
 
-			auto fov = 60.0f;
+			auto fov = sync_get_val(cameraFOVTrack, row);
 			auto aspect = float(width) / height;
 			auto znear = 0.01f;
 			auto zfar = 100.0f;
-			auto projectionMatrix = glm::perspective(fov * float(M_PI / 180.0f), aspect, znear, zfar);
+			auto projectionMatrix = glm::perspective(float(fov * M_PI / 180), aspect, znear, zfar);
 
 			auto offset = 0u;
 			map<const Transform*, unsigned int> offsetMap;
