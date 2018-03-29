@@ -30,7 +30,7 @@ void main()
 
 	position = textureLod(volumeSampler, position, 0).xyz;
 	position += textureLod(volumeSampler, position * 3, 0).xyz * 0.5;
-	position += textureLod(volumeSampler, position * 15, 0).xyz * 0.1;
+	position += textureLod(volumeSampler, position * 15, 0).xyz * 0.01;
 	position *= 5;
 
 	outTexCoord = texCoord;

@@ -13,7 +13,8 @@ layout (location = 1) out vec3 outModelPos;
 
 void main()
 {
-	outModelPos = inPos;
-	outTexCoord = 0.5 + 0.5 * inPos.xy;
-	gl_Position = perObjectUBO.modelViewProjectionMatrix * vec4(inPos.xyz, 1.0);
+	vec3 pos = inPos;
+	outModelPos = pos;
+	outTexCoord = 0.5 + 0.5 * pos.xy;
+	gl_Position = perObjectUBO.modelViewProjectionMatrix * vec4(pos.xyz, 1.0);
 }
