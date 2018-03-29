@@ -100,7 +100,7 @@ VkPhysicalDevice choosePhysicalDevice()
 	return physicalDevice;
 }
 
-static VkPipeline createFullScreenQuadPipeline(VkPipelineLayout layout, VkRenderPass renderPass, VkShaderModule fragmentShader)
+static VkPipeline createGeometrylessPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const vector<VkPipelineShaderStageCreateInfo> &shaderStages)
 {
 	VkPipelineVertexInputStateCreateInfo pipelineVertexInputStateCreateInfo = {};
 	pipelineVertexInputStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -157,24 +157,6 @@ static VkPipeline createFullScreenQuadPipeline(VkPipelineLayout layout, VkRender
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
 	pipelineDynamicStateCreateInfo.dynamicStateCount = ARRAY_SIZE(dynamicStateEnables);
 
-	vector<VkPipelineShaderStageCreateInfo> shaderStages = { {
-		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-		nullptr,
-		0,
-		VK_SHADER_STAGE_VERTEX_BIT,
-		loadShaderModule("data/shaders/fullscreenquad.vert.spv"),
-		"main",
-		nullptr
-	}, {
-		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-		nullptr,
-		0,
-		VK_SHADER_STAGE_FRAGMENT_BIT,
-		fragmentShader,
-		"main",
-		nullptr
-	} };
-
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipelineCreateInfo.layout = layout;
@@ -195,6 +177,29 @@ static VkPipeline createFullScreenQuadPipeline(VkPipelineLayout layout, VkRender
 	assert(err == VK_SUCCESS);
 
 	return pipeline;
+}
+
+static VkPipeline createFullScreenQuadPipeline(VkPipelineLayout layout, VkRenderPass renderPass, VkShaderModule fragmentShader)
+{
+	vector<VkPipelineShaderStageCreateInfo> shaderStages = { {
+		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_SHADER_STAGE_VERTEX_BIT,
+		loadShaderModule("data/shaders/fullscreenquad.vert.spv"),
+		"main",
+		nullptr
+	}, {
+		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_SHADER_STAGE_FRAGMENT_BIT,
+		fragmentShader,
+		"main",
+		nullptr
+	} };
+
+	return createGeometrylessPipeline(layout, renderPass, shaderStages);
 }
 
 #ifdef WIN32
