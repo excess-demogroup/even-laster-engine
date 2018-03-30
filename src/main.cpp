@@ -268,6 +268,8 @@ int main(int argc, char *argv[])
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 		win = glfwCreateWindow(width, height, appName, fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
+		if (fullscreen)
+			glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		glfwSetKeyCallback(win, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
 			if (action == GLFW_PRESS && key == GLFW_KEY_ESCAPE)
