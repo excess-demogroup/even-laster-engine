@@ -703,9 +703,9 @@ int main(int argc, char *argv[])
 		auto planes = importTexture2DArray("assets/planes", TextureImportFlags::NONE);
 		auto offsetMaps = importTexture2DArray("assets/offset-maps", TextureImportFlags::NONE);
 		auto overlays = importTexture2DArray("assets/overlays", TextureImportFlags::PREMULTIPLY_ALPHA);
+		auto cubeTexture = importTextureCube("assets/cubemap.hdr", TextureImportFlags::GENERATE_MIPMAPS);
 
 		VkSampler textureSampler = createSampler(float(planes.getMipLevels()), false, false);
-		VkDescriptorImageInfo descriptorImageInfo = planes.getDescriptorImageInfo(textureSampler);
 
 		struct {
 			float planeIndex;
@@ -715,14 +715,18 @@ int main(int argc, char *argv[])
 		auto refractionUniformBuffer = new Buffer(sizeof(refractionUniforms), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
 		for (SceneRenderer &sceneRenderer : sceneRenderers) {
+			vector<VkDescriptorImageInfo> descriptorImageInfos = {
+				planes.getDescriptorImageInfo(textureSampler),
+				cubeTexture.getDescriptorImageInfo(textureSampler)
+			};
+
 			VkWriteDescriptorSet writeDescriptorSets[2] = {};
 			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[0].dstSet = sceneRenderer.getDescriptorSet();
-			writeDescriptorSets[0].descriptorCount = 1;
-			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSets[0].pBufferInfo = nullptr;
-			writeDescriptorSets[0].pImageInfo = &descriptorImageInfo;
 			writeDescriptorSets[0].dstBinding = 1;
+			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			writeDescriptorSets[0].descriptorCount = descriptorImageInfos.size();
+			writeDescriptorSets[0].pImageInfo = descriptorImageInfos.data();
 
 			auto descriptorBufferInfo = refractionUniformBuffer->getDescriptorBufferInfo();
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -730,7 +734,7 @@ int main(int argc, char *argv[])
 			writeDescriptorSets[1].descriptorCount = 1;
 			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			writeDescriptorSets[1].pBufferInfo = &descriptorBufferInfo;
-			writeDescriptorSets[1].dstBinding = 2;
+			writeDescriptorSets[1].dstBinding = 3;
 
 			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 		}

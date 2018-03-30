@@ -13,8 +13,9 @@ layout (location = 1) in vec3 modelPos;
 layout (location = 0) out vec4 outFragColor;
 
 layout (binding = 1) uniform sampler2DArray samplerPlane;
+layout (binding = 2) uniform samplerCube samplerEnv;
 
-layout (binding = 2) uniform UBO
+layout (binding = 3) uniform UBO
 {
 	float planeIndex;
 	float fade;
@@ -72,6 +73,14 @@ void main()
 	vec3 color = vec3(0);
 	if (trace(pos, dirR, hitA) && trace(pos, dirB, hitB))
 		color += sampleSpectrum(hitA, hitB) * ubo.fade;
-	color += pow(1 - dot(modelNormal, -view), 3) * 0.5;
+
+	float fres = pow(1 - dot(modelNormal, -view), 3);
+#if 1
+	vec3 envCoord = reflect(normalize(view), modelNormal);
+	color += texture(samplerEnv, envCoord).rgb * pow(1 - dot(modelNormal, -view), 3) * fres;
+#else
+	color += fres * 0.5;
+#endif
+
 	outFragColor = vec4(color, 1);
 }
