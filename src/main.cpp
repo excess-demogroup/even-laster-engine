@@ -1105,7 +1105,8 @@ int main(int argc, char *argv[])
 			auto fade = sync_get_val(fadeTrack, row);
 			auto pulseAmount = sync_get_val(pulseAmountTrack, row);
 			auto pulseSpeed = sync_get_val(pulseSpeedTrack, row);
-			fade = max(0.0, fade - pulseAmount + float(cos(row * pulseSpeed * (M_PI / rowsPerBeat))) * pulseAmount);
+			auto pulse = cos(row * pulseSpeed * (M_PI / rowsPerBeat));
+			fade = max(0.0, fade - pulseAmount + pulse * pulseAmount);
 
 			postProcessPushConstantData.arrayBufferFrame = uint32_t(arrayBufferFrame);
 			postProcessPushConstantData.validFrames = uint32_t(validFrames);
