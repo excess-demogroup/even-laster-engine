@@ -9,3 +9,11 @@ vec3 spectrum_offset(float t)
 	float t0 = 3.0 * t - 1.5;
 	return clamp( vec3( -t0, 1.0-abs(t0), t0), 0.0, 1.0);
 }
+
+uint rand(uint seed)
+{
+	int a = 1103515245;
+	int c = 12345;
+	seed = (a * seed + c) & 0xFFFFFFFF;
+	return seed;
+}

@@ -22,6 +22,8 @@ layout(push_constant) uniform PushConstants {
 	float overlayAlpha;
 	float fade;
 	float flash;
+	float patternAmount;
+	int patternScale;
 } pushConstants;
 
 vec3 sampleSpectrum(float timeA, float timeB)
@@ -61,6 +63,11 @@ void main()
 
 	float time = pushConstants.arrayBufferFrame;
 	float delay = textureLod(samplerOffsets, vec3(pos.xy, pushConstants.delayImage), 0).x;
+
+	uint r = rand(int(gl_GlobalInvocationID.x ^ gl_GlobalInvocationID.y) >> pushConstants.patternScale);
+	float delayPattern = float(r >> (32 - 23)) / ((1 << 23) - 1);
+	delay = mix(delay, delayPattern, pushConstants.patternAmount);
+
 	delay *= pushConstants.delayAmount;
 	delay *= textureSize(samplerColor, 0).z;
 	delay = clamp(delay, 0, pushConstants.validFrames - 1);

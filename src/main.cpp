@@ -748,6 +748,8 @@ int main(int argc, char *argv[])
 			float overlayAlpha;
 			float fade;
 			float flash;
+			float patternAmount;
+			uint32_t patternScale;
 		} postProcessPushConstantData;
 
 		VkPushConstantRange postProcessPushConstantRange = {
@@ -846,6 +848,8 @@ int main(int argc, char *argv[])
 		auto delayImageTrack = sync_get_track(rocket, "postprocess:delay.image");
 		auto delayAmountTrack = sync_get_track(rocket, "postprocess:delay.amount");
 		auto delayChromaTrack = sync_get_track(rocket, "postprocess:delay.chroma");
+		auto delayPatternAmountTrack = sync_get_track(rocket, "postprocess:pattern.amount");
+		auto delayPatternScaleTrack = sync_get_track(rocket, "postprocess:pattern.scale");
 		auto bloomAmountTrack = sync_get_track(rocket, "postprocess:bloom.amount");
 		auto bloomShapeTrack = sync_get_track(rocket, "postprocess:bloom.shape");
 
@@ -1112,6 +1116,8 @@ int main(int argc, char *argv[])
 			postProcessPushConstantData.overlayAlpha = float(sync_get_val(overlayAlphaTrack, row));
 			postProcessPushConstantData.fade = float(fade);
 			postProcessPushConstantData.flash = float(sync_get_val(flashTrack, row));
+			postProcessPushConstantData.patternAmount = float(sync_get_val(delayPatternAmountTrack, row));
+			postProcessPushConstantData.patternScale = int(sync_get_val(delayPatternScaleTrack, row));
 			vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(postProcessPushConstantData), &postProcessPushConstantData);
 
 			vkCmdDispatch(commandBuffer, width / 16, height / 16, 1);
