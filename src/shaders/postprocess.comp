@@ -30,7 +30,7 @@ layout(push_constant) uniform PushConstants {
 vec3 sampleSpectrum(vec2 pos, float timeA, float timeB)
 {
 	// thanks to Hornet ;)
-	const int num_iter = 7;
+	const int num_iter = 32;
 	const float stepsiz = 1.0 / (num_iter - 1);
 
 	float rnd = nrand(gl_GlobalInvocationID.xy + pushConstants.arrayBufferFrame * 0.1);
