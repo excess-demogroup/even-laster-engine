@@ -338,6 +338,8 @@ int main(int argc, char *argv[])
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 		win = glfwCreateWindow(width, height, appName, fullscreen ? glfwGetPrimaryMonitor() : nullptr, nullptr);
+		if (fullscreen)
+			glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		if (!BASS_Init(-1, 44100, 0, 0, 0))
 			throw runtime_error("failed to init bass");
