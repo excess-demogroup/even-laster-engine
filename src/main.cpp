@@ -749,6 +749,7 @@ int main(int argc, char *argv[])
 			float fade;
 			float flash;
 			float patternAmount;
+			float kaleidoCount;
 			uint32_t patternScale;
 		} postProcessPushConstantData;
 
@@ -852,6 +853,7 @@ int main(int argc, char *argv[])
 		auto delayPatternScaleTrack = sync_get_track(rocket, "postprocess:pattern.scale");
 		auto bloomAmountTrack = sync_get_track(rocket, "postprocess:bloom.amount");
 		auto bloomShapeTrack = sync_get_track(rocket, "postprocess:bloom.shape");
+		auto kaleidoTrack = sync_get_track(rocket, "postprocess:kaleidoscope");
 
 		auto overlayIndexTrack = sync_get_track(rocket, "overlay.index");
 		auto overlayAlphaTrack = sync_get_track(rocket, "overlay.alpha");
@@ -1119,6 +1121,7 @@ int main(int argc, char *argv[])
 			postProcessPushConstantData.flash = float(sync_get_val(flashTrack, row));
 			postProcessPushConstantData.patternAmount = float(sync_get_val(delayPatternAmountTrack, row));
 			postProcessPushConstantData.patternScale = int(sync_get_val(delayPatternScaleTrack, row));
+			postProcessPushConstantData.kaleidoCount = sync_get_val(kaleidoTrack, row);
 			vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(postProcessPushConstantData), &postProcessPushConstantData);
 
 			vkCmdDispatch(commandBuffer, width / 16, height / 16, 1);

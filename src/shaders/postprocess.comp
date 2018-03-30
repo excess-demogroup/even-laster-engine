@@ -23,10 +23,11 @@ layout(push_constant) uniform PushConstants {
 	float fade;
 	float flash;
 	float patternAmount;
+	float kaleidoCount;
 	int patternScale;
 } pushConstants;
 
-vec3 sampleSpectrum(float timeA, float timeB)
+vec3 sampleSpectrum(vec2 pos, float timeA, float timeB)
 {
 	// thanks to Hornet ;)
 	const int num_iter = 7;
@@ -47,8 +48,8 @@ vec3 sampleSpectrum(float timeA, float timeB)
 		float time = mix(timeA, timeB, t);
 		int slice = int(time);
 
-		vec3 a = texelFetch(samplerColor, ivec3(ivec2(gl_GlobalInvocationID.xy), (slice + 0) % slices), 0).xyz;
-		vec3 b = texelFetch(samplerColor, ivec3(ivec2(gl_GlobalInvocationID.xy), (slice + 1) % slices), 0).xyz;
+		vec3 a = texture(samplerColor, vec3(pos, (slice + 0) % slices)).xyz;
+		vec3 b = texture(samplerColor, vec3(pos, (slice + 1) % slices)).xyz;
 		vec3 color = mix(a, b, fract(time));
 
 		sumcol += w * color;
@@ -57,9 +58,30 @@ vec3 sampleSpectrum(float timeA, float timeB)
 	return sumcol.rgb /= sumw;
 }
 
+
+vec2 kaleidoscope(vec2 pos, float count)
+{
+	float th = atan(pos.y, pos.x);
+	float r = length(pos);
+
+	float f = 3.14159265 / count;
+	th += 3.14159265 * 0.5;
+	th = abs(mod(th, 2 * f) - f) + f;
+	th -= 3.14159265 * 0.5;
+
+	return vec2(cos(th), sin(th)) * r;
+}
+
 void main()
 {
 	vec2 pos = (gl_GlobalInvocationID.xy + 0.5) / imageSize(outputImage);
+
+	vec2 kaleidoPos = pos;
+	if (pushConstants.kaleidoCount > 0) {
+		vec2 halfSize = imageSize(outputImage) * 0.5;
+		kaleidoPos = 0.5 + kaleidoscope(vec2(gl_GlobalInvocationID.xy) + 0.5 - halfSize, pushConstants.kaleidoCount) / halfSize;
+	}
+
 
 	float time = pushConstants.arrayBufferFrame;
 	float delay = textureLod(samplerOffsets, vec3(pos.xy, pushConstants.delayImage), 0).x;
@@ -72,7 +94,7 @@ void main()
 	delay *= textureSize(samplerColor, 0).z;
 	delay = clamp(delay, 0, pushConstants.validFrames - 1);
 
-	vec3 color = sampleSpectrum(time - delay, time - delay * pushConstants.delayChroma);
+	vec3 color = sampleSpectrum(kaleidoPos, time - delay, time - delay * pushConstants.delayChroma);
 
 	vec4 overlay = textureLod(overlaySampler, vec3(pos.xy, pushConstants.overlayIndex), 0);
 	color = color * (1 - overlay.a * pushConstants.overlayAlpha) + overlay.rgb * pushConstants.overlayAlpha;
