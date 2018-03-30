@@ -104,5 +104,9 @@ void main()
 
 	color = color * pushConstants.fade + pushConstants.flash;
 
+	uint pixelSeed = rand(137 + gl_GlobalInvocationID.x) | (rand(8 + gl_GlobalInvocationID.y) << 4);
+	uint frameSeed = rand(pushConstants.arrayBufferFrame);
+	color += randf(pixelSeed ^ frameSeed) * (4.0 / 255);
+
 	imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), vec4(color, 1));
 }

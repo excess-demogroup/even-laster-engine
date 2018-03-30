@@ -17,3 +17,9 @@ uint rand(uint seed)
 	seed = (a * seed + c) & 0xFFFFFFFF;
 	return seed;
 }
+
+float randf(uint seed)
+{
+	uint r = rand(seed);
+	return float(r >> (32 - 23)) / ((1 << 23) - 1);
+}
