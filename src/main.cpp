@@ -321,7 +321,11 @@ int main(int argc, char *argv[])
 #else
 	auto width = 1280, height = 720;
 #endif
+#ifdef SYNC_PLAYER
+	auto fullscreen = true;
+#else
 	auto fullscreen = false;
+#endif
 	GLFWwindow *win = nullptr;
 
 	try {
