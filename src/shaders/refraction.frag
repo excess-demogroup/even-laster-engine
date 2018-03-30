@@ -77,7 +77,7 @@ void main()
 	float fres = pow(1 - dot(modelNormal, -view), 3);
 #if 1
 	vec3 envCoord = reflect(normalize(view), modelNormal);
-	color += texture(samplerEnv, envCoord).rgb * pow(1 - dot(modelNormal, -view), 3) * fres;
+	color += (0.25 + 0.5 * texture(samplerEnv, envCoord).rgb * pow(1 - dot(modelNormal, -view), 3)) * fres;
 #else
 	color += fres * 0.5;
 #endif
