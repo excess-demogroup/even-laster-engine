@@ -11,6 +11,8 @@ layout (rgba8, binding = 0) uniform writeonly image2D outputImage;
 layout (binding = 1) uniform sampler2DArray samplerColor;
 layout (binding = 2) uniform sampler2DArray samplerOffsets;
 layout (binding = 3) uniform sampler2DArray overlaySampler;
+layout (binding = 4) uniform sampler3D colorLut1;
+layout (binding = 5) uniform sampler3D colorLut2;
 
 layout(push_constant) uniform PushConstants {
 	int arrayBufferFrame;
@@ -25,6 +27,8 @@ layout(push_constant) uniform PushConstants {
 	float patternAmount;
 	float kaleidoCount;
 	int patternScale;
+	float gradeBlend;
+	float gradeAmount;
 } pushConstants;
 
 vec3 sampleSpectrum(vec2 pos, float timeA, float timeB)
@@ -107,6 +111,12 @@ void main()
 	uint pixelSeed = rand(137 + gl_GlobalInvocationID.x) | (rand(8 + gl_GlobalInvocationID.y) << 4);
 	uint frameSeed = rand(pushConstants.arrayBufferFrame);
 	color += randf(pixelSeed ^ frameSeed) * (4.0 / 255);
+
+	vec3 srgbColor = fromLinear(color);
+	vec3 gradeColor1 = toLinear(textureLod(colorLut1, srgbColor, 0).rgb);
+	vec3 gradeColor2 = toLinear(textureLod(colorLut2, srgbColor, 0).rgb);
+	vec3 gradeColor = mix(gradeColor1, gradeColor2, pushConstants.gradeBlend);
+	color = mix(color, gradeColor, pushConstants.gradeAmount);
 
 	imageStore(outputImage, ivec2(gl_GlobalInvocationID.xy), vec4(color, 1));
 }

@@ -298,6 +298,125 @@ static Texture3D generateFractalNoise(int width, int height, int depth)
 	return texture;
 }
 
+#include <fstream>
+#include <sstream>
+
+Texture3D importCubeFile(const std::string &filename)
+{
+	int size;
+
+	StagingBuffer *stagingBuffer = nullptr;
+	float *ptr = nullptr;
+	int colorsRead = 0;
+
+	std::ifstream stream(filename);
+	std::string line;
+	while (getline(stream, line)) {
+		if (line.empty() || line[0] == '#')
+			continue;
+
+		if (isalpha(line[0])) {
+			auto sep = line.find(" ");
+			auto verb = line.substr(0, sep);
+
+			if (verb == "TITLE")
+				continue; // ignore title
+
+			if (verb == "LUT_3D_SIZE") {
+				auto sizeString = line.substr(sep + 1);
+
+				char *end = nullptr;
+				size = strtol(sizeString.c_str(), &end, 10);
+				if (end == nullptr)
+					throw runtime_error("expected integer size");
+
+				auto textureSize = sizeof(float) * 4 * size * size * size;
+				stagingBuffer = new StagingBuffer(textureSize);
+				ptr = static_cast<float *>(stagingBuffer->map(0, textureSize));
+
+				continue;
+			}
+
+			if (verb == "DOMAIN_MIN") {
+				if (line != "DOMAIN_MIN 0.0 0.0 0.0")
+					throw runtime_error("expected DOMAIN_MIN");
+				continue;
+			}
+
+			if (verb == "DOMAIN_MAX") {
+				if (line != "DOMAIN_MAX 1.0 1.0 1.0")
+					throw runtime_error("expected DOMAIN_MAX");
+				continue;
+			}
+
+			throw runtime_error("unrecognized verb");
+		}
+
+		if (isdigit(line[0])) {
+			if (ptr == nullptr)
+				throw runtime_error("expected size before color values");
+
+			std::stringstream ss(line);
+
+			float r = 0, g = 0, b = 0;
+
+			ss >> r;
+			if (ss.peek() != ' ')
+				throw runtime_error("unexpected character");
+			ss.ignore();
+
+			ss >> g;
+			if (ss.peek() != ' ')
+				throw runtime_error("unexpected character");
+			ss.ignore();
+
+			ss >> b;
+
+			if (!ss.eof())
+				throw runtime_error("unexpected character");
+
+			ptr[colorsRead * 4 + 0] = r;
+			ptr[colorsRead * 4 + 1] = g;
+			ptr[colorsRead * 4 + 2] = b;
+			ptr[colorsRead * 4 + 3] = 1.0f;
+			++colorsRead;
+			continue;
+		}
+
+		throw runtime_error("unrecognized line");
+	}
+
+	if (colorsRead != size * size * size)
+		throw runtime_error("wrong amount of colors");
+
+	Texture3D texture(VK_FORMAT_R32G32B32A32_SFLOAT, size, size, size, 1);
+	stagingBuffer->unmap();
+	texture.uploadFromStagingBuffer(stagingBuffer, 0);
+	return texture;
+}
+
+std::vector<Texture3D> importColorLuts(string folder)
+{
+	std::vector<Texture3D> colorLuts;
+	for (int i = 0; true; ++i) {
+		char path[256];
+		snprintf(path, sizeof(path), "%s/%04d.CUBE", folder.c_str(), i);
+
+		struct stat st;
+		if (stat(path, &st) < 0 ||
+			(st.st_mode & _S_IFMT) != S_IFREG)
+			break;
+
+		auto colorLut = importCubeFile(path);
+		colorLuts.push_back(colorLut);
+	}
+
+	if (colorLuts.size() == 0)
+		throw runtime_error("no color-luts!");
+
+	return colorLuts;
+}
+
 
 #ifdef WIN32
 
@@ -572,10 +691,6 @@ int main(int argc, char *argv[])
 		VkSampler bloomSampler = createSampler(float(bloomLevels), false, false);
 
 		{
-			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
-			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-			postProcessRenderTargetImageInfo.imageView = postProcessRenderTarget.getImageView();
-
 			VkWriteDescriptorSet writeDescriptorSet = {};
 
 			vector<VkDescriptorImageInfo> descriptorImageInfos = {
@@ -654,10 +769,6 @@ int main(int argc, char *argv[])
 		VkSampler fractalNoiseSampler = createSampler(0.0f, true, false);
 
 		{
-			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
-			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-			postProcessRenderTargetImageInfo.imageView = postProcessRenderTarget.getImageView();
-
 			VkWriteDescriptorSet writeDescriptorSets[2] = {};
 
 			auto descriptorBufferInfo = wavePlaneUniformBuffer->getDescriptorBufferInfo();
@@ -704,6 +815,7 @@ int main(int argc, char *argv[])
 		auto offsetMaps = importTexture2DArray("assets/offset-maps", TextureImportFlags::NONE);
 		auto overlays = importTexture2DArray("assets/overlays", TextureImportFlags::PREMULTIPLY_ALPHA);
 		auto cubeTexture = importTextureCube("assets/cubemap.hdr", TextureImportFlags::GENERATE_MIPMAPS);
+		auto colorLuts = importColorLuts("assets/luts");
 
 		VkSampler textureSampler = createSampler(float(planes.getMipLevels()), false, false);
 
@@ -739,13 +851,16 @@ int main(int argc, char *argv[])
 			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 		}
 
-		VkSampler arrayTextureSampler = createSampler(0.0f, false, false);
+		auto arrayTextureSampler = createSampler(0.0f, false, false);
+		auto colorLutSampler = createSampler(0.0f, false, false);
 
 		auto postProcessDescriptorSetLayout = createDescriptorSetLayout({
 			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
 			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 			{ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 			{ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+			{ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+			{ 5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
 			});
 
 		struct {
@@ -761,6 +876,8 @@ int main(int argc, char *argv[])
 			float patternAmount;
 			float kaleidoCount;
 			uint32_t patternScale;
+			float gradeBlend;
+			float gradeAmount;
 		} postProcessPushConstantData;
 
 		VkPushConstantRange postProcessPushConstantRange = {
@@ -773,20 +890,25 @@ int main(int argc, char *argv[])
 
 		VkPipeline postProcessPipeline = createComputePipeline(postProcessPipelineLayout, loadShaderModule("data/shaders/postprocess.comp.spv"));
 
+		int swapChainImageCount = swapChain.getImageViews().size();
 		auto postProcessDescriptorPool = createDescriptorPool({
-			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 },
-		}, swapChain.getImageViews().size());
+			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, uint32_t(swapChainImageCount * 1) },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, uint32_t(swapChainImageCount * 6) },
+		}, swapChainImageCount);
 
-		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessDescriptorSetLayout);
-		{
+		vector<VkDescriptorSet> postProcessDescriptorSets;
+		postProcessDescriptorSets.reserve(swapChainImageCount);
+		for (int i = 0; i < swapChainImageCount; ++i) {
+			auto descriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessDescriptorSetLayout);
+			postProcessDescriptorSets.push_back(descriptorSet);
+
 			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
 			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 			postProcessRenderTargetImageInfo.imageView = postProcessRenderTarget.getImageView();
 
 			VkWriteDescriptorSet writeDescriptorSets[2] = {};
 			writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSets[0].dstSet = postProcessDescriptorSet;
+			writeDescriptorSets[0].dstSet = descriptorSet;
 			writeDescriptorSets[0].dstBinding = 0;
 			writeDescriptorSets[0].descriptorCount = 1;
 			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
@@ -798,13 +920,8 @@ int main(int argc, char *argv[])
 				{ arrayTextureSampler, overlays.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }
 			};
 
-			VkDescriptorImageInfo descriptorImageInfo1 = {};
-			descriptorImageInfo1.sampler = arrayTextureSampler;
-			descriptorImageInfo1.imageView = colorArray.getImageView();
-			descriptorImageInfo1.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			writeDescriptorSets[1].dstSet = postProcessDescriptorSet;
+			writeDescriptorSets[1].dstSet = descriptorSet;
 			writeDescriptorSets[1].dstBinding = 1;
 			writeDescriptorSets[1].descriptorCount = descriptorImageInfos.size();
 			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -864,6 +981,12 @@ int main(int argc, char *argv[])
 		auto bloomAmountTrack = sync_get_track(rocket, "postprocess:bloom.amount");
 		auto bloomShapeTrack = sync_get_track(rocket, "postprocess:bloom.shape");
 		auto kaleidoTrack = sync_get_track(rocket, "postprocess:kaleidoscope");
+
+		auto gradeIndex1Track = sync_get_track(rocket, "postprocess:grade.index1");
+		auto gradeIndex2Track = sync_get_track(rocket, "postprocess:grade.index2");
+		auto gradeBlendTrack = sync_get_track(rocket, "postprocess:grade.blend");
+		auto gradeAmountTrack = sync_get_track(rocket, "postprocess:grade.amount");
+
 
 		auto overlayIndexTrack = sync_get_track(rocket, "overlay.index");
 		auto overlayAlphaTrack = sync_get_track(rocket, "overlay.alpha");
@@ -1103,6 +1226,27 @@ int main(int argc, char *argv[])
 			if (validFrames < colorArray.getArrayLayers())
 				validFrames++;
 
+			VkDescriptorSet &postProcessDescriptorSet = postProcessDescriptorSets[currentSwapImage];
+			{
+				auto gradeIndex1 = max(0, min(int(sync_get_val(gradeIndex1Track, row)), int(colorLuts.size() - 1)));
+				auto gradeIndex2 = max(0, min(int(sync_get_val(gradeIndex2Track, row)), int(colorLuts.size() - 1)));
+
+				VkWriteDescriptorSet writeDescriptorSet = {};
+				vector<VkDescriptorImageInfo> descriptorImageInfos = {
+					{ colorLutSampler, colorLuts[gradeIndex1].getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+					{ colorLutSampler, colorLuts[gradeIndex2].getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }
+				};
+
+				writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				writeDescriptorSet.dstSet = postProcessDescriptorSet;
+				writeDescriptorSet.dstBinding = 4;
+				writeDescriptorSet.descriptorCount = descriptorImageInfos.size();
+				writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+				writeDescriptorSet.pImageInfo = descriptorImageInfos.data();
+
+				vkUpdateDescriptorSets(device, 1, &writeDescriptorSet, 0, nullptr);
+			}
+
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipeline);
 			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipelineLayout, 0, 1, &postProcessDescriptorSet, 0, nullptr);
 
@@ -1131,9 +1275,11 @@ int main(int argc, char *argv[])
 			postProcessPushConstantData.flash = float(sync_get_val(flashTrack, row));
 			postProcessPushConstantData.patternAmount = float(sync_get_val(delayPatternAmountTrack, row));
 			postProcessPushConstantData.patternScale = int(sync_get_val(delayPatternScaleTrack, row));
-			postProcessPushConstantData.kaleidoCount = sync_get_val(kaleidoTrack, row);
-			vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(postProcessPushConstantData), &postProcessPushConstantData);
+			postProcessPushConstantData.kaleidoCount = float(sync_get_val(kaleidoTrack, row));
+			postProcessPushConstantData.gradeBlend = float(sync_get_val(gradeBlendTrack, row));
+			postProcessPushConstantData.gradeAmount = float(sync_get_val(gradeAmountTrack, row));
 
+			vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(postProcessPushConstantData), &postProcessPushConstantData);
 			vkCmdDispatch(commandBuffer, width / 16, height / 16, 1);
 
 			imageBarrier(
