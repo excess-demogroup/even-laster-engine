@@ -1339,6 +1339,11 @@ int main(int argc, char *argv[])
 			swapChain.queuePresent(currentSwapImage, &presentCompleteSemaphore, 1);
 
 			glfwPollEvents();
+
+#ifdef SYNC_PLAYER
+			if (BASS_ChannelIsActive(stream) == BASS_ACTIVE_STOPPED)
+				break;
+#endif
 		}
 
 #ifndef SYNC_PLAYER
