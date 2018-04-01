@@ -52,8 +52,8 @@ vec3 sampleSpectrum(vec2 pos, float timeA, float timeB)
 		float time = mix(timeA, timeB, t);
 		int slice = int(time);
 
-		vec3 a = texture(samplerColor, vec3(pos, (slice + 0) % slices)).xyz;
-		vec3 b = texture(samplerColor, vec3(pos, (slice + 1) % slices)).xyz;
+		vec3 a = textureLod(samplerColor, vec3(pos, (slice + 0) % slices), 0).xyz;
+		vec3 b = textureLod(samplerColor, vec3(pos, (slice + 1) % slices), 0).xyz;
 		vec3 color = mix(a, b, fract(time));
 
 		sumcol += w * color;
