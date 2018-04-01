@@ -116,7 +116,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height, VkImageUsageFl
 	auto presentModes = getPresentModes(surface);
 	swapchainCreateInfo.presentMode = presentModes[0];
 	for (auto presentMode : presentModes)
-		if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+		if (presentMode == VK_PRESENT_MODE_FIFO_KHR)
 			swapchainCreateInfo.presentMode = presentMode;
 
 	swapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
