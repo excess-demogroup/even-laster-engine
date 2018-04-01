@@ -976,6 +976,7 @@ int main(int argc, char *argv[])
 		auto delayImageTrack = sync_get_track(rocket, "postprocess:delay.image");
 		auto delayAmountTrack = sync_get_track(rocket, "postprocess:delay.amount");
 		auto delayChromaTrack = sync_get_track(rocket, "postprocess:delay.chroma");
+		auto delayResetTrack = sync_get_track(rocket, "postprocess:delay.reset");
 		auto delayPatternAmountTrack = sync_get_track(rocket, "postprocess:pattern.amount");
 		auto delayPatternScaleTrack = sync_get_track(rocket, "postprocess:pattern.scale");
 		auto bloomAmountTrack = sync_get_track(rocket, "postprocess:bloom.amount");
@@ -1223,6 +1224,8 @@ int main(int argc, char *argv[])
 				VK_ACCESS_TRANSFER_WRITE_BIT, 0,
 				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+			if (sync_get_val(delayResetTrack, row) > 0.5)
+				validFrames = 0;
 			if (validFrames < colorArray.getArrayLayers())
 				validFrames++;
 
