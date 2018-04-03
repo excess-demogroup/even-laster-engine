@@ -15,6 +15,7 @@ using std::vector;
 using std::unique_ptr;
 
 #include <FreeImage.h>
+#include <immintrin.h>
 
 static FIBITMAP *loadBitmap(string filename, VkFormat *format)
 {
