@@ -183,8 +183,8 @@ Texture2DArray importTexture2DArray(string folder, TextureImportFlags flags)
 		snprintf(path, sizeof(path), "%s/%04d.png", folder.c_str(), i);
 
 		struct stat st;
-		if (stat(path, &st) < 0 ||
-			(st.st_mode & _S_IFMT) != S_IFREG)
+		if ((stat(path, &st) < 0) ||
+		    (st.st_mode & S_IFMT) != S_IFREG)
 			break;
 
 		VkFormat format = VK_FORMAT_UNDEFINED;
