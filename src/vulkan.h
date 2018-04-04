@@ -70,13 +70,14 @@ namespace vulkan
 		return deviceMemory;
 	}
 
-	inline VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, int commandBufferCount)
+	inline VkCommandBuffer *allocateCommandBuffers(VkCommandPool commandPool, size_t commandBufferCount)
 	{
+		assert(commandBufferCount < UINT32_MAX);
 		VkCommandBufferAllocateInfo commandAllocInfo = {};
 		commandAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 		commandAllocInfo.commandPool = commandPool;
 		commandAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		commandAllocInfo.commandBufferCount = commandBufferCount;
+		commandAllocInfo.commandBufferCount = uint32_t(commandBufferCount);
 
 		auto commandBuffers = new VkCommandBuffer[commandBufferCount];
 		VkResult err = vkAllocateCommandBuffers(device, &commandAllocInfo, commandBuffers);
@@ -210,10 +211,11 @@ namespace vulkan
 		VkFilter filter = VK_FILTER_NEAREST,
 		VkImageLayout srcLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VkImageLayout dstLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 	{
+		assert(imageBlits.size() < UINT32_MAX);
 		vkCmdBlitImage(commandBuffer,
 			srcImage, srcLayout,
 			dstImage, dstLayout,
-			imageBlits.size(), imageBlits.data(),
+			uint32_t(imageBlits.size()), imageBlits.data(),
 			filter);
 	}
 
@@ -243,13 +245,16 @@ namespace vulkan
 			srcLayout, dstLayout);
 	}
 
-	inline VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize> &poolSizes, int maxSets)
+	inline VkDescriptorPool createDescriptorPool(const std::vector<VkDescriptorPoolSize> &poolSizes, size_t maxSets)
 	{
+		assert(poolSizes.size() < UINT32_MAX);
+		assert(maxSets < UINT32_MAX);
+
 		VkDescriptorPoolCreateInfo descriptorPoolCreateInfo = {};
 		descriptorPoolCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		descriptorPoolCreateInfo.poolSizeCount = poolSizes.size();
+		descriptorPoolCreateInfo.poolSizeCount = uint32_t(poolSizes.size());
 		descriptorPoolCreateInfo.pPoolSizes = poolSizes.data();
-		descriptorPoolCreateInfo.maxSets = maxSets;
+		descriptorPoolCreateInfo.maxSets = uint32_t(maxSets);
 
 		VkDescriptorPool descriptorPool;
 		auto err = vkCreateDescriptorPool(device, &descriptorPoolCreateInfo, nullptr, &descriptorPool);
@@ -345,12 +350,12 @@ namespace vulkan
 		assert(width > 0);
 		assert(height > 0);
 		assert(layers > 0);
-		assert(attachments.size() > 0);
+		assert(attachments.size() > 0 && attachments.size() < UINT32_MAX);
 
 		VkFramebufferCreateInfo framebufferCreateInfo = {};
 		framebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferCreateInfo.renderPass = renderPass;
-		framebufferCreateInfo.attachmentCount = attachments.size();
+		framebufferCreateInfo.attachmentCount = uint32_t(attachments.size());
 		framebufferCreateInfo.pAttachments = attachments.data();
 		framebufferCreateInfo.width = uint32_t(width);
 		framebufferCreateInfo.height = uint32_t(height);
@@ -364,13 +369,15 @@ namespace vulkan
 
 	inline VkPipelineLayout createPipelineLayout(const std::vector<VkDescriptorSetLayout> &descriptorSetLayouts, const std::vector<VkPushConstantRange> &pushConstantRanges)
 	{
+		assert(descriptorSetLayouts.size() < UINT32_MAX);
+
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
 		pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
-		pipelineLayoutCreateInfo.setLayoutCount = descriptorSetLayouts.size();
+		pipelineLayoutCreateInfo.setLayoutCount = uint32_t(descriptorSetLayouts.size());
 		pipelineLayoutCreateInfo.pSetLayouts = descriptorSetLayouts.data();
 
-		pipelineLayoutCreateInfo.pushConstantRangeCount = pushConstantRanges.size();
+		pipelineLayoutCreateInfo.pushConstantRangeCount = uint32_t(pushConstantRanges.size());
 		pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRanges.data();
 
 		VkPipelineLayout pipelineLayout;
@@ -381,12 +388,14 @@ namespace vulkan
 
 	inline VkDescriptorSetLayout createDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutBinding> &layoutBindings, VkDescriptorSetLayoutCreateFlags flags = 0)
 	{
+		assert(layoutBindings.size() < UINT32_MAX);
+
 		VkDescriptorSetLayoutCreateInfo desciptorSetLayoutCreateInfo = {};
 		desciptorSetLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 
 		desciptorSetLayoutCreateInfo.flags = flags;
 
-		desciptorSetLayoutCreateInfo.bindingCount = layoutBindings.size();
+		desciptorSetLayoutCreateInfo.bindingCount = uint32_t(layoutBindings.size());
 		desciptorSetLayoutCreateInfo.pBindings = layoutBindings.data();
 
 		VkDescriptorSetLayout descriptorSetLayout;

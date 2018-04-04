@@ -215,8 +215,9 @@ Texture2DArray importTexture2DArray(string folder, TextureImportFlags flags)
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
 		mipLevels = 32 - clz(max(firstWidth, firstHeight));
 
-	Texture2DArray texture(firstFormat, firstWidth, firstHeight, bitmaps.size(), mipLevels, true);
-	for (size_t i = 0; i < bitmaps.size(); ++i)
+	assert(bitmaps.size() < INT_MAX);
+	Texture2DArray texture(firstFormat, firstWidth, firstHeight, int(bitmaps.size()), mipLevels, true);
+	for (int i = 0; i < texture.getArrayLayers(); ++i)
 		uploadMipChain(texture, bitmaps[i], mipLevels, i);
 
 	return texture;

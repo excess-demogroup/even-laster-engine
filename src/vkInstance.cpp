@@ -73,8 +73,9 @@ void vulkan::instanceInit(const char *appName, const vector<const char *> &enabl
 	instanceCreateInfo.pNext = nullptr;
 	instanceCreateInfo.pApplicationInfo = &appInfo;
 
+	assert(enabledExtensions.size() < UINT32_MAX);
 	instanceCreateInfo.ppEnabledExtensionNames = enabledExtensions.data();
-	instanceCreateInfo.enabledExtensionCount = enabledExtensions.size();
+	instanceCreateInfo.enabledExtensionCount = uint32_t(enabledExtensions.size());
 
 #ifndef NDEBUG
 	instanceCreateInfo.ppEnabledLayerNames = validationLayerNames;
