@@ -113,15 +113,17 @@ static VkPipeline createGraphicsPipeline(const ShaderProgram &shaderProgram, VkR
 	return pipeline;
 }
 
-static VkPipeline createComputePipeline(VkPipelineLayout layout, VkShaderModule shaderModule, const char *name = "main")
+static VkPipeline createComputePipeline(const ShaderProgram &shaderProgram)
 {
 	VkComputePipelineCreateInfo computePipelineCreateInfo = {};
 	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	computePipelineCreateInfo.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	computePipelineCreateInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	computePipelineCreateInfo.stage.module = shaderModule;
-	computePipelineCreateInfo.stage.pName = name;
-	computePipelineCreateInfo.layout = layout;
+
+	auto stages = shaderProgram.getPipelineShaderStageCreateInfos();
+	assert(stages.size() == 1);
+	assert(stages[0].stage == VK_SHADER_STAGE_COMPUTE_BIT);
+
+	computePipelineCreateInfo.stage = stages[0];
+	computePipelineCreateInfo.layout = shaderProgram.getPipelineLayout();
 
 	VkPipeline computePipeline;
 	auto err = vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &computePipeline);
@@ -451,20 +453,20 @@ int main(int argc, char *argv[])
 		auto indexBuffer = Buffer(sizeof(CubeData::vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		indexBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
 
-		auto postProcessDescriptorSetLayout = createDescriptorSetLayout({
-			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
-			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+		auto postProcessShaderProgram = ShaderProgram({
+			ShaderStage(VK_SHADER_STAGE_COMPUTE_BIT, loadShaderModule("data/shaders/postprocess.comp.spv"))
+		}, {
+			ShaderDescriptor(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT),
+			ShaderDescriptor(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT),
 		});
-		auto postProcessPipelineLayout = createPipelineLayout({ postProcessDescriptorSetLayout }, { });
-
-		VkPipeline postProcessPipeline = createComputePipeline(postProcessPipelineLayout, loadShaderModule("data/shaders/postprocess.comp.spv"));
+		auto postProcessPipeline = createComputePipeline(postProcessShaderProgram);
 
 		auto postProcessDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		}, imageViews.size());
 
-		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessDescriptorSetLayout);
+		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessShaderProgram.getDescriptorSetLayout());
 		{
 			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
 			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -601,7 +603,7 @@ int main(int argc, char *argv[])
 			vkCmdEndRenderPass(commandBuffer);
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipelineLayout, 0, 1, &postProcessDescriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessShaderProgram.getPipelineLayout(), 0, 1, &postProcessDescriptorSet, 0, nullptr);
 
 			imageBarrier(
 				commandBuffer,
