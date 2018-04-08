@@ -504,10 +504,11 @@ int main(int argc, char *argv[])
 		     presentCompleteSemaphore = createSemaphore();
 
 		VkCommandPool commandPool = createCommandPool(graphicsQueueIndex);
-		auto commandBuffers = allocateCommandBuffers(commandPool, imageViews.size());
 
-		auto commandBufferFences = new VkFence[imageViews.size()];
-		for (auto i = 0u; i < imageViews.size(); ++i)
+		auto commandBuffers = allocateCommandBuffers(commandPool, swapChain.getImageViews().size());
+
+		auto commandBufferFences = new VkFence[commandBuffers.size()];
+		for (auto i = 0u; i < commandBuffers.size(); ++i)
 			commandBufferFences[i] = createFence(VK_FENCE_CREATE_SIGNALED_BIT);
 
 		err = vkQueueWaitIdle(graphicsQueue);
