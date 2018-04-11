@@ -39,7 +39,7 @@ static vector<const char *> getRequiredInstanceExtensions()
 #include "scene/scene.h"
 #include "scene/rendertarget.h"
 
-static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass renderPass, const VkPipelineVertexInputStateCreateInfo &pipelineVertexInputStateCreateInfo)
+static VkPipeline createGraphicsPipeline(const ShaderProgram &shaderProgram, VkRenderPass renderPass, const VkPipelineVertexInputStateCreateInfo &pipelineVertexInputStateCreateInfo)
 {
 	VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyStateCreateInfo = {};
 	pipelineInputAssemblyStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -89,27 +89,9 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 	pipelineDynamicStateCreateInfo.pDynamicStates = dynamicStateEnables;
 	pipelineDynamicStateCreateInfo.dynamicStateCount = ARRAY_SIZE(dynamicStateEnables);
 
-	VkPipelineShaderStageCreateInfo shaderStages[] = { {
-		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-		nullptr,
-		0,
-		VK_SHADER_STAGE_VERTEX_BIT,
-		loadShaderModule("data/shaders/triangle.vert.spv"),
-		"main",
-		NULL
-	}, {
-		VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-		nullptr,
-		0,
-		VK_SHADER_STAGE_FRAGMENT_BIT,
-		loadShaderModule("data/shaders/triangle.frag.spv"),
-		"main",
-		NULL
-	} };
-
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo = {};
 	pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipelineCreateInfo.layout = layout;
+	pipelineCreateInfo.layout = shaderProgram.getPipelineLayout();
 	pipelineCreateInfo.renderPass = renderPass;
 	pipelineCreateInfo.pVertexInputState = &pipelineVertexInputStateCreateInfo;
 	pipelineCreateInfo.pInputAssemblyState = &pipelineInputAssemblyStateCreateInfo;
@@ -119,8 +101,10 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 	pipelineCreateInfo.pViewportState = &pipelineViewportStateCreateInfo;
 	pipelineCreateInfo.pDepthStencilState = &pipelineDepthStencilStateCreateInfo;
 	pipelineCreateInfo.pDynamicState = &pipelineDynamicStateCreateInfo;
-	pipelineCreateInfo.stageCount = ARRAY_SIZE(shaderStages);
-	pipelineCreateInfo.pStages = shaderStages;
+
+	auto shaderStages = shaderProgram.getPipelineShaderStageCreateInfos();
+	pipelineCreateInfo.stageCount = shaderStages.size();
+	pipelineCreateInfo.pStages = shaderStages.data();
 
 	VkPipeline pipeline;
 	auto err = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline);
@@ -129,15 +113,17 @@ static VkPipeline createGraphicsPipeline(VkPipelineLayout layout, VkRenderPass r
 	return pipeline;
 }
 
-static VkPipeline createComputePipeline(VkPipelineLayout layout, VkShaderModule shaderModule, const char *name = "main")
+static VkPipeline createComputePipeline(const ShaderProgram &shaderProgram)
 {
 	VkComputePipelineCreateInfo computePipelineCreateInfo = {};
 	computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-	computePipelineCreateInfo.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	computePipelineCreateInfo.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
-	computePipelineCreateInfo.stage.module = shaderModule;
-	computePipelineCreateInfo.stage.pName = name;
-	computePipelineCreateInfo.layout = layout;
+
+	auto stages = shaderProgram.getPipelineShaderStageCreateInfos();
+	assert(stages.size() == 1);
+	assert(stages[0].stage == VK_SHADER_STAGE_COMPUTE_BIT);
+
+	computePipelineCreateInfo.stage = stages[0];
+	computePipelineCreateInfo.layout = shaderProgram.getPipelineLayout();
 
 	VkPipeline computePipeline;
 	auto err = vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &computePipelineCreateInfo, nullptr, &computePipeline);
@@ -391,11 +377,14 @@ int main(int argc, char *argv[])
 
 		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
 
-		auto descriptorSetLayout = createDescriptorSetLayout({
+		auto shaderProgram = ShaderProgram({
+			ShaderStage(VK_SHADER_STAGE_VERTEX_BIT, loadShaderModule("data/shaders/triangle.vert.spv")),
+			ShaderStage(VK_SHADER_STAGE_FRAGMENT_BIT, loadShaderModule("data/shaders/triangle.frag.spv"))
+		}, {
 			{ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT },
-			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT },
+			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT }
 		});
-		auto pipelineLayout = createPipelineLayout({ descriptorSetLayout }, {});
+		auto pipelineLayout = createPipelineLayout({ shaderProgram.getDescriptorSetLayout() }, {});
 
 		VkVertexInputBindingDescription vertexInputBindingDesc[1];
 		vertexInputBindingDesc[0].binding = 0;
@@ -415,7 +404,7 @@ int main(int argc, char *argv[])
 		pipelineVertexInputStateCreateInfo.vertexAttributeDescriptionCount = ARRAY_SIZE(vertexInputAttributeDescription);
 		pipelineVertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescription;
 
-		auto pipeline = createGraphicsPipeline(pipelineLayout, renderPass, pipelineVertexInputStateCreateInfo);
+		auto pipeline = createGraphicsPipeline(shaderProgram, renderPass, pipelineVertexInputStateCreateInfo);
 
 		auto descriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1 },
@@ -431,7 +420,7 @@ int main(int argc, char *argv[])
 
 		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 
-		auto descriptorSet = allocateDescriptorSet(descriptorPool, descriptorSetLayout);
+		auto descriptorSet = allocateDescriptorSet(descriptorPool, shaderProgram.getDescriptorSetLayout());
 
 		VkDescriptorBufferInfo descriptorBufferInfo = uniformBuffer.getDescriptorBufferInfo();
 
@@ -464,20 +453,20 @@ int main(int argc, char *argv[])
 		auto indexBuffer = Buffer(sizeof(CubeData::vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
 		indexBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
 
-		auto postProcessDescriptorSetLayout = createDescriptorSetLayout({
-			{ 0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, 0 },
-			{ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT },
+		auto postProcessShaderProgram = ShaderProgram({
+			ShaderStage(VK_SHADER_STAGE_COMPUTE_BIT, loadShaderModule("data/shaders/postprocess.comp.spv"))
+		}, {
+			ShaderDescriptor(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT),
+			ShaderDescriptor(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT),
 		});
-		auto postProcessPipelineLayout = createPipelineLayout({ postProcessDescriptorSetLayout }, { });
-
-		VkPipeline postProcessPipeline = createComputePipeline(postProcessPipelineLayout, loadShaderModule("data/shaders/postprocess.comp.spv"));
+		auto postProcessPipeline = createComputePipeline(postProcessShaderProgram);
 
 		auto postProcessDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
 		}, imageViews.size());
 
-		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessDescriptorSetLayout);
+		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessShaderProgram.getDescriptorSetLayout());
 		{
 			VkDescriptorImageInfo postProcessRenderTargetImageInfo = {};
 			postProcessRenderTargetImageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
@@ -614,7 +603,7 @@ int main(int argc, char *argv[])
 			vkCmdEndRenderPass(commandBuffer);
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipeline);
-			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessPipelineLayout, 0, 1, &postProcessDescriptorSet, 0, nullptr);
+			vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, postProcessShaderProgram.getPipelineLayout(), 0, 1, &postProcessDescriptorSet, 0, nullptr);
 
 			imageBarrier(
 				commandBuffer,
