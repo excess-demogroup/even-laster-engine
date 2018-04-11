@@ -1,4 +1,3 @@
-#include "../core/core.h"
 #include "import-texture.h"
 
 #include <string>
@@ -167,7 +166,7 @@ std::unique_ptr<Texture2D> importTexture2D(string filename, TextureImportFlags f
 
 	auto mipLevels = 1;
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
-		mipLevels = 32 - clz(max(baseWidth, baseHeight));
+		mipLevels = TextureBase::maxMipLevels(max(baseWidth, baseHeight));
 
 	auto texture = make_unique<Texture2D>(format, baseWidth, baseHeight, mipLevels, 1, true);
 	uploadMipChain(*texture, dib, mipLevels);
@@ -215,7 +214,7 @@ unique_ptr<Texture2DArray> importTexture2DArray(string folder, TextureImportFlag
 
 	auto mipLevels = 1;
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
-		mipLevels = 32 - clz(max(firstWidth, firstHeight));
+		mipLevels = TextureBase::maxMipLevels(max(firstWidth, firstHeight));
 
 	assert(bitmaps.size() < INT_MAX);
 	auto texture = make_unique<Texture2DArray>(firstFormat, firstWidth, firstHeight, int(bitmaps.size()), mipLevels, true);
@@ -244,7 +243,7 @@ unique_ptr<TextureCube> importTextureCube(string filename, TextureImportFlags fl
 
 	auto mipLevels = 1;
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
-		mipLevels = 32 - clz(baseSize);
+		mipLevels = TextureBase::maxMipLevels(baseSize);
 
 	auto texture = make_unique<TextureCube>(format, baseSize, mipLevels);
 

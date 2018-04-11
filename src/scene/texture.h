@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include "buffer.h"
+#include "../core/core.h"
 
 class TextureBase {
 protected:
@@ -14,6 +15,11 @@ public:
 	{
 		assert(mipLevel >= 0);
 		return std::max(size >> mipLevel, 1);
+	}
+
+	static int maxMipLevels(int baseSize)
+	{
+		return 32 - clz(baseSize);
 	}
 
 	int getWidth(int level = 0) { return mipSize(baseWidth, level); }
