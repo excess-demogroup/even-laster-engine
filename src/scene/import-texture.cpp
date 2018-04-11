@@ -10,8 +10,10 @@
 
 using std::string;
 using std::runtime_error;
+using std::make_unique;
 using std::max;
 using std::vector;
+using std::unique_ptr;
 
 #include <FreeImage.h>
 
@@ -151,7 +153,7 @@ static void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, i
 	FreeImage_Unload(dib);
 }
 
-Texture2D importTexture2D(string filename, TextureImportFlags flags)
+std::unique_ptr<Texture2D> importTexture2D(string filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
 	auto dib = loadBitmap(filename, &format);
@@ -167,12 +169,12 @@ Texture2D importTexture2D(string filename, TextureImportFlags flags)
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
 		mipLevels = 32 - clz(max(baseWidth, baseHeight));
 
-	Texture2D texture(format, baseWidth, baseHeight, mipLevels, 1, true);
-	uploadMipChain(texture, dib, mipLevels);
+	auto texture = make_unique<Texture2D>(format, baseWidth, baseHeight, mipLevels, 1, true);
+	uploadMipChain(*texture, dib, mipLevels);
 	return texture;
 }
 
-Texture2DArray importTexture2DArray(string folder, TextureImportFlags flags)
+unique_ptr<Texture2DArray> importTexture2DArray(string folder, TextureImportFlags flags)
 {
 	VkFormat firstFormat = VK_FORMAT_UNDEFINED;
 	unsigned int firstWidth, firstHeight;
@@ -216,15 +218,14 @@ Texture2DArray importTexture2DArray(string folder, TextureImportFlags flags)
 		mipLevels = 32 - clz(max(firstWidth, firstHeight));
 
 	assert(bitmaps.size() < INT_MAX);
-	Texture2DArray texture(firstFormat, firstWidth, firstHeight, int(bitmaps.size()), mipLevels, true);
-	for (int i = 0; i < texture.getArrayLayers(); ++i)
-		uploadMipChain(texture, bitmaps[i], mipLevels, i);
+	auto texture = make_unique<Texture2DArray>(firstFormat, firstWidth, firstHeight, int(bitmaps.size()), mipLevels, true);
+	for (int i = 0; i < texture->getArrayLayers(); ++i)
+		uploadMipChain(*texture, bitmaps[i], mipLevels, i);
 
 	return texture;
 }
 
-
-TextureCube importTextureCube(string filename, TextureImportFlags flags)
+unique_ptr<TextureCube> importTextureCube(string filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
 	auto dib = loadBitmap(filename, &format);
@@ -245,7 +246,7 @@ TextureCube importTextureCube(string filename, TextureImportFlags flags)
 	if (flags & TextureImportFlags::GENERATE_MIPMAPS)
 		mipLevels = 32 - clz(baseSize);
 
-	TextureCube texture(format, baseSize, mipLevels);
+	auto texture = make_unique<TextureCube>(format, baseSize, mipLevels);
 
 	static const int offsets[6][2] = {
 		{ 2, 2 }, // -X
@@ -265,7 +266,7 @@ TextureCube importTextureCube(string filename, TextureImportFlags flags)
 			FreeImage_FlipHorizontal(faceDib);
 		}
 
-		uploadMipChain(texture, faceDib, mipLevels, face);
+		uploadMipChain(*texture, faceDib, mipLevels, face);
 	}
 
 	FreeImage_Unload(dib);

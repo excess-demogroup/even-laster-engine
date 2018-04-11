@@ -432,9 +432,9 @@ int main(int argc, char *argv[])
 		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
 		writeDescriptorSets[0].dstBinding = 0;
 
-		VkSampler textureSampler = createSampler(float(texture.getMipLevels()), true, true);
+		VkSampler textureSampler = createSampler(float(texture->getMipLevels()), true, true);
 
-		VkDescriptorImageInfo descriptorImageInfo = texture.getDescriptorImageInfo(textureSampler);
+		VkDescriptorImageInfo descriptorImageInfo = texture->getDescriptorImageInfo(textureSampler);
 		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		writeDescriptorSets[1].dstSet = descriptorSet;
 		writeDescriptorSets[1].descriptorCount = 1;
