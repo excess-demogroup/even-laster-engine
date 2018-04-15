@@ -29,6 +29,9 @@ using std::vector;
 using std::map;
 using std::exception;
 using std::runtime_error;
+using glm::vec2;
+using glm::vec3;
+using glm::mat4;
 
 static vector<const char *> getRequiredInstanceExtensions()
 {
@@ -134,36 +137,36 @@ static VkPipeline createComputePipeline(const ShaderProgram &shaderProgram)
 
 namespace CubeData
 {
-	glm::vec3 vertexPositions[] = {
-		glm::vec3(-1.0f, 1.0f, -1.0f),
-		glm::vec3(-1.0f, 1.0f, 1.0f),
-		glm::vec3(1.0f, 1.0f, -1.0f),
-		glm::vec3(1.0f, 1.0f, 1.0f),
+	vec3 vertexPositions[] = {
+		vec3(-1.0f, 1.0f, -1.0f),
+		vec3(-1.0f, 1.0f, 1.0f),
+		vec3(1.0f, 1.0f, -1.0f),
+		vec3(1.0f, 1.0f, 1.0f),
 
-		glm::vec3(-1.0f, -1.0f, -1.0f),
-		glm::vec3(1.0f, -1.0f, -1.0f),
-		glm::vec3(-1.0f, -1.0f, 1.0f),
-		glm::vec3(1.0f, -1.0f, 1.0f),
+		vec3(-1.0f, -1.0f, -1.0f),
+		vec3(1.0f, -1.0f, -1.0f),
+		vec3(-1.0f, -1.0f, 1.0f),
+		vec3(1.0f, -1.0f, 1.0f),
 
-		glm::vec3(-1.0f, -1.0f, 1.0f),
-		glm::vec3(1.0f, -1.0f, 1.0f),
-		glm::vec3(-1.0f, 1.0f, 1.0f),
-		glm::vec3(1.0f, 1.0f, 1.0f),
+		vec3(-1.0f, -1.0f, 1.0f),
+		vec3(1.0f, -1.0f, 1.0f),
+		vec3(-1.0f, 1.0f, 1.0f),
+		vec3(1.0f, 1.0f, 1.0f),
 
-		glm::vec3(-1.0f, -1.0f, -1.0f),
-		glm::vec3(-1.0f, 1.0f, -1.0f),
-		glm::vec3(1.0f, -1.0f, -1.0f),
-		glm::vec3(1.0f, 1.0f, -1.0f),
+		vec3(-1.0f, -1.0f, -1.0f),
+		vec3(-1.0f, 1.0f, -1.0f),
+		vec3(1.0f, -1.0f, -1.0f),
+		vec3(1.0f, 1.0f, -1.0f),
 
-		glm::vec3(1.0f, -1.0f, -1.0f),
-		glm::vec3(1.0f, 1.0f, -1.0f),
-		glm::vec3(1.0f, -1.0f, 1.0f),
-		glm::vec3(1.0f, 1.0f, 1.0f),
+		vec3(1.0f, -1.0f, -1.0f),
+		vec3(1.0f, 1.0f, -1.0f),
+		vec3(1.0f, -1.0f, 1.0f),
+		vec3(1.0f, 1.0f, 1.0f),
 
-		glm::vec3(-1.0f, -1.0f, -1.0f),
-		glm::vec3(-1.0f, -1.0f, 1.0f),
-		glm::vec3(-1.0f, 1.0f, -1.0f),
-		glm::vec3(-1.0f, 1.0f, 1.0f),
+		vec3(-1.0f, -1.0f, -1.0f),
+		vec3(-1.0f, -1.0f, 1.0f),
+		vec3(-1.0f, 1.0f, -1.0f),
+		vec3(-1.0f, 1.0f, 1.0f),
 	};
 
 	uint16_t vertexIndices[] = {
@@ -354,12 +357,12 @@ int main(int argc, char *argv[])
 		Scene scene;
 
 		Vertex v = {};
-		v.position = glm::vec3(0, 0, 0);
+		v.position = vec3(0, 0, 0);
 		vector<Vertex> vertices;
 		for (auto i = 0u; i < ARRAY_SIZE(CubeData::vertexPositions); ++i) {
-			glm::vec3 pos = CubeData::vertexPositions[i];
+			vec3 pos = CubeData::vertexPositions[i];
 			v.position = pos;
-			v.uv[0] = 0.5f + 0.5f * glm::vec2(pos.x, pos.y);
+			v.uv[0] = 0.5f + 0.5f * vec2(pos.x, pos.y);
 			vertices.push_back(v);
 		}
 		vector<uint32_t> indices;
@@ -413,7 +416,7 @@ int main(int argc, char *argv[])
 		}, 1);
 
 		struct {
-			glm::mat4 modelViewProjectionMatrix;
+			mat4 modelViewProjectionMatrix;
 		} perObjectUniforms;
 		auto uniformSize = sizeof(perObjectUniforms);
 		auto uniformBufferSpacing = uint32_t(alignSize(uniformSize, deviceProperties.limits.minUniformBufferOffsetAlignment));
@@ -558,11 +561,11 @@ int main(int argc, char *argv[])
 			auto th = float(time);
 
 			// animate, yo
-			t1->setLocalMatrix(glm::rotate(glm::mat4(1), th, glm::vec3(0, 0, 1)));
-			t2->setLocalMatrix(glm::translate(glm::mat4(1), glm::vec3(cos(th), 1, 1)));
+			t1->setLocalMatrix(rotate(mat4(1), th, vec3(0, 0, 1)));
+			t2->setLocalMatrix(translate(mat4(1), vec3(cos(th), 1, 1)));
 
-			auto viewPosition = glm::vec3(sin(th * 0.1f) * 10.0f, 0, cos(th * 0.1f) * 10.0f);
-			auto viewMatrix = glm::lookAt(viewPosition, glm::vec3(0), glm::vec3(0, 1, 0));
+			auto viewPosition = vec3(sin(th * 0.1f) * 10.0f, 0, cos(th * 0.1f) * 10.0f);
+			auto viewMatrix = glm::lookAt(viewPosition, vec3(0), vec3(0, 1, 0));
 			auto fov = 60.0f;
 			auto aspect = float(width) / height;
 			auto znear = 0.01f;
