@@ -60,11 +60,11 @@ static VkBool32 messageCallback(
 	return false;
 }
 
-void vulkan::instanceInit(const char *appName, const vector<const char *> &enabledExtensions)
+void vulkan::instanceInit(const std::string &appName, const vector<const char *> &enabledExtensions)
 {
 	VkApplicationInfo appInfo = {};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-	appInfo.pApplicationName = appName;
+	appInfo.pApplicationName = appName.c_str();
 	appInfo.pEngineName = "very lastest engine ever";
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
@@ -173,9 +173,9 @@ void vulkan::deviceInit(VkPhysicalDevice physicalDevice, function<bool(VkInstanc
 }
 
 template <typename T>
-static T getDeviceProc(VkDevice device, const char *entrypoint)
+static T getDeviceProc(VkDevice device, const std::string &entrypoint)
 {
-	auto ret = reinterpret_cast<T>(vkGetDeviceProcAddr(device, entrypoint));
+	auto ret = reinterpret_cast<T>(vkGetDeviceProcAddr(device, entrypoint.c_str()));
 	assert(ret != nullptr);
 	return ret;
 }
@@ -183,9 +183,9 @@ static T getDeviceProc(VkDevice device, const char *entrypoint)
 struct vulkan::instance_funcs vulkan::instanceFuncs;
 
 template <typename T>
-static T getInstanceProc(VkInstance instance, const char *entrypoint)
+static T getInstanceProc(VkInstance instance, const std::string &entrypoint)
 {
-	auto ret = reinterpret_cast<T>(vkGetInstanceProcAddr(instance, entrypoint));
+	auto ret = reinterpret_cast<T>(vkGetInstanceProcAddr(instance, entrypoint.c_str()));
 	assert(ret != nullptr);
 	return ret;
 }

@@ -3,7 +3,7 @@
 
 #include "vulkan.h"
 
-VkShaderModule loadShaderModule(const char *path);
+VkShaderModule loadShaderModule(const std::string &path);
 
 class ShaderStage {
 public:

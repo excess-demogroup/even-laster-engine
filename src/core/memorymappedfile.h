@@ -9,17 +9,17 @@
 class MemoryMappedFile
 {
 public:
-	explicit MemoryMappedFile(const char *path)
+	explicit MemoryMappedFile(const std::string &path)
 	{
 		WIN32_FILE_ATTRIBUTE_DATA attr;
-		if (!GetFileAttributesEx(path, GetFileExInfoStandard, &attr))
+		if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &attr))
 			throw std::runtime_error("failed to get file attributes");
 		size = attr.nFileSizeLow;
 
 		if (attr.nFileSizeHigh != 0)
 			throw std::runtime_error("too large file");
 
-		hfile = CreateFile(path, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+		hfile = CreateFile(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 		if (INVALID_HANDLE_VALUE == hfile)
 			throw std::runtime_error("failed to open file for reading");
 

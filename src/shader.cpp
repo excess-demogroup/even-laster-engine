@@ -1,7 +1,7 @@
 #include "shader.h"
 #include "core/memorymappedfile.h"
 
-VkShaderModule loadShaderModule(const char *path)
+VkShaderModule loadShaderModule(const std::string &path)
 {
 	MemoryMappedFile shaderCode(path);
 	assert(shaderCode.getSize() > 0);
