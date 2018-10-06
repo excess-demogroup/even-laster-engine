@@ -40,20 +40,18 @@ class Material {
 
 class Model {
 public:
-	Model(const Mesh *mesh, const Material *material) :
+	Model(const Mesh &mesh, const Material &material) :
 		mesh(mesh),
 		material(material)
 	{
-		assert(mesh != nullptr);
-		assert(material != nullptr);
 	}
 
-	const Mesh *getMesh() const { return mesh; }
-	const Material *getMaterial() const { return material; }
+	const Mesh &getMesh() const { return mesh; }
+	const Material &getMaterial() const { return material; }
 
 private:
-	const Mesh *mesh;
-	const Material *material;
+	const Mesh &mesh;
+	const Material &material;
 };
 
 class Transform {

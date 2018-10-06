@@ -371,7 +371,7 @@ int main(int argc, char *argv[])
 		indices.push_back(2);
 		auto mesh = Mesh(vertices, indices);
 		auto material = Material();
-		auto model = new Model(&mesh, &material);
+		auto model = new Model(mesh, material);
 		auto t1 = scene.createMatrixTransform();
 		auto t2 = scene.createMatrixTransform(t1);
 		scene.createObject(model, t1);
