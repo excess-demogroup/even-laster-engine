@@ -28,10 +28,8 @@ Buffer::~Buffer()
 	vkFreeMemory(device, deviceMemory, nullptr);
 }
 
-void Buffer::uploadFromStagingBuffer(StagingBuffer *stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size)
+void Buffer::uploadFromStagingBuffer(const StagingBuffer &stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size)
 {
-	assert(stagingBuffer != nullptr);
-
 	auto commandBuffer = allocateCommandBuffers(setupCommandPool, 1)[0];
 
 	VkCommandBufferBeginInfo commandBufferBeginInfo = {};
@@ -45,7 +43,7 @@ void Buffer::uploadFromStagingBuffer(StagingBuffer *stagingBuffer, VkDeviceSize 
 	bufferCopy.srcOffset = srcOffset;
 	bufferCopy.dstOffset = dstOffset;
 	bufferCopy.size = size;
-	vkCmdCopyBuffer(commandBuffer, stagingBuffer->getBuffer(), buffer, 1, &bufferCopy);
+	vkCmdCopyBuffer(commandBuffer, stagingBuffer.getBuffer(), buffer, 1, &bufferCopy);
 
 	err = vkEndCommandBuffer(commandBuffer);
 	assert(err == VK_SUCCESS);

@@ -448,8 +448,8 @@ int main(int argc, char *argv[])
 		writeDescriptorSets[1].dstBinding = 1;
 		vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 
-		auto vertexStagingBuffer = new StagingBuffer(sizeof(CubeData::vertexPositions));
-		vertexStagingBuffer->uploadMemory(0, CubeData::vertexPositions, sizeof(CubeData::vertexPositions));
+		auto vertexStagingBuffer = StagingBuffer(sizeof(CubeData::vertexPositions));
+		vertexStagingBuffer.uploadMemory(0, CubeData::vertexPositions, sizeof(CubeData::vertexPositions));
 
 		auto vertexBuffer = Buffer(sizeof(CubeData::vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		vertexBuffer.uploadFromStagingBuffer(vertexStagingBuffer, 0, 0, sizeof(CubeData::vertexPositions));

@@ -46,7 +46,7 @@ public:
 		return descriptorBufferInfo;
 	}
 
-	void uploadFromStagingBuffer(StagingBuffer *stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
+	void uploadFromStagingBuffer(const StagingBuffer &stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size);
 
 private:
 	VkBuffer buffer;
