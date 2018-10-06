@@ -145,19 +145,18 @@ private:
 
 class Object {
 public:
-	Object(const Model *model, const Transform *transform) :
+	Object(const Model &model, const Transform *transform) :
 		model(model),
 		transform(transform)
 	{
-		assert(model != nullptr);
 		assert(transform != nullptr);
 	}
 
-	const Model *getModel() const { return model; }
+	const Model &getModel() const { return model; }
 	const Transform *getTransform() const { return transform; }
 
 private:
-	const Model *model;
+	const Model &model;
 	const Transform *transform;
 };
 
@@ -180,7 +179,7 @@ public:
 		return trans;
 	}
 
-	Object *createObject(Model *model, const Transform *transform = nullptr)
+	Object *createObject(const Model &model, const Transform *transform = nullptr)
 	{
 		if (transform == nullptr)
 			transform = &rootTransform;
