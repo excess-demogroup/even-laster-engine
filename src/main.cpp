@@ -594,9 +594,9 @@ int main(int argc, char *argv[])
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 			for (auto object : scene.getObjects()) {
-				assert(offsetMap.count(object->getTransform()) > 0);
+				assert(offsetMap.count(&object->getTransform()) > 0);
 
-				auto offset = offsetMap[object->getTransform()];
+				auto offset = offsetMap[&object->getTransform()];
 				assert(offset <= uniformBufferSize - uniformSize);
 				uint32_t dynamicOffsets[] = { (uint32_t)offset };
 				vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 1, dynamicOffsets);

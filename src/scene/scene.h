@@ -145,19 +145,18 @@ private:
 
 class Object {
 public:
-	Object(const Model &model, const Transform *transform) :
+	Object(const Model &model, const Transform &transform) :
 		model(model),
 		transform(transform)
 	{
-		assert(transform != nullptr);
 	}
 
 	const Model &getModel() const { return model; }
-	const Transform *getTransform() const { return transform; }
+	const Transform &getTransform() const { return transform; }
 
 private:
 	const Model &model;
-	const Transform *transform;
+	const Transform &transform;
 };
 
 class Scene {
@@ -181,12 +180,9 @@ public:
 
 	Object *createObject(const Model &model, const Transform *transform = nullptr)
 	{
-		if (transform == nullptr)
-			transform = &rootTransform;
+		assert(!transform || transform->getRootTransform() == &rootTransform);
 
-		assert(transform->getRootTransform() == &rootTransform);
-
-		auto obj = new Object(model, transform);
+		auto obj = new Object(model, transform ? *transform : rootTransform);
 		objects.push_back(obj);
 		return obj;
 	}
