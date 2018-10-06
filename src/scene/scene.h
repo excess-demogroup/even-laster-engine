@@ -145,7 +145,7 @@ private:
 
 class Object {
 public:
-	Object(Model *model, Transform *transform) :
+	Object(const Model *model, const Transform *transform) :
 		model(model),
 		transform(transform)
 	{
@@ -157,8 +157,8 @@ public:
 	const Transform *getTransform() const { return transform; }
 
 private:
-	Model *model;
-	Transform *transform;
+	const Model *model;
+	const Transform *transform;
 };
 
 class Scene {
@@ -180,7 +180,7 @@ public:
 		return trans;
 	}
 
-	Object *createObject(Model *model, Transform *transform = nullptr)
+	Object *createObject(Model *model, const Transform *transform = nullptr)
 	{
 		if (transform == nullptr)
 			transform = &rootTransform;
