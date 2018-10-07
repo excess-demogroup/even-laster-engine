@@ -178,23 +178,21 @@ public:
 		return trans;
 	}
 
-	Object *createObject(const Model &model, const Transform *transform = nullptr)
+	Object &createObject(const Model &model, const Transform *transform = nullptr)
 	{
 		assert(!transform || transform->getRootTransform() == &rootTransform);
-
-		auto obj = new Object(model, transform ? *transform : rootTransform);
-		objects.push_back(obj);
-		return obj;
+		objects.emplace_back(model, transform ? *transform : rootTransform);
+		return objects.back();
 	}
 
 	const Transform &getRootTransform() const { return rootTransform; }
 
-	const std::list<Object*> &getObjects() const { return objects; }
+	const std::list<Object> &getObjects() const { return objects; }
 	const std::list<Transform*> &getTransforms() const { return transforms; }
 
 private:
 	std::list<Transform*> transforms;
-	std::list<Object*> objects;
+	std::list<Object> objects;
 	RootTransform rootTransform;
 };
 
