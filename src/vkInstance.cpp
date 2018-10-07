@@ -23,7 +23,7 @@ VkPhysicalDevice vulkan::physicalDevice;
 VkPhysicalDeviceFeatures vulkan::enabledFeatures = { 0 };
 VkPhysicalDeviceProperties vulkan::deviceProperties;
 VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
-uint32_t vulkan::graphicsQueueIndex = UINT32_MAX;
+uint32_t vulkan::graphicsQueueFamily = UINT32_MAX;
 VkQueue vulkan::graphicsQueue;
 VkCommandPool vulkan::setupCommandPool;
 VkDebugReportCallbackEXT vulkan::debugReportCallback;
@@ -105,16 +105,16 @@ void vulkan::instanceInit(const std::string &appName, const vector<const char *>
 #endif
 }
 
-static uint32_t findQueue(VkPhysicalDevice physicalDevice, VkQueueFlags requiredFlags, function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
+static uint32_t findQueueFamily(VkPhysicalDevice physicalDevice, VkQueueFlags requiredFlags, function<bool(VkInstance, VkPhysicalDevice, uint32_t)> usableQueue)
 {
-	uint32_t queueCount;
-	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, nullptr);
-	assert(queueCount > 0);
+	uint32_t queueFamilyCount;
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+	assert(queueFamilyCount > 0);
 
-	VkQueueFamilyProperties *props = new VkQueueFamilyProperties[queueCount];
-	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueCount, props);
+	VkQueueFamilyProperties *props = new VkQueueFamilyProperties[queueFamilyCount];
+	vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, props);
 
-	for (uint32_t i = 0; i < queueCount; i++) {
+	for (uint32_t i = 0; i < queueFamilyCount; i++) {
 		if ((props[i].queueFlags & requiredFlags) == requiredFlags && usableQueue(instance, physicalDevice, i)) {
 			delete[] props;
 			return i;
@@ -136,12 +136,12 @@ void vulkan::deviceInit(VkPhysicalDevice physicalDevice, function<bool(VkInstanc
 
 	vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 
-	graphicsQueueIndex = findQueue(physicalDevice, VK_QUEUE_GRAPHICS_BIT, usableQueue);
+	graphicsQueueFamily = findQueueFamily(physicalDevice, VK_QUEUE_GRAPHICS_BIT, usableQueue);
 
 	VkDeviceQueueCreateInfo queueCreateInfo = {};
 	float queuePriorities = 0.0f;
 	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueCreateInfo.queueFamilyIndex = graphicsQueueIndex;
+	queueCreateInfo.queueFamilyIndex = graphicsQueueFamily;
 	queueCreateInfo.queueCount = 1;
 	queueCreateInfo.pQueuePriorities = &queuePriorities;
 
@@ -167,9 +167,9 @@ void vulkan::deviceInit(VkPhysicalDevice physicalDevice, function<bool(VkInstanc
 	assert(err == VK_SUCCESS);
 
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &deviceMemoryProperties);
-	vkGetDeviceQueue(device, graphicsQueueIndex, 0, &graphicsQueue);
+	vkGetDeviceQueue(device, graphicsQueueFamily, 0, &graphicsQueue);
 
-	setupCommandPool = createCommandPool(graphicsQueueIndex);
+	setupCommandPool = createCommandPool(graphicsQueueFamily);
 }
 
 template <typename T>

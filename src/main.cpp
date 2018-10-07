@@ -275,8 +275,8 @@ int main(int argc, char *argv[])
 		instanceInit(appName, enabledExtensions);
 
 		auto physicalDevice = choosePhysicalDevice();
-		deviceInit(physicalDevice, [](VkInstance instance, VkPhysicalDevice physicalDevice, uint32_t queueIndex) {
-			return glfwGetPhysicalDevicePresentationSupport(instance, physicalDevice, queueIndex) == GLFW_TRUE;
+		deviceInit(physicalDevice, [](VkInstance instance, VkPhysicalDevice physicalDevice, uint32_t queueFamily) {
+			return glfwGetPhysicalDevicePresentationSupport(instance, physicalDevice, queueFamily) == GLFW_TRUE;
 		});
 
 		VkSurfaceKHR surface;
@@ -503,7 +503,7 @@ int main(int argc, char *argv[])
 		auto backBufferSemaphore = createSemaphore(),
 		     presentCompleteSemaphore = createSemaphore();
 
-		VkCommandPool commandPool = createCommandPool(graphicsQueueIndex);
+		VkCommandPool commandPool = createCommandPool(graphicsQueueFamily);
 
 		auto commandBuffers = allocateCommandBuffers(commandPool, swapChain.getImageViews().size());
 

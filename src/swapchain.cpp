@@ -44,7 +44,7 @@ SwapChain::SwapChain(VkSurfaceKHR surface, int width, int height, VkImageUsageFl
 	swapChain(VK_NULL_HANDLE)
 {
 	VkBool32 surfaceSupported = VK_FALSE;
-	VkResult err = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueIndex, surface, &surfaceSupported);
+	VkResult err = vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueFamily, surface, &surfaceSupported);
 	assert(err == VK_SUCCESS);
 	assert(surfaceSupported == VK_TRUE);
 
