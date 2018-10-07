@@ -188,10 +188,10 @@ public:
 	const Transform &getRootTransform() const { return rootTransform; }
 
 	const std::list<Object> &getObjects() const { return objects; }
-	const std::list<Transform*> &getTransforms() const { return transforms; }
+	const std::list<Transform *> &getTransforms() const { return transforms; }
 
 private:
-	std::list<Transform*> transforms;
+	std::list<Transform *> transforms;
 	std::list<Object> objects;
 	RootTransform rootTransform;
 };
