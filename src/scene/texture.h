@@ -103,4 +103,12 @@ public:
 	}
 };
 
+class Texture3D : public TextureBase {
+public:
+	Texture3D(VkFormat format, int width, int height, int depth, int mipLevels = 1) :
+		TextureBase(format, VK_IMAGE_TYPE_3D, VK_IMAGE_VIEW_TYPE_3D, width, height, depth, mipLevels, 1, true)
+	{
+	}
+};
+
 #endif // TEXTURE_H
