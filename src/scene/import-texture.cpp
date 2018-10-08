@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <algorithm>
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 #include <sys/stat.h>
 
@@ -267,5 +269,99 @@ unique_ptr<TextureCube> importTextureCube(const string &filename, TextureImportF
 	}
 
 	FreeImage_Unload(dib);
+	return texture;
+}
+
+unique_ptr<Texture3D> importCubeFile(const std::string &filename)
+{
+	int size;
+
+	StagingBuffer *stagingBuffer = nullptr;
+	float *ptr = nullptr;
+	int colorsRead = 0;
+
+	std::ifstream stream(filename);
+	std::string line;
+	while (getline(stream, line)) {
+		if (line.empty() || line[0] == '#')
+			continue;
+
+		if (isalpha(line[0])) {
+			auto sep = line.find(" ");
+			auto verb = line.substr(0, sep);
+
+			if (verb == "TITLE")
+				continue; // ignore title
+
+			if (verb == "LUT_3D_SIZE") {
+				auto sizeString = line.substr(sep + 1);
+
+				char *end = nullptr;
+				size = strtol(sizeString.c_str(), &end, 10);
+				if (end == nullptr)
+					throw runtime_error("expected integer size");
+
+				auto textureSize = sizeof(float) * 4 * size * size * size;
+				stagingBuffer = new StagingBuffer(textureSize);
+				ptr = static_cast<float *>(stagingBuffer->map(0, textureSize));
+
+				continue;
+			}
+
+			if (verb == "DOMAIN_MIN") {
+				if (line != "DOMAIN_MIN 0.0 0.0 0.0")
+					throw runtime_error("expected DOMAIN_MIN");
+				continue;
+			}
+
+			if (verb == "DOMAIN_MAX") {
+				if (line != "DOMAIN_MAX 1.0 1.0 1.0")
+					throw runtime_error("expected DOMAIN_MAX");
+				continue;
+			}
+
+			throw runtime_error("unrecognized verb");
+		}
+
+		if (isdigit(line[0])) {
+			if (ptr == nullptr)
+				throw runtime_error("expected size before color values");
+
+			std::stringstream ss(line);
+
+			float r = 0, g = 0, b = 0;
+
+			ss >> r;
+			if (ss.peek() != ' ')
+				throw runtime_error("unexpected character");
+			ss.ignore();
+
+			ss >> g;
+			if (ss.peek() != ' ')
+				throw runtime_error("unexpected character");
+			ss.ignore();
+
+			ss >> b;
+
+			if (!ss.eof())
+				throw runtime_error("unexpected character");
+
+			ptr[colorsRead * 4 + 0] = r;
+			ptr[colorsRead * 4 + 1] = g;
+			ptr[colorsRead * 4 + 2] = b;
+			ptr[colorsRead * 4 + 3] = 1.0f;
+			++colorsRead;
+			continue;
+		}
+
+		throw runtime_error("unrecognized line");
+	}
+
+	if (colorsRead != size * size * size)
+		throw runtime_error("wrong amount of colors");
+
+	auto texture = make_unique<Texture3D>(VK_FORMAT_R32G32B32A32_SFLOAT, size, size, size, 1);
+	stagingBuffer->unmap();
+	texture->uploadFromStagingBuffer(stagingBuffer, 0);
 	return texture;
 }

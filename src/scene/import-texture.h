@@ -24,5 +24,6 @@ inline TextureImportFlags operator |= (TextureImportFlags &a, const TextureImpor
 std::unique_ptr<Texture2D> importTexture2D(const std::string &filename, TextureImportFlags flags);
 std::unique_ptr<TextureCube> importTextureCube(const std::string &filename, TextureImportFlags flags);
 std::unique_ptr<Texture2DArray> importTexture2DArray(const std::string &filename, TextureImportFlags flags);
+std::unique_ptr<Texture3D> importCubeFile(const std::string &filename);
 
 #endif // IMPORT_TEXTURE_H
