@@ -64,8 +64,7 @@ private:
 class ShaderProgram {
 public:
 	ShaderProgram(const std::vector<ShaderStage> &stages, const std::vector<ShaderDescriptor> &descriptors, const std::vector<VkPushConstantRange> &pushConstantRanges = {}) :
-		stages(stages),
-		descriptors(descriptors)
+		stages(stages)
 	{
 		std::vector<VkDescriptorSetLayoutBinding> layoutBindings;
 		layoutBindings.reserve(descriptors.size());
@@ -93,7 +92,6 @@ private:
 	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	const std::vector<ShaderStage> stages;
-	const std::vector<ShaderDescriptor> descriptors;
 };
 
 #endif /* SHADER_H */
