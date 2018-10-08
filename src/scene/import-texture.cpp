@@ -150,7 +150,7 @@ static void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, i
 	FreeImage_Unload(dib);
 }
 
-std::unique_ptr<Texture2D> importTexture2D(string filename, TextureImportFlags flags)
+std::unique_ptr<Texture2D> importTexture2D(const string &filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
 	auto dib = loadBitmap(filename, &format);
@@ -171,7 +171,7 @@ std::unique_ptr<Texture2D> importTexture2D(string filename, TextureImportFlags f
 	return texture;
 }
 
-unique_ptr<Texture2DArray> importTexture2DArray(string folder, TextureImportFlags flags)
+unique_ptr<Texture2DArray> importTexture2DArray(const string &folder, TextureImportFlags flags)
 {
 	VkFormat firstFormat = VK_FORMAT_UNDEFINED;
 	unsigned int firstWidth, firstHeight;
@@ -222,7 +222,7 @@ unique_ptr<Texture2DArray> importTexture2DArray(string folder, TextureImportFlag
 	return texture;
 }
 
-unique_ptr<TextureCube> importTextureCube(string filename, TextureImportFlags flags)
+unique_ptr<TextureCube> importTextureCube(const string &filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
 	auto dib = loadBitmap(filename, &format);
