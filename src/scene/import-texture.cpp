@@ -150,7 +150,7 @@ static void uploadMipChain(TextureBase &texture, FIBITMAP *dib, int mipLevels, i
 	FreeImage_Unload(dib);
 }
 
-std::unique_ptr<Texture2D> importTexture2D(const string &filename, TextureImportFlags flags)
+unique_ptr<Texture2D> importTexture2D(const string &filename, TextureImportFlags flags)
 {
 	VkFormat format = VK_FORMAT_UNDEFINED;
 	auto dib = loadBitmap(filename, &format);
