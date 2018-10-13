@@ -380,6 +380,7 @@ int main(int argc, char *argv[])
 		// OK, let's prepare for rendering!
 
 		auto texture = importTexture2D("assets/excess-logo.png", TextureImportFlags::GENERATE_MIPMAPS);
+		auto colorLut = importCubeFile("assets/color-lut.CUBE");
 
 		auto shaderProgram = ShaderProgram({
 			ShaderStage(VK_SHADER_STAGE_VERTEX_BIT, loadShaderModule("data/shaders/triangle.vert.spv")),
@@ -436,7 +437,8 @@ int main(int argc, char *argv[])
 		writeDescriptorSets[0].pBufferInfo = &descriptorBufferInfo;
 		writeDescriptorSets[0].dstBinding = 0;
 
-		VkSampler textureSampler = createSampler(float(texture->getMipLevels()), true, true);
+		auto textureSampler = createSampler(float(texture->getMipLevels()), true, true);
+		auto colorLutSampler = createSampler(0.0f, false, false);
 
 		VkDescriptorImageInfo descriptorImageInfo = texture->getDescriptorImageInfo(textureSampler);
 		writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -462,12 +464,13 @@ int main(int argc, char *argv[])
 		}, {
 			ShaderDescriptor(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT),
 			ShaderDescriptor(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT),
+			ShaderDescriptor(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT),
 		});
 		auto postProcessPipeline = createComputePipeline(postProcessShaderProgram);
 
 		auto postProcessDescriptorPool = createDescriptorPool({
 			{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 },
-			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
 		}, imageViews.size());
 
 		auto postProcessDescriptorSet = allocateDescriptorSet(postProcessDescriptorPool, postProcessShaderProgram.getDescriptorSetLayout());
@@ -484,17 +487,17 @@ int main(int argc, char *argv[])
 			writeDescriptorSets[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			writeDescriptorSets[0].pImageInfo = &postProcessRenderTargetImageInfo;
 
-			VkDescriptorImageInfo descriptorImageInfo = {};
-			descriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			descriptorImageInfo.imageView = colorRenderTarget.getImageView();
-			descriptorImageInfo.sampler = textureSampler;
+			vector<VkDescriptorImageInfo> descriptorImageInfos = {
+				{ textureSampler, colorRenderTarget.getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+				{ colorLutSampler, colorLut->getImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }
+			};
 
 			writeDescriptorSets[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 			writeDescriptorSets[1].dstSet = postProcessDescriptorSet;
 			writeDescriptorSets[1].dstBinding = 1;
-			writeDescriptorSets[1].descriptorCount = 1;
 			writeDescriptorSets[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			writeDescriptorSets[1].pImageInfo = &descriptorImageInfo;
+			writeDescriptorSets[1].descriptorCount = descriptorImageInfos.size();
+			writeDescriptorSets[1].pImageInfo = descriptorImageInfos.data();
 
 			vkUpdateDescriptorSets(device, ARRAY_SIZE(writeDescriptorSets), writeDescriptorSets, 0, nullptr);
 		}
