@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <cstring>
 
-#include "vulkan.h"
+#include "vkinstance.h"
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN

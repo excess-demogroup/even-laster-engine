@@ -174,7 +174,7 @@
     <ClCompile Include="src\scene\texture.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\swapchain.cpp" />
-    <ClCompile Include="src\vkInstance.cpp" />
+    <ClCompile Include="src\vkinstance.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>

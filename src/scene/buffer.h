@@ -1,7 +1,7 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
-#include "../vulkan.h"
+#include "../vkinstance.h"
 
 #include <cstring>
 

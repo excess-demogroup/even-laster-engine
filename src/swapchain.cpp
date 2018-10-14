@@ -1,6 +1,6 @@
 #include "swapchain.h"
 
-#include "vulkan.h"
+#include "vkinstance.h"
 #include <assert.h>
 #include <algorithm>
 #include <stdexcept>

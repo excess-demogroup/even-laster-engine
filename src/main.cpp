@@ -11,7 +11,7 @@
 #include <map>
 #include <stdexcept>
 
-#include "vulkan.h"
+#include "vkinstance.h"
 #include "core/core.h"
 #include "swapchain.h"
 #include "shader.h"

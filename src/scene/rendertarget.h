@@ -1,7 +1,7 @@
 #ifndef RENDERTARGET_H
 #define RENDERTARGET_H
 
-#include "../vulkan.h"
+#include "../vkinstance.h"
 
 class RenderTargetBase {
 protected:

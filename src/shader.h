@@ -1,7 +1,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include "vulkan.h"
+#include "vkinstance.h"
 
 VkShaderModule loadShaderModule(const std::string &path);
 

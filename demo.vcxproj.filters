@@ -2,7 +2,7 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="src\swapchain.cpp" />
-    <ClCompile Include="src\vkInstance.cpp" />
+    <ClCompile Include="src\vkinstance.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\scene\buffer.cpp" />
