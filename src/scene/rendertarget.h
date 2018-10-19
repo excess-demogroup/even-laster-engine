@@ -86,30 +86,4 @@ public:
 	}
 };
 
-class Texture2DArrayRenderTarget : public RenderTargetBase {
-public:
-	Texture2DArrayRenderTarget(VkFormat format, int width, int height, int arrayLayers, VkSampleCountFlagBits sampleCount, VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) :
-		RenderTargetBase(format, VK_IMAGE_TYPE_2D, VK_IMAGE_VIEW_TYPE_2D_ARRAY, width, height, 1, arrayLayers, sampleCount, usage, VK_IMAGE_ASPECT_COLOR_BIT)
-	{
-		arrayImageViews.reserve(arrayLayers);
-		for (int i = 0; i < arrayLayers; ++i) {
-			VkImageSubresourceRange subresourceRange;
-			subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			subresourceRange.baseMipLevel = 0;
-			subresourceRange.baseArrayLayer = i;
-			subresourceRange.levelCount = 1;
-			subresourceRange.layerCount = 1;
-			arrayImageViews.push_back(createImageView(image, VK_IMAGE_VIEW_TYPE_2D, format, subresourceRange));
-		}
-	}
-
-	const std::vector<VkImageView> &getArrayImageViews() const
-	{
-		return arrayImageViews;
-	}
-
-private:
-	std::vector<VkImageView> arrayImageViews;
-};
-
 #endif // RENDERTARGET_H
