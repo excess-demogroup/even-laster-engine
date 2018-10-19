@@ -166,7 +166,7 @@
     <ClInclude Include="src\scene\texture.h" />
     <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\swapchain.h" />
-    <ClInclude Include="src\vulkan.h" />
+    <ClInclude Include="src\vkinstance.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\scene\buffer.cpp" />

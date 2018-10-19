@@ -19,7 +19,7 @@
     <ClInclude Include="src\scene\rendertarget.h" />
     <ClInclude Include="src\scene\scene.h" />
     <ClInclude Include="src\scene\texture.h" />
-    <ClInclude Include="src\vulkan.h" />
+    <ClInclude Include="src\vkinstance.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="src\shaders\*.frag" />
