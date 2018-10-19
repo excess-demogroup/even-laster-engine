@@ -453,11 +453,14 @@ int main(int argc, char *argv[])
 		auto vertexStagingBuffer = StagingBuffer(sizeof(CubeData::vertexPositions));
 		vertexStagingBuffer.uploadMemory(0, CubeData::vertexPositions, sizeof(CubeData::vertexPositions));
 
-		auto vertexBuffer = Buffer(sizeof(CubeData::vertexPositions), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		auto vertexBuffer = VertexBuffer(sizeof(CubeData::vertexPositions));
 		vertexBuffer.uploadFromStagingBuffer(vertexStagingBuffer, 0, 0, sizeof(CubeData::vertexPositions));
 
-		auto indexBuffer = Buffer(sizeof(CubeData::vertexIndices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
-		indexBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
+		auto indexStagingBuffer = StagingBuffer(sizeof(CubeData::vertexIndices));
+		indexStagingBuffer.uploadMemory(0, CubeData::vertexIndices, sizeof(CubeData::vertexIndices));
+
+		auto indexBuffer = IndexBuffer(sizeof(CubeData::vertexIndices));
+		indexBuffer.uploadFromStagingBuffer(indexStagingBuffer, 0, 0, sizeof(CubeData::vertexIndices));
 
 		auto postProcessShaderProgram = ShaderProgram({
 			ShaderStage(VK_SHADER_STAGE_COMPUTE_BIT, loadShaderModule("data/shaders/postprocess.comp.spv"))
