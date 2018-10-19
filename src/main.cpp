@@ -293,11 +293,11 @@ int main(int argc, char *argv[])
 		};
 
 		auto depthFormat = findBestFormat(depthCandidates, VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
-		DepthRenderTarget depthRenderTarget(depthFormat, width, height);
+		DepthRenderTarget depthRenderTarget(depthFormat, width, height, VK_SAMPLE_COUNT_1_BIT);
 
 		auto renderTargetFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
-		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
-		ColorRenderTarget postProcessRenderTarget(renderTargetFormat, width, height, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
+		ColorRenderTarget colorRenderTarget(renderTargetFormat, width, height, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+		ColorRenderTarget postProcessRenderTarget(renderTargetFormat, width, height, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
 
 		VkAttachmentDescription attachments[2];
 		attachments[0].flags = 0;
