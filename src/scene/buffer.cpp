@@ -31,7 +31,7 @@ Buffer::~Buffer()
 
 void Buffer::uploadFromStagingBuffer(const StagingBuffer &stagingBuffer, VkDeviceSize srcOffset, VkDeviceSize dstOffset, VkDeviceSize size)
 {
-	auto commandBuffer = allocateCommandBuffers(setupCommandPool, 1)[0];
+	auto commandBuffer = getSetupCommandBuffer();
 
 	VkCommandBufferBeginInfo commandBufferBeginInfo = {};
 	commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

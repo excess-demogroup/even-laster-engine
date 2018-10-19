@@ -517,8 +517,7 @@ int main(int argc, char *argv[])
 		for (auto i = 0u; i < commandBuffers.size(); ++i)
 			commandBufferFences[i] = createFence(VK_FENCE_CREATE_SIGNALED_BIT);
 
-		err = vkQueueWaitIdle(graphicsQueue);
-		assert(err == VK_SUCCESS);
+		setupCleanup();
 
 		auto startTime = glfwGetTime();
 		while (!glfwWindowShouldClose(win)) {

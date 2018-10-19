@@ -25,7 +25,7 @@ VkPhysicalDeviceProperties vulkan::deviceProperties;
 VkPhysicalDeviceMemoryProperties vulkan::deviceMemoryProperties;
 uint32_t vulkan::graphicsQueueFamily = UINT32_MAX;
 VkQueue vulkan::graphicsQueue;
-VkCommandPool vulkan::setupCommandPool;
+VkCommandPool setupCommandPool;
 VkDebugReportCallbackEXT vulkan::debugReportCallback;
 
 #ifndef NDEBUG
@@ -170,6 +170,18 @@ void vulkan::deviceInit(VkPhysicalDevice physicalDevice, function<bool(VkInstanc
 	vkGetDeviceQueue(device, graphicsQueueFamily, 0, &graphicsQueue);
 
 	setupCommandPool = createCommandPool(graphicsQueueFamily);
+}
+
+VkCommandBuffer vulkan::getSetupCommandBuffer()
+{
+	return allocateCommandBuffers(setupCommandPool, 1)[0];
+}
+
+void vulkan::setupCleanup()
+{
+	VkResult err = vkQueueWaitIdle(graphicsQueue);
+	assert(err == VK_SUCCESS);
+	vkDestroyCommandPool(device, setupCommandPool, nullptr);
 }
 
 template <typename T>

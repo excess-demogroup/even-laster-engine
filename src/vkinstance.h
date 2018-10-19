@@ -9,6 +9,7 @@
 #include <functional>
 #include <vector>
 #include <cassert>
+#include <queue>
 
 #include "core/core.h"
 
@@ -22,8 +23,6 @@ namespace vulkan
 	extern VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
 	extern VkQueue graphicsQueue;
 	extern uint32_t graphicsQueueFamily;
-
-	extern VkCommandPool setupCommandPool;
 
 	extern VkDebugReportCallbackEXT debugReportCallback;
 
@@ -405,6 +404,9 @@ namespace vulkan
 
 		return descriptorSetLayout;
 	}
+
+	VkCommandBuffer getSetupCommandBuffer();
+	void setupCleanup();
 
 	void instanceFuncsInit(VkInstance instance);
 };
