@@ -423,7 +423,7 @@ int main(int argc, char *argv[])
 		auto uniformBufferSpacing = uint32_t(alignSize(uniformSize, deviceProperties.limits.minUniformBufferOffsetAlignment));
 		auto uniformBufferSize = VkDeviceSize(uniformBufferSpacing * scene.getTransforms().size());
 
-		auto uniformBuffer = Buffer(uniformBufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT);
+		auto uniformBuffer = UniformBuffer(uniformBufferSize);
 
 		auto descriptorSet = allocateDescriptorSet(descriptorPool, shaderProgram.getDescriptorSetLayout());
 
