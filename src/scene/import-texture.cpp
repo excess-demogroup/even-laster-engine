@@ -170,6 +170,7 @@ unique_ptr<Texture2D> importTexture2D(const string &filename, TextureImportFlags
 
 	auto texture = make_unique<Texture2D>(format, baseWidth, baseHeight, mipLevels, 1, true);
 	uploadMipChain(*texture, dib, mipLevels);
+
 	return texture;
 }
 
