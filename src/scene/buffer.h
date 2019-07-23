@@ -25,7 +25,7 @@ public:
 		vkUnmapMemory(vulkan::device, deviceMemory);
 	}
 
-	void uploadMemory(VkDeviceSize offset, void *data, VkDeviceSize size)
+	void uploadMemory(VkDeviceSize offset, const void *data, VkDeviceSize size)
 	{
 		auto mappedUniformMemory = map(offset, size);
 		memcpy(mappedUniformMemory, data, (size_t)size);
